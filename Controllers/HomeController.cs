@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using BAEClassLibrary;
 
 namespace SnowTrolleyProduction.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BAEController
     {
         public ActionResult Index()
         {
