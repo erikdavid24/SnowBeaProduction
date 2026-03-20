@@ -1,0 +1,118 @@
+﻿@model SHE.SafetyTours.Models.TrolleySetupViewModel
+@{
+    ViewBag.Title = "Gestionde Programa";
+}
+
+<style>
+    .ts-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+        .ts-header h4 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #3d4465;
+            margin: 0;
+        }
+
+    .ts-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+        .ts-toolbar label {
+            color: #7d8499;
+            font-size: .78rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+    #lvTrolley {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        padding: 4px 2px;
+    }
+
+        #lvTrolley + .k-pager {
+            border-top: 1px solid #e8ecf1;
+            margin-top: 10px;
+            background: #fafbfc;
+        }
+</style>
+
+<div class="ts-header">
+    <h4>
+        <i class="fas fa-cogs" style="color:#5d78ff;margin-right:8px;"></i>
+        Gestión de Trolleys (Setup)
+    </h4>
+    <div class="ts-toolbar">
+        @if (BAEClassLibrary.UserContext.ModulePermissions.Create("Gestion de programa"))
+        {
+            <a id="btnAdd" href="#" class="k-button k-primary" style="border-radius:6px;" onclick="addNew(event)">
+                <span class="k-icon k-i-plus"></span> Nuevo Setup
+            </a>
+        }
+        <label>De</label>
+        <input id="startDate" style="width:125px;" />
+        <label>a</label>
+        <input id="endDate" style="width:125px;" />
+        <a href="#" class="k-button" style="border-radius:6px;" onclick="reload(event)">
+            <span class="k-icon k-i-zoom"></span> Buscar
+        </a>
+    </div>
+</div>
+
+@(Html.Kendo().ListView<SHE.SafetyTours.Models.TrolleySetupViewModel>()
+    .Name("lvTrolley")
+    .TagName("div")
+    .ClientTemplateId("cardTemplate")
+    .DataSource(ds => ds
+        .Model(m => m.Id(p => p.Id))
+        .PageSize(9)
+        .Sort(s => s.Add("FechaCreacion").Descending())
+        .Read(r => r.Action("Read", "TrolleySetup").Data("getFilter"))
+        .Create(r => r.Action("Create", "TrolleySetup"))
+        .Update(r => r.Action("Update", "TrolleySetup"))
+        .Destroy(r => r.Action("Delete", "TrolleySetup"))
+    )
+    .Pageable()
+    .Editable()
+)
+
+@Html.Partial("CardTemplate")
+
+<script>
+    $(function () {
+        var now = new Date();
+        var from = new Date(now.getFullYear(), now.getMonth(), 1);
+        $("#startDate").kendoDatePicker({ value: from, format: "yyyy/MM/dd" });
+        $("#endDate").kendoDatePicker({ value: now, format: "yyyy/MM/dd" });
+    });
+
+    function addNew(e) {
+        e.preventDefault();
+        $("#lvTrolley").data("kendoListView").add();
+    }
+
+    function reload(e) {
+        if (e) e.preventDefault();
+        $("#lvTrolley").data("kendoListView").dataSource.read();
+    }
+
+    function getFilter() {
+        var s = $("#startDate").data("kendoDatePicker");
+        var e = $("#endDate").data("kendoDatePicker");
+        return {
+            startDate: s ? kendo.toString(s.value(), "yyyy/MM/dd") : "",
+            endDate: e ? kendo.toString(e.value(), "yyyy/MM/dd") : ""
+        };
+    }
+</script>
