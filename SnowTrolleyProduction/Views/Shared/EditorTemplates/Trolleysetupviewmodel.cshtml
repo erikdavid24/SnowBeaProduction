@@ -1,0 +1,68 @@
+﻿@model SHE.SafetyTours.Models.TrolleySetupViewModel
+
+@Html.HiddenFor(m => m.Id)
+@Html.HiddenFor(m => m.Id_Proceso)
+@Html.HiddenFor(m => m.FechaCreacion)
+
+<div class="k-edit-label">
+    @Html.LabelFor(m => m.WorkOrder)
+</div>
+<div class="k-edit-field">
+    @(Html.Kendo().TextBoxFor(m => m.WorkOrder)
+        .HtmlAttributes(new { style = "width:100%", placeholder = "Ej. WO-2026-001" }))
+    @Html.ValidationMessageFor(m => m.WorkOrder, "", new { @class = "k-form-error" })
+</div>
+
+<div class="k-edit-label">
+    @Html.LabelFor(m => m.Id_Programa)
+</div>
+<div class="k-edit-field">
+    @(Html.Kendo().TextBoxFor(m => m.Id_Programa)
+        .HtmlAttributes(new { style = "width:100%", placeholder = "Nombre del programa" }))
+</div>
+
+<div class="k-edit-label">
+    @Html.LabelFor(m => m.PiezasProgramadas)
+</div>
+<div class="k-edit-field">
+    @(Html.Kendo().NumericTextBoxFor(m => m.PiezasProgramadas)
+        .Min(0).Format("n0")
+        .HtmlAttributes(new { style = "width:100%" }))
+    @Html.ValidationMessageFor(m => m.PiezasProgramadas, "", new { @class = "k-form-error" })
+</div>
+
+<div class="k-edit-label">
+    @Html.LabelFor(m => m.Trolleys)
+</div>
+<div class="k-edit-field">
+    @(Html.Kendo().TextBoxFor(m => m.Trolleys)
+        .HtmlAttributes(new { style = "width:100%", placeholder = "Ej. T1, T2, T3" }))
+    @Html.ValidationMessageFor(m => m.Trolleys, "", new { @class = "k-form-error" })
+</div>
+
+<div class="k-edit-label">
+    @Html.LabelFor(m => m.Status)
+</div>
+<div class="k-edit-field">
+    @(Html.Kendo().DropDownListFor(m => m.Status)
+        .BindTo(new[] { "Abierto", "En Proceso", "Completado" })
+        .HtmlAttributes(new { style = "width:100%", data_value_primitive = "true" }))
+</div>
+
+<div class="k-edit-label">
+    @Html.LabelFor(m => m.Id_Linea)
+</div>
+<div class="k-edit-field">
+    @(Html.Kendo().NumericTextBoxFor(m => m.Id_Linea)
+        .Min(0).Format("n0")
+        .HtmlAttributes(new { style = "width:100%" }))
+</div>
+
+<div class="k-edit-label">
+    @Html.LabelFor(m => m.Comentarios)
+</div>
+<div class="k-edit-field">
+    @(Html.Kendo().TextAreaFor(m => m.Comentarios)
+        .Rows(3)
+        .HtmlAttributes(new { style = "width:100%", placeholder = "Observaciones..." }))
+</div>
