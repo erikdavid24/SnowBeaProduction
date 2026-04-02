@@ -2,9 +2,9 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace SHE.SafetyTours.Models
+namespace SnowTrolleyProduction.Models
 {
-    public class TrolleySetupViewModel
+    public class ProgramGestionViewModel
     {
         public int Id { get; set; }
 
@@ -23,11 +23,9 @@ namespace SHE.SafetyTours.Models
         [DisplayName("Pzas Programadas")]
         public int PiezasProgramadas { get; set; }
 
-        [Required]
         [DisplayName("Trolleys")]
         public string Trolleys { get; set; }
 
-        [Required]
         [DisplayName("Estatus")]
         public string Status { get; set; }
 
@@ -43,5 +41,10 @@ namespace SHE.SafetyTours.Models
         [DisplayName("Comentarios")]
         public string Comentarios { get; set; }
 
+        [DisplayName("Ensamble")]
+        public string Ensamble { get; set; }
+
+        [DisplayName("Lados")]
+        public string Lados { get; set; }
     }
 }

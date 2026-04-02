@@ -1,4 +1,5 @@
-﻿@{
+﻿File: SnowTrolleyProduction\Views\Shared\_Layout.cshtml
+""@{
     ViewBag.Kendo = "2021.3.1109";
     var culture = System.Globalization.CultureInfo.CurrentCulture.ToString();
 }
@@ -48,6 +49,8 @@
 
 </head>
 <body class="kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--fixed @BAEClassLibrary.UserContext.current.AsideMenu">
+
+    @RenderSection("Styles", required: false)
 
     <!-- begin:: Page -->
     <!-- begin:: Header Mobile -->
@@ -357,5 +360,6 @@
     <script type="text/javascript" src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/rocketchat-script.js"></script>
 
     <!--end::Global Notification -->
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

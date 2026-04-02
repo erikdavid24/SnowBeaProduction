@@ -130,7 +130,8 @@
 <script type="text/x-kendo-tmpl" id="cardTemplate">
     # var badgeCls = Status === 'Completado' ? 'done' : (Status === 'En Proceso' ? 'proc' : 'open'); #
     # var badgeIco = Status === 'Completado' ? 'fa-check-circle' : (Status === 'En Proceso' ? 'fa-cog' : 'fa-clock'); #
-    # var fecha = kendo.toString(kendo.parseDate(FechaCreacion), 'dd/MM/yyyy'); #
+    # var _fd = FechaCreacion instanceof Date ? FechaCreacion : new Date(parseInt(FechaCreacion.replace('/Date(','').replace(')/',''))); #
+    # var fecha = _fd && !isNaN(_fd) ? (_fd.getDate().toString().padStart(2,'0') + '/' + (_fd.getMonth()+1).toString().padStart(2,'0') + '/' + _fd.getFullYear()) : '—'; #
     <div class="ts-card">
         <span class="ts-card-num">\##=Id#</span>
         <div style="margin-top:6px;">

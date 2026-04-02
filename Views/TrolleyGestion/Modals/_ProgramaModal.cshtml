@@ -1,0 +1,57 @@
+@model List<SnowTrolleyProduction.Models.EnsambleGestion>
+@{
+    var programa = ViewBag.Programa as SnowTrolleyProduction.Models.ProgramaGestion;
+    string titulo = programa != null ? "Editar Programa" : "Agregar Programa";
+    bool esEdicion = programa != null;
+}
+
+<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">@titulo</h4>
+
+@if (esEdicion)
+{
+    <input type="hidden" id="modalProgramaId" value="@programa.Id" />
+}
+
+<div class="form-group">
+    <label class="form-label">Ensamble</label>
+    <select id="modalProgramaEnsambleSelect" class="form-control">
+        @foreach (var ens in Model)
+        {
+            <option value="@ens.Id">@ens.Numero</option>
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Programa</label>
+    <input type="text" id="modalProgramaNumero" class="form-control" value="@(esEdicion ? programa.Numero : "")" required />
+</div>
+
+<div class="form-actions">
+    <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
+    <button type="button" class="k-button k-primary" id="btnSubmitPrograma"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
+</div>
+
+<script>
+(function () {
+    var esEdicion = @(esEdicion ? "true" : "false");
+    $('#btnSubmitPrograma').on('click', function () {
+        var numero = $('#modalProgramaNumero').val().trim();
+        var ensambleId = parseInt($('#modalProgramaEnsambleSelect').val());
+        if (!numero) { alert('El número de programa es requerido.'); return; }
+        var $btn = $(this).prop('disabled', true);
+        if (esEdicion) {
+            var programaId = parseInt($('#modalProgramaId').val());
+            $.post(TG.urls.editarPrograma, { programaId: programaId, ensambleId: ensambleId, numero: numero }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarProgramas(); }
+                else { alert(r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+        } else {
+            $.post(TG.urls.agregarPrograma, { numero: numero, ensambleId: ensambleId }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarProgramas(); }
+                else { alert(r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+        }
+    });
+})();
+</script>

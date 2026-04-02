@@ -1,0 +1,235 @@
+@{
+    ViewBag.Title = "Plan de Producción – Proceso";
+}
+
+@section Styles {
+    <link href="~/Content/css/programa-gestion.css" rel="stylesheet" />
+    <style>
+        .tp-header { margin-bottom: 18px; }
+        .tp-linea-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .tp-card { background: #fff; border: 1px solid #e8ecf1; border-radius: 10px; box-shadow: 0 1px 5px rgba(0,0,0,.06); margin-bottom: 18px; }
+        .tp-card-header { padding: 10px 16px; background: #eef0f8; border-radius: 10px 10px 0 0; border-bottom: 1px solid #e2e6f0; font-weight: 700; color: #3d4465; font-size: .88rem; }
+        .tp-card-body { padding: 14px; }
+        .table thead th { background: #3d4465; color: #fff; font-size: .8rem; }
+        .table tbody tr:hover { background: #f7f8fc; }
+        .badge-setup    { background: #fff8ec; color: #f59e0b; border: 1px solid #fde68a; border-radius: 4px; padding: 2px 10px; font-size: .75rem; font-weight: 700; }
+        .badge-arranque { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; border-radius: 4px; padding: 2px 10px; font-size: .75rem; font-weight: 700; }
+        .trolley-badge  { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: .72rem; font-weight: 700; margin: 1px; color: #fff; }
+        .trolley-badge.ok       { background: #22c55e; }
+        .trolley-badge.mismatch { background: #ef4444; }
+    </style>
+}
+
+<div class="ts-header tp-header">
+    <h4><i class="fas fa-industry" style="color:#5d78ff;margin-right:8px;"></i>Plan de Producción – Proceso</h4>
+    <a href="@Url.Action("Index","ProgramGestion")" class="k-button btn-rounded">
+        <span class="k-icon k-i-arrow-chevron-left"></span> Volver al Kanban
+    </a>
+</div>
+
+<div class="tp-card">
+    <div class="tp-card-header">Seleccionar Línea</div>
+    <div class="tp-card-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="tp-linea-btns" id="lineaBtns"></div>
+            <div id="btnIrSetupWrap" style="display:none;">
+                <a id="btnIrASetup" href="#" class="k-button k-primary btn-rounded"><span class="k-icon k-i-arrow-right"></span> Ir a Setup</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tp-card">
+    <div class="tp-card-header"><i class="fas fa-cog" style="color:#3b82f6;margin-right:6px;"></i>En Setup / Proceso</div>
+    <div class="tp-card-body">
+        <div class="table-responsive">
+            <table class="table table-sm" id="tablaArranque">
+                <thead><tr><th>Programa</th><th>Work Order</th><th>Trolleys</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="tp-card">
+    <div class="tp-card-header"><i class="fas fa-clock" style="color:#f59e0b;margin-right:6px;"></i>Disponibles para Setup</div>
+    <div class="tp-card-body">
+        <div class="table-responsive">
+            <table class="table table-sm" id="tablaProcesos">
+                <thead><tr><th>Programa</th><th>Work Order</th><th>Trolleys</th><th>Acción</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var TP = {
+            urls: {
+                procesos:  '@Url.Action("ObtenerProcesos",          "TrolleyProcess")',
+                activos:   '@Url.Action("ObtenerTrabajosEnArranque","TrolleyProcess")',
+                trolleys:  '@Url.Action("ObtenerTrolleys",          "TrolleyProcess")',
+                setup:     '@Url.Action("GuardarSetup",             "TrolleyProcess")',
+                irSetup:   '@Url.Action("Index",                    "TrolleySetup")'
+            }
+        };
+        var lineaSel = null, refTrolleys = [];
+
+        function empty(n, msg) {
+            return '<tr><td colspan="' + n + '" class="text-center py-3" style="color:#b0b7d0;">' +
+                '<i class="fas fa-inbox" style="font-size:1.4rem;display:block;margin-bottom:6px;"></i>' + msg + '</td></tr>';
+        }
+        function trolleyBadge(t, ok) { return '<span class="trolley-badge ' + (ok ? 'ok' : 'mismatch') + '">' + t + '</span>'; }
+
+        // Cargar botones de línea
+        $.get('@Url.Action("GetLineas","ProgramGestion")', function (l) {
+            var w = $('#lineaBtns');
+            if (!l || !l.length) { w.html('<span style="color:#9aa0b8;">Sin líneas</span>'); return; }
+            $.each(l, function (_, x) {
+                w.append('<button class="k-button btn-rounded tp-btn-linea" data-val="' + x.Value + '">Línea ' + x.Value + '</button>');
+            });
+        });
+
+        $(document).on('click', '.tp-btn-linea', function () {
+            $('.tp-btn-linea').removeClass('k-primary');
+            $(this).addClass('k-primary');
+            cargar(parseInt($(this).data('val')));
+        });
+
+        function cargar(linea) {
+            lineaSel = linea;
+            cargarActivos(linea);
+            cargarDisponibles(linea);
+        }
+        function cargarActivos(linea) {
+            $.post(TP.urls.activos, { linea: linea }, function (data) {
+                refTrolleys = [];
+                var tb = $('#tablaArranque tbody').empty();
+                if (!data || !data.length) {
+                    tb.html(empty(4, 'No hay trabajos en proceso (Setup/Arranque).'));
+                    $('#btnIrSetupWrap').hide();
+                    return;
+                }
+
+                // Guardar trolleys del activo para semáforo
+                if (data[0].trolleys) {
+                    refTrolleys = data[0].trolleys.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+                }
+
+                $.each(data, function (_, it) {
+                    var bd = '';
+                    if (it.trolleys) {
+                        $.each(it.trolleys.split(','), function (_, t) {
+                            if (t.trim()) bd += trolleyBadge(t.trim(), true) + ' ';
+                        });
+                    }
+                    // Mostrar lado como badge junto al programa
+                    var ladoBadge = '<span style="display:inline-block;background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe;border-radius:12px;padding:1px 7px;font-size:.7rem;font-weight:700;margin-left:4px;">' + (it.id_Programa || '') + '</span>';
+                    var st = it.status === 'Arranque'
+                        ? '<span class="badge-arranque">Arranque</span>'
+                        : '<span class="badge-setup">Setup</span>';
+                    tb.append('<tr><td>' + (it.id_Programa || '') + '</td><td>' + (it.workOrder || '') + '</td><td>' + bd + '</td><td>' + st + '</td></tr>');
+                });
+
+                $('#btnIrASetup').attr('href', TP.urls.irSetup + '?linea=' + linea);
+                $('#btnIrSetupWrap').show();
+            }).fail(function () {
+                $('#tablaArranque tbody').html(empty(4, 'Error de conexión.'));
+            });
+        }
+
+        function cargarDisponibles(linea) {
+            $.post(TP.urls.procesos, { linea: linea }, function (proc) {
+                if (!proc || !proc.length) {
+                    $('#tablaProcesos tbody').html(empty(4, 'Sin órdenes pendientes para la línea ' + linea));
+                    return;
+                }
+
+                var ids = $.map(proc, function (p) { return p.id_Proceso; });
+                $.post(TP.urls.trolleys, { idProcesos: ids }, function (data) {
+                    pintarDisponibles(data);
+                }).fail(function () {
+                    $('#tablaProcesos tbody').html(empty(4, 'Error cargando trolleys.'));
+                });
+            }).fail(function () {
+                $('#tablaProcesos tbody').html(empty(4, 'Error obteniendo procesos.'));
+            });
+        }
+
+        function pintarDisponibles(procesos) {
+            var tb = $('#tablaProcesos tbody').empty();
+            var hayActivo = refTrolleys.length > 0;
+
+            // Referencia: si hay activo, comparar contra él; si no, contra el primero de la lista
+            var trolleysRef = hayActivo
+                ? refTrolleys
+                : (procesos.length && $.isArray(procesos[0].trolleys) ? procesos[0].trolleys : []);
+
+            $.each(procesos, function (i, p) {
+                var arr = $.isArray(p.trolleys) ? p.trolleys : [];
+
+                // Generar badges con semáforo
+                var badges = '';
+                $.each(arr, function (_, t) {
+                    var isPresente = trolleysRef.indexOf(t) >= 0;
+                    var esVerde = isPresente || (!hayActivo && i === 0);
+                    badges += trolleyBadge(t, esVerde) + ' ';
+                });
+
+                // Mostrar programa y lados
+                var progHtml = p.id_Programa || '';
+                if (p.lados && p.lados.length > 1) {
+                    progHtml = '<div><strong>' + (p.ensamble || p.id_Programa || '') + '</strong></div>';
+                    progHtml += '<div style="margin-top:3px;">';
+                    $.each(p.lados, function (_, l) {
+                        progHtml += '<span class="trolley-badge ok" style="background:#6366f1;font-size:.68rem;">' + l + '</span> ';
+                    });
+                    progHtml += '</div>';
+                }
+
+                // Acción: solo el primero puede iniciar Setup si NO hay activo
+                var accion = '';
+                if (!hayActivo && i === 0) {
+                    accion = '<button class="k-button k-primary btn-rounded" onclick="iniciarSetup(' +
+                        p.id_Proceso + ',\'' + (p.id_Programa || '') + '\')">' +
+                        '<i class="fas fa-tools"></i> Setup</button>';
+                } else if (hayActivo) {
+                    accion = '<span style="color:#9aa0b8;font-size:.8rem;">En espera</span>';
+                }
+
+                tb.append(
+                    '<tr>' +
+                    '<td>' + progHtml + '</td>' +
+                    '<td>' + (p.workOrder || '') + '</td>' +
+                    '<td>' + badges + '</td>' +
+                    '<td>' + accion + '</td>' +
+                    '</tr>'
+                );
+            });
+        }
+
+        function iniciarSetup(id, prog) {
+            Swal.fire({
+                title: '¿Mandar a Setup?',
+                text: 'Se cambiará el estado de ' + prog + ' a Setup.',
+                type: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, enviar',
+                cancelButtonText: 'Cancelar'
+            }).then(function (res) {
+                if (!res.value) return;
+                $.post(TP.urls.setup, { idProceso: id, linea: lineaSel }, function (r) {
+                    if (r.success) {
+                        Swal.fire({ title: '¡Enviado!', text: 'Redirigiendo al Setup...', type: 'success', timer: 1400, showConfirmButton: false })
+                            .then(function () { window.location.href = r.redirectUrl; });
+                    } else {
+                        Swal.fire('Atención', r.message, 'warning');
+                    }
+                }).fail(function () { Swal.fire('Error', 'Error de conexión.', 'error'); });
+            });
+        }
+    </script>
+}

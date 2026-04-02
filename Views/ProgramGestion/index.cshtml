@@ -1,0 +1,215 @@
+@model SnowTrolleyProduction.Models.ProgramGestionViewModel
+@{
+    ViewBag.Title = "Gestión de Programa";
+}
+
+@section Styles {
+    <link href="~/Content/css/programa-gestion.css" rel="stylesheet" />
+}
+
+<div class="ts-header">
+    <h4><i class="fas fa-cogs" style="color:#5d78ff;margin-right:8px;"></i>Plan de Producción</h4>
+    <div class="ts-toolbar">
+        <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded" id="btnIrProceso"><span class="k-icon k-i-play"></span> Ir al Proceso</a>
+        <a href="#" class="k-button k-primary btn-rounded" id="btnNuevoPrograma"><span class="k-icon k-i-plus"></span> Nuevo Programa</a>
+        <a href="#" class="k-button btn-excel" id="btnSubirExcel"><i class="fas fa-file-excel"></i>&nbsp;Subir Excel</a>
+        <label>De</label><input id="startDate" class="ts-input-date" />
+        <label>a</label><input id="endDate" class="ts-input-date" />
+        <a href="#" class="k-button btn-rounded" id="btnBuscar"><span class="k-icon k-i-zoom"></span> Buscar</a>
+    </div>
+</div>
+
+<div class="ts-kanban" id="kanbanBoard">
+    <div class="ts-kanban-col">
+        <div class="ts-kanban-col-header">
+            <i class="fas fa-clock" style="color:#f59e0b;"></i> Creado
+            <span id="cntPendiente" class="ts-kanban-badge" style="background:#fde68a;color:#92400e;"></span>
+        </div>
+        <div class="ts-kanban-col-body" id="bodyPendiente"></div>
+    </div>
+    <div class="ts-kanban-col">
+        <div class="ts-kanban-col-header">
+            <i class="fas fa-cog" style="color:#3b82f6;"></i> En Proceso
+            <span id="cntEnProceso" class="ts-kanban-badge" style="background:#bfdbfe;color:#1e40af;"></span>
+        </div>
+        <div class="ts-kanban-col-body" id="bodyEnProceso"></div>
+    </div>
+    <div class="ts-kanban-col">
+        <div class="ts-kanban-col-header">
+            <i class="fas fa-check-circle" style="color:#22c55e;"></i> Completado
+            <span id="cntCompletado" class="ts-kanban-badge" style="background:#bbf7d0;color:#166534;"></span>
+        </div>
+        <div class="ts-kanban-col-body" id="bodyCompletado"></div>
+    </div>
+</div>
+
+@(Html.Kendo().Window().Name("wndExcel").Title("Cargar Plan de Producción").Visible(false).Modal(true).Width(450)
+    .Content(@<text>
+        <form method="post" action="@Url.Action("CargaMasiva","ProgramGestion")" enctype="multipart/form-data">
+            <div class="wnd-excel-body">
+                <i class="fas fa-file-excel wnd-excel-icon"></i>
+                <p class="wnd-excel-text">Selecciona tu archivo <b>.xlsx</b> para cargar el plan.</p>
+                <input type="file" name="archivoExcel" accept=".xlsx,.xls" class="wnd-excel-file" required />
+                <button type="submit" class="k-button k-primary wnd-excel-submit"><i class="fas fa-upload"></i> Subir y Procesar</button>
+            </div>
+        </form>
+    </text>)
+)
+
+@(Html.Kendo().Window().Name("wndNuevo").Title("Nuevo Programa").Visible(false).Modal(true).Width(600)
+    .Events(e => e.Close("onWndNuevoCerrar"))
+    .Content(@<text>
+        <div class="wnd-nuevo-body">
+            <div class="form-group form-row">
+                <div class="form-col">
+                    <label class="form-label">Línea *</label>
+                    @(Html.Kendo().DropDownList().Name("Id_Linea").DataTextField("Text").DataValueField("Value")
+                        .OptionLabel("-- Selecciona Línea --").HtmlAttributes(new { style = "width:100%;", id = "cbLinea" })
+                        .DataSource(s => s.Read(r => r.Action("GetLineas","ProgramGestion").Type(HttpVerbs.Get)))
+                        .Events(e => e.Change("onLineaChange")))
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Ensamble *</label>
+                    @(Html.Kendo().DropDownList().Name("Id_Ensamble").DataTextField("Text").DataValueField("Value")
+                        .OptionLabel("-- Selecciona Ensamble --").HtmlAttributes(new { style = "width:100%;", id = "cbEnsamble" })
+                        .DataSource(s => s.Read(r => r.Action("GetEnsambles","ProgramGestion").Data("getLineaData").Type(HttpVerbs.Get)).ServerFiltering(true))
+                        .AutoBind(false).Enable(false).Events(e => e.Change("onEnsambleChange")))
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Programa *</label>
+                @(Html.Kendo().DropDownList().Name("Id_Programa").DataTextField("Text").DataValueField("Value")
+                    .OptionLabel("-- Selecciona Programa --").HtmlAttributes(new { style = "width:100%;", id = "cbPrograma" })
+                    .DataSource(s => s.Read(r => r.Action("GetProgramas","ProgramGestion").Data("getEnsambleData").Type(HttpVerbs.Get)).ServerFiltering(true))
+                    .AutoBind(false).Enable(false))
+            </div>
+            <div class="form-group">
+                <label class="form-label">WorkOrder *</label>
+                <div class="wo-wrap">
+                    <input type="text" id="txtWorkOrderBase" class="form-control wo-base" readonly />
+                    <span class="wo-sep">-</span>
+                    <input type="text" id="txtWorkOrderSufijo" class="form-control wo-suffix" value="000" maxlength="3" />
+                    <input type="hidden" id="hdnWorkOrderFinal" />
+                </div>
+                <small class="wo-hint">La base se genera automáticamente, puedes editar los últimos 3 dígitos.</small>
+            </div>
+            <div class="form-group form-row">
+                <div class="form-col">
+                    <label class="form-label">Piezas Programadas *</label>
+                    <input type="number" id="txtPiezas" class="form-control" min="1" />
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Fecha de Inicio *</label>
+                    @(Html.Kendo().DatePicker().Name("FechaCreacion").Value(DateTime.Now).Format("yyyy/MM/dd")
+                        .HtmlAttributes(new { style = "width:100%;", id = "dpFecha" }))
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Comentarios</label>
+                <textarea id="txtComentarios" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="k-button" id="btnCancelarNuevo">Cancelar</button>
+                <button type="button" class="k-button k-primary" id="btnGuardarNuevo"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </text>)
+)
+
+@(Html.Kendo().Window().Name("wndEditar").Title("Editar Programa").Visible(false).Modal(true).Width(540)
+    .Events(e => e.Close("onWndEditarCerrar"))
+    .Content(@<text>
+        <div class="wnd-nuevo-body">
+            <input type="hidden" id="editId" /><input type="hidden" id="editEnsambleVal" />
+            <div class="form-group form-row">
+                <div class="form-col">
+                    <label class="form-label">WorkOrder</label>
+                    <input type="text" id="editWorkOrder" class="form-control" />
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Piezas Programadas *</label>
+                    <input type="number" id="editPiezas" class="form-control" min="1" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Ensamble</label>
+                <input type="text" id="editEnsamble" class="form-control" readonly style="background:#f3f6f9;font-weight:600;" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Lados</label>
+                <div id="editLadosContainer" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;min-height:32px;">
+                    <span style="color:#b0b7d0;font-size:.82rem;">Cargando lados...</span>
+                </div>
+            </div>
+            <div class="form-group form-row">
+                <div class="form-col">
+                    <label class="form-label">Línea</label>
+                    <input type="number" id="editLinea" class="form-control" />
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Trolleys</label>
+                    <input type="text" id="editTrolleys" class="form-control" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Comentarios</label>
+                <textarea id="editComentarios" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="k-button" id="btnCancelarEditar">Cancelar</button>
+                <button type="button" class="k-button k-primary" id="btnGuardarEditar"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </text>)
+)
+
+
+@(Html.Kendo().Window().Name("wndSetup").Title("Setup de Trolleys").Visible(false).Modal(true).Width(520)
+    .Events(e => e.Close("onWndSetupCerrar"))
+    .Content(@<text>
+        <div class="wnd-nuevo-body">
+            <input type="hidden" id="setupProgramaId" />
+            <input type="hidden" id="setupLinea" />
+            <div class="form-group">
+                <label class="form-label">Programa</label>
+                <input type="text" id="setupPrograma" class="form-control" readonly style="background:#f3f6f9;font-weight:600;" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Máquina</label>
+                <select id="setupMaquina" class="form-control"></select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Asignación de Trolleys por Zona</label>
+                <div id="setupZonasContainer" style="margin-top:6px;"></div>
+                <p id="setupAlertaDuplicados" style="display:none;color:#ef4444;font-size:.82rem;margin-top:6px;">
+                    <i class="fas fa-exclamation-triangle"></i> No puedes poner un mismo trolley en dos locaciones diferentes.
+                </p>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="k-button" id="btnCancelarSetup">Cancelar</button>
+                <button type="button" class="k-button k-primary" id="btnGuardarSetup"><i class="fas fa-tools"></i> Guardar Setup</button>
+            </div>
+        </div>
+    </text>)
+)
+
+
+<script>
+var PG = {
+    urls: {
+        readKanban:          '@Url.Action("ReadKanban",          "ProgramGestion")',
+        createManual:        '@Url.Action("CreateManual",        "ProgramGestion")',
+        editarDirecto:       '@Url.Action("EditarDirecto",       "ProgramGestion")',
+        eliminarDirecto:     '@Url.Action("EliminarDirecto",     "ProgramGestion")',
+        semanaFiscal:        '@Url.Action("GetSemanaFiscal",     "ProgramGestion")',
+        getLadosPorEnsamble: '@Url.Action("GetLadosPorEnsamble", "ProgramGestion")',
+        getTrolleysPorLinea: '@Url.Action("GetTrolleysPorLinea", "ProgramGestion")',
+        guardarSetupTrolleys:'@Url.Action("GuardarSetupTrolleys","ProgramGestion")'
+    },
+    msj: {
+        exito: '@Html.Raw(TempData["Success"] != null ? TempData["Success"].ToString() : "")',
+        error: '@Html.Raw(TempData["Error"]   != null ? TempData["Error"].ToString()   : "")'
+    }
+};
+</script>
+@Scripts.Render("~/Scripts/programa-gestion.js")

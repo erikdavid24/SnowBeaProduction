@@ -13,10 +13,10 @@ namespace SnowTrolleyProduction.Models
     using System.Data.Entity;
     using System.Data.Entity.Infrastructure;
     
-    public partial class BAESystemsGuaymasEntities1 : DbContext
+    public partial class BAESystemsGuaymasEntities : DbContext
     {
-        public BAESystemsGuaymasEntities1()
-            : base("name=BAESystemsGuaymasEntities1")
+        public BAESystemsGuaymasEntities()
+            : base("name=BAESystemsGuaymasEntities")
         {
         }
     
@@ -27,27 +27,16 @@ namespace SnowTrolleyProduction.Models
     
         public virtual DbSet<Acomodo> Acomodoes { get; set; }
         public virtual DbSet<Area> Areas { get; set; }
-        public virtual DbSet<Auditoria> Auditorias { get; set; }
-        public virtual DbSet<Auditoria_Respuestas> Auditoria_Respuestas { get; set; }
-        public virtual DbSet<Checklist> Checklists { get; set; }
-        public virtual DbSet<Checklist_Preguntas> Checklist_Preguntas { get; set; }
-        public virtual DbSet<Checklist_Respuestas> Checklist_Respuestas { get; set; }
-        public virtual DbSet<Ensambles_T> Ensambles_T { get; set; }
+        public virtual DbSet<Ensamble> Ensambles { get; set; }
         public virtual DbSet<Equipos> Equipos { get; set; }
         public virtual DbSet<Linea> Lineas { get; set; }
         public virtual DbSet<Maquina> Maquinas { get; set; }
         public virtual DbSet<Programa> Programas { get; set; }
-        public virtual DbSet<Request> Requests { get; set; }
         public virtual DbSet<TrolleySetup> TrolleySetups { get; set; }
-        public virtual DbSet<Employee> Employees { get; set; }
-        public virtual DbSet<Falla> Fallas { get; set; }
         public virtual DbSet<Id_Status> Id_Status { get; set; }
-        public virtual DbSet<Request_Status> Request_Status { get; set; }
-        public virtual DbSet<Trolley_Program> Trolley_Program { get; set; }
-        public virtual DbSet<TrolleySetup_Backup> TrolleySetup_Backup { get; set; }
         public virtual DbSet<Work> Works { get; set; }
         public virtual DbSet<Works_Backup> Works_Backup { get; set; }
-        public virtual DbSet<CRDay> CRDays { get; set; }
-        public virtual DbSet<EmployeeFullInfo> EmployeeFullInfoes { get; set; }
+        public virtual DbSet<FiscalCalendar> FiscalCalendars { get; set; }
+        public virtual DbSet<Trolley_Program> Trolley_Program { get; set; }
     }
 }

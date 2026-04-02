@@ -1,0 +1,83 @@
+@model List<SnowTrolleyProduction.Models.LineaGestion>
+@{
+    var maquina = ViewBag.Maquina as SnowTrolleyProduction.Models.MaquinaGestion;
+    string titulo = maquina != null ? "Editar Máquina" : "Agregar Máquina";
+    bool esEdicion = maquina != null;
+}
+
+<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">@titulo</h4>
+
+@if (esEdicion)
+{
+    <input type="hidden" id="modalMaquinaId" value="@maquina.Id" />
+}
+
+<div class="form-group">
+    <label class="form-label">Línea</label>
+    <select id="modalLineaSelect" class="form-control">
+        @foreach (var linea in Model)
+        {
+            if (esEdicion && maquina.Linea != null && maquina.Linea.Id_Linea == linea.Id_Linea)
+            {
+                <option value="@linea.Id_Linea" selected>@linea.Numero_Linea</option>
+            }
+            else
+            {
+                <option value="@linea.Id_Linea">@linea.Numero_Linea</option>
+            }
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Equipo</label>
+    <select id="modalEquipoSelect" class="form-control">
+        <option value="">Cargando...</option>
+    </select>
+</div>
+
+<div class="form-actions">
+    <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
+    <button type="button" class="k-button k-primary" id="btnSubmitMaquina"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
+</div>
+
+<script>
+(function () {
+    var esEdicion = @(esEdicion ? "true" : "false");
+    var equipoActual = @(esEdicion && maquina.Equipo != null ? maquina.Equipo.IdEquipo.ToString() : "null");
+
+    function cargarEquipos() {
+        var lineaId = $('#modalLineaSelect').val();
+        $.get(TG.urls.equiposPorLinea, { lineaId: lineaId, equipoActual: equipoActual }, function (r) {
+            var $sel = $('#modalEquipoSelect').empty();
+            $.each(r.equipos, function (i, eq) {
+                var opt = $('<option>').val(eq.IdEquipo).text(eq.EquipoDescripcion);
+                if (eq.IdEquipo === equipoActual) opt.prop('selected', true);
+                $sel.append(opt);
+            });
+        });
+    }
+
+    cargarEquipos();
+    $('#modalLineaSelect').on('change', cargarEquipos);
+
+    $('#btnSubmitMaquina').on('click', function () {
+        var equipoId = parseInt($('#modalEquipoSelect').val());
+        var lineaId = parseInt($('#modalLineaSelect').val());
+        if (!equipoId) { alert('Selecciona un equipo.'); return; }
+        var $btn = $(this).prop('disabled', true);
+        if (esEdicion) {
+            var maquinaId = parseInt($('#modalMaquinaId').val());
+            $.post(TG.urls.editarMaquina, { maquinaId: maquinaId, equipoId: equipoId }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarMaquinas(); }
+                else { alert(r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+        } else {
+            $.post(TG.urls.agregarMaquina, { equipoId: equipoId, lineaId: lineaId }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarMaquinas(); }
+                else { alert(r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+        }
+    });
+})();
+</script>
