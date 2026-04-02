@@ -77,11 +77,11 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">Programa *</label>
-                @(Html.Kendo().DropDownList().Name("Id_Programa").DataTextField("Text").DataValueField("Value")
-                    .OptionLabel("-- Selecciona Programa --").HtmlAttributes(new { style = "width:100%;", id = "cbPrograma" })
-                    .DataSource(s => s.Read(r => r.Action("GetProgramas","ProgramGestion").Data("getEnsambleData").Type(HttpVerbs.Get)).ServerFiltering(true))
-                    .AutoBind(false).Enable(false))
+                <label class="form-label">Programa(s)</label>
+                <input type="hidden" id="hdnProgramaSeleccionado" />
+                <div id="ladosAutoContainer" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;min-height:36px;padding:8px;border:1px solid #e2e6f0;border-radius:6px;background:#f9fafb;">
+                    <span style="color:#b0b7d0;font-size:.82rem;">Selecciona un ensamble para ver los lados...</span>
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">WorkOrder *</label>

@@ -340,6 +340,7 @@
     <Content Include="Views\TrolleyGestion\Modals\_EnsambleModal.cshtml" />
     <Content Include="Views\TrolleyGestion\Modals\_ProgramaModal.cshtml" />
     <Content Include="Views\TrolleyGestion\Modals\_AcomodoModal.cshtml" />
+    <Content Include="Views\TrolleyGestion\Modals\_AcomodoModalAutocompletado.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

@@ -24,7 +24,7 @@ namespace SnowTrolleyProduction.Controllers.service
         // ?? Consultas ?????????????????????????????????????????????????????????
 
         /// <summary>Devuelve los registros con Status = 'Creado' o 'Pendiente' para una línea,
-        /// agrupados por ensamble (un item por ensamble con todos sus lados).</summary>
+        /// una fila por lado/programa (sin agrupar por ensamble).</summary>
         public List<ProcesoItem> GetProcesosDisponibles(int linea)
         {
             const string sql = @"
@@ -46,45 +46,32 @@ namespace SnowTrolleyProduction.Controllers.service
                 conn.Open();
                 var rows = conn.Query<dynamic>(sql, new { linea }).ToList();
 
-                // Agrupar por ensamble: el primero del grupo es el representante
-                var grupos = new Dictionary<string, ProcesoItem>();
-                foreach (var r in rows)
+                // Una fila por lado: sin agrupar
+                return rows.Select(r => new ProcesoItem
                 {
-                    string ens = (string)r.ensamble ?? (string)r.id_Programa;
-                    string prog = (string)r.id_Programa;
-                    if (!grupos.ContainsKey(ens))
-                    {
-                        grupos[ens] = new ProcesoItem
-                        {
-                            id_Proceso        = (int)r.id_Proceso,
-                            id_Programa       = prog,
-                            ensamble          = ens,
-                            workOrder         = (string)r.workOrder,
-                            piezasProgramadas = (int)r.piezasProgramadas,
-                            trolleys          = new List<string>(),
-                            lados             = new List<string>(),
-                            idsProcesos       = new List<int>()
-                        };
-                    }
-                    grupos[ens].lados.Add(prog);
-                    grupos[ens].idsProcesos.Add((int)r.id_Proceso);
-                }
-
-                return grupos.Values.ToList();
+                    id_Proceso        = (int)r.id_Proceso,
+                    id_Programa       = (string)r.id_Programa,
+                    ensamble          = (string)r.ensamble ?? (string)r.id_Programa,
+                    workOrder         = (string)r.workOrder,
+                    piezasProgramadas = (int)r.piezasProgramadas,
+                    trolleys          = new List<string>(),
+                    lados             = new List<string>(),
+                    idsProcesos       = new List<int>()
+                }).ToList();
             }
         }
 
         /// <summary>Devuelve los registros con Status = 'Setup' o 'Arranque' para una línea,
-        /// incluyendo la lista de trolleys asignados en dbo.Acomodo.</summary>
+        /// una fila por programa (lado), incluyendo los trolleys de cada uno.</summary>
         public List<ProcesoArranque> GetTrabajosEnProceso(int linea)
         {
             const string sqlWorks = @"
-                SELECT Id AS id_Proceso, Linea AS linea, Id_Programa AS id_Programa,
-                       WorkOrder AS workOrder, Status AS status, FechaCreacion AS fechaCreacion
-                FROM   [Proccess].[TrolleySetup]
-                WHERE  Linea   = @linea
-                  AND  Status IN ('Setup', 'Arranque')
-                ORDER  BY FechaCreacion ASC";
+                SELECT ts.Id AS id_Proceso, ts.Linea AS linea, ts.Id_Programa AS id_Programa,
+                       ts.WorkOrder AS workOrder, ts.Status AS status, ts.FechaCreacion AS fechaCreacion
+                FROM   [Proccess].[TrolleySetup] ts
+                WHERE  ts.Linea   = @linea
+                  AND  ts.Status IN ('Setup', 'Arranque')
+                ORDER  BY ts.FechaCreacion ASC";
 
             const string sqlTrolleys = @"
                 SELECT e.Equipo_descripcion
@@ -102,12 +89,13 @@ namespace SnowTrolleyProduction.Controllers.service
 
                 foreach (var r in rows)
                 {
-                    var trolleyList = conn.Query<string>(sqlTrolleys, new { prog = (string)r.id_Programa }).ToList();
+                    var prog = (string)r.id_Programa;
+                    var trolleyList = conn.Query<string>(sqlTrolleys, new { prog }).ToList();
                     trabajos.Add(new ProcesoArranque
                     {
                         id_Proceso    = (int)r.id_Proceso,
                         linea         = (int)r.linea,
-                        id_Programa   = (string)r.id_Programa,
+                        id_Programa   = prog,
                         workOrder     = (string)r.workOrder,
                         status        = (string)r.status,
                         fechaCreacion = r.fechaCreacion != null ? (DateTime)r.fechaCreacion : DateTime.Now,
@@ -120,7 +108,8 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        /// <summary>Enriquece cada ProcesoItem con su lista de trolleys desde [Proccess].[Acomodo].</summary>
+        /// <summary>Enriquece cada ProcesoItem con su lista de trolleys desde [Proccess].[Acomodo].
+        /// Busca trolleys de todos los lados del grupo, no solo del representante.</summary>
         public List<ProcesoItem> EnriquecerConTrolleys(List<ProcesoItem> procesos)
         {
             if (procesos == null || procesos.Count == 0)
@@ -139,7 +128,13 @@ namespace SnowTrolleyProduction.Controllers.service
                 conn.Open();
                 foreach (var p in procesos)
                 {
-                    p.trolleys = conn.Query<string>(sql, new { prog = p.id_Programa }).ToList();
+                    p.trolleys = new List<string>();
+                    var programas = (p.lados != null && p.lados.Count > 0) ? p.lados : new List<string> { p.id_Programa };
+                    foreach (var prog in programas)
+                    {
+                        var tList = conn.Query<string>(sql, new { prog }).ToList();
+                        p.trolleys.AddRange(tList);
+                    }
                 }
             }
 
@@ -150,6 +145,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
         /// <summary>
         /// Carga procesos por IDs y los enriquece con sus trolleys de Acomodo.
+        /// Devuelve una fila por ID (una por lado/programa), cada una con sus propios trolleys.
         /// </summary>
         public List<ProcesoItem> GetProcesosConTrolleys(List<int> idProcesos)
         {
@@ -179,40 +175,32 @@ namespace SnowTrolleyProduction.Controllers.service
                 conn.Open();
                 var rows = conn.Query<dynamic>(sqlItems, new { ids = idProcesos }).ToList();
 
-                // Agrupar por ensamble, combinando trolleys de todos los lados
-                var grupos = new Dictionary<string, ProcesoItem>();
+                // Una fila por lado: cada registro con sus propios trolleys
+                var result = new List<ProcesoItem>();
                 foreach (var r in rows)
                 {
-                    string ens = (string)r.ensamble ?? (string)r.id_Programa;
                     string prog = (string)r.id_Programa;
-                    if (!grupos.ContainsKey(ens))
-                    {
-                        grupos[ens] = new ProcesoItem
-                        {
-                            id_Proceso        = (int)r.id_Proceso,
-                            id_Programa       = prog,
-                            ensamble          = ens,
-                            workOrder         = (string)r.workOrder,
-                            piezasProgramadas = (int)r.piezasProgramadas,
-                            trolleys          = new List<string>(),
-                            lados             = new List<string>(),
-                            idsProcesos       = new List<int>()
-                        };
-                    }
-                    grupos[ens].lados.Add(prog);
-                    grupos[ens].idsProcesos.Add((int)r.id_Proceso);
-
-                    // Agregar trolleys de este lado al grupo
                     var tList = conn.Query<string>(sqlTrolleys, new { prog }).ToList();
-                    grupos[ens].trolleys.AddRange(tList);
+                    result.Add(new ProcesoItem
+                    {
+                        id_Proceso        = (int)r.id_Proceso,
+                        id_Programa       = prog,
+                        ensamble          = (string)r.ensamble ?? prog,
+                        workOrder         = (string)r.workOrder,
+                        piezasProgramadas = (int)r.piezasProgramadas,
+                        trolleys          = tList,
+                        lados             = new List<string>(),
+                        idsProcesos       = new List<int>()
+                    });
                 }
 
-                return grupos.Values.ToList();
+                return result;
             }
         }
 
         /// <summary>
         /// Cambia el registro a 'Setup' si no hay otro activo en la misma línea.
+        /// Cada lado/programa es independiente; no se promueven hermanos automáticamente.
         /// Devuelve (success, mensaje).
         /// </summary>
         public (bool Success, string Message) IniciarSetup(int idProceso, int linea)
@@ -228,17 +216,6 @@ namespace SnowTrolleyProduction.Controllers.service
                 SET    Status = 'Setup'
                 WHERE  Id = @id";
 
-            // Find sibling sides: same ensamble, same line, status 'Creado' or 'Pendiente'
-            const string sqlSiblings = @"
-                SELECT ts2.Id
-                FROM   [Proccess].[TrolleySetup] ts1
-                INNER JOIN [Proccess].[Programas] p1 ON p1.Numero = ts1.Id_Programa
-                INNER JOIN [Proccess].[Programas] p2 ON p2.Ensamble = p1.Ensamble AND p2.Numero <> p1.Numero
-                INNER JOIN [Proccess].[TrolleySetup] ts2 ON ts2.Id_Programa = p2.Numero
-                WHERE  ts1.Id = @id
-                  AND  ts2.Linea = @linea
-                  AND  ts2.Status IN ('Creado', 'Pendiente')";
-
             using (var conn = new SqlConnection(_connStr))
             {
                 conn.Open();
@@ -248,13 +225,6 @@ namespace SnowTrolleyProduction.Controllers.service
                     return (false, "Ya existe un trabajo en Setup o Arranque en esta línea. Finalícelo primero.");
 
                 conn.Execute(sqlUpdate, new { id = idProceso });
-
-                // Also set sibling sides to Setup
-                var siblingIds = conn.Query<int>(sqlSiblings, new { id = idProceso, linea }).ToList();
-                foreach (var sibId in siblingIds)
-                {
-                    conn.Execute(sqlUpdate, new { id = sibId });
-                }
 
                 return (true, string.Empty);
             }

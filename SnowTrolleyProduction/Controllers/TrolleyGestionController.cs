@@ -226,7 +226,7 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpGet]
-        public JsonResult AcomodoAutocompletado(int linea, int? trolleyActual, int? programaActual, int? maquinaActual, int? locacionActual)
+        public ActionResult AcomodoAutocompletado(int linea)
         {
             var lineaObj = _svc.GetLineasSMT().FirstOrDefault(l => l.Id_Linea == linea);
             int lineaId = lineaObj != null ? lineaObj.Id_Linea : linea;
@@ -235,16 +235,11 @@ namespace SnowTrolleyProduction.Controllers
             var programas = _svc.GetProgramasPorLinea(lineaId);
             var maquinas = _svc.GetMaquinasPorLinea(lineaId);
 
-            return Json(new
-            {
-                trolleys = trolleys.Select(t => new { t.IdEquipo, t.EquipoDescripcion }),
-                programas = programas.Select(p => new { p.Id, p.Numero }),
-                maquinas = maquinas.Select(m => new { m.Id, descripcion = m.Equipo.EquipoDescripcion }),
-                trolleyActual,
-                programaActual,
-                maquinaActual,
-                locacionActual
-            }, JsonRequestBehavior.AllowGet);
+            ViewBag.Trollies = trolleys;
+            ViewBag.Programas = programas;
+            ViewBag.Maquinas = maquinas;
+
+            return PartialView("Modals/_AcomodoModalAutocompletado", linea);
         }
 
         [HttpPost]
@@ -252,6 +247,11 @@ namespace SnowTrolleyProduction.Controllers
         {
             try
             {
+                if (vm.ProgramaId <= 0)
+                    return Json(new { success = false, message = "Selecciona un programa válido." });
+                if (vm.MaquinaId <= 0 && vm.MaquinaId2 <= 0)
+                    return Json(new { success = false, message = "No hay máquinas configuradas para esta línea." });
+
                 _svc.GuardarAcomodo(vm);
                 return Json(new { success = true });
             }

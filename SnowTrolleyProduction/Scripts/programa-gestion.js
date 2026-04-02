@@ -1,4 +1,8 @@
-function g(a){if(!a)return'—';var b=new Date(parseInt(a.replace('/Date(','').replace(')/,'')));return isNaN(b)?'—':String(b.getDate()).padStart(2,'0')+'/'+String(b.getMonth()+1).padStart(2,'0')+'/'+b.getFullYear()}function h(a,b,c,d){Swal.fire($.extend({title:a,text:b,type:c},d||{}))}function i(a,b,c){h(a,b,'success',$.extend({confirmButtonColor:'#1bc5bd'},c||{}))}function j(a,b){h(a,b,'error',{confirmButtonColor:'#f64e60'})}function k(a,b){h(a,b,'warning',{confirmButtonColor:'#f64e60'})}
+function formatFecha(a){if(!a)return'—';var b=new Date(parseInt(a.replace('/Date(','').replace(')/',''))); return isNaN(b)?'—':String(b.getDate()).padStart(2,'0')+'/'+String(b.getMonth()+1).padStart(2,'0')+'/'+b.getFullYear();}
+function swalBase(a,b,c,d){Swal.fire($.extend({title:a,text:b,type:c},d||{}));}
+function swalOk(a,b,c){swalBase(a,b,'success',$.extend({confirmButtonColor:'#1bc5bd'},c||{}));}
+function swalErr(a,b){swalBase(a,b,'error',{confirmButtonColor:'#f64e60'});}
+function swalWarn(a,b){swalBase(a,b,'warning',{confirmButtonColor:'#f64e60'});}
 
 // ?? Kanban ?????????????????????????????????????????????????
 function cargarKanban() {
@@ -68,11 +72,11 @@ function generarWorkOrderBase() {
 function prepararWorkOrderFinal() {
     var linea = $('#cbLinea').data('kendoDropDownList').value();
     var ensamble = $('#cbEnsamble').data('kendoDropDownList').value();
-    var programa = $('#cbPrograma').data('kendoDropDownList').value();
+    var programa = $('#hdnProgramaSeleccionado').val();
     var base = $('#txtWorkOrderBase').val();
     if (!linea)    { swalWarn('Campo requerido', 'Selecciona una Línea.');    return false; }
     if (!ensamble) { swalWarn('Campo requerido', 'Selecciona un Ensamble.');  return false; }
-    if (!programa) { swalWarn('Campo requerido', 'Selecciona un Programa.');  return false; }
+    if (!programa) { swalWarn('Campo requerido', 'No se encontraron programas para este ensamble.');  return false; }
     if (!base)     { swalWarn('Campo requerido', 'El WorkOrder es inválido.'); return false; }
     $('#hdnWorkOrderFinal').val(base + $('#txtWorkOrderSufijo').val());
     return true;
@@ -83,8 +87,9 @@ function getLineaData()    { var d = $('#cbLinea').data('kendoDropDownList');   
 function getEnsambleData() { var d = $('#cbEnsamble').data('kendoDropDownList'); return { ensamble: d ? d.value() : '' }; }
 
 function onWndNuevoCerrar() {
-    ['#cbLinea', '#cbEnsamble', '#cbPrograma'].forEach(function (s) { var d = $(s).data('kendoDropDownList'); if (d) { d.value(''); if (s !== '#cbLinea') d.enable(false); } });
-    $('#txtWorkOrderBase,#hdnWorkOrderFinal,#txtPiezas,#txtComentarios').val(''); $('#txtWorkOrderSufijo').val('000');
+    ['#cbLinea', '#cbEnsamble'].forEach(function (s) { var d = $(s).data('kendoDropDownList'); if (d) { d.value(''); if (s !== '#cbLinea') d.enable(false); } });
+    $('#txtWorkOrderBase,#hdnWorkOrderFinal,#txtPiezas,#txtComentarios,#hdnProgramaSeleccionado').val(''); $('#txtWorkOrderSufijo').val('000');
+    $('#ladosAutoContainer').html('<span style="color:#b0b7d0;font-size:.82rem;">Selecciona un ensamble para ver los lados...</span>');
 }
 function onWndEditarCerrar() {
     $('#editId,#editEnsamble,#editEnsambleVal,#editWorkOrder,#editPiezas,#editTrolleys,#editLinea,#editComentarios').val('');
@@ -94,15 +99,35 @@ function onWndSetupCerrar() { $('#setupPrograma,#setupProgramaId,#setupLinea').v
 
 function onLineaChange() {
     var id = $('#cbLinea').data('kendoDropDownList').value();
-    var ddlE = $('#cbEnsamble').data('kendoDropDownList'), ddlP = $('#cbPrograma').data('kendoDropDownList');
-    ddlE.value(''); ddlP.value(''); ddlP.enable(false);
+    var ddlE = $('#cbEnsamble').data('kendoDropDownList');
+    ddlE.value('');
+    $('#hdnProgramaSeleccionado').val('');
+    $('#ladosAutoContainer').html('<span style="color:#b0b7d0;font-size:.82rem;">Selecciona un ensamble para ver los lados...</span>');
     if (id) { ddlE.enable(true); ddlE.dataSource.read(); generarWorkOrderBase(); } else { ddlE.enable(false); $('#txtWorkOrderBase').val(''); }
 }
 function onEnsambleChange() {
     var id = $('#cbEnsamble').data('kendoDropDownList').value();
-    var ddlP = $('#cbPrograma').data('kendoDropDownList');
-    ddlP.value('');
-    if (id) { ddlP.enable(true); ddlP.dataSource.read(); } else { ddlP.enable(false); }
+    var $cont = $('#ladosAutoContainer');
+    $('#hdnProgramaSeleccionado').val('');
+    if (!id) {
+        $cont.html('<span style="color:#b0b7d0;font-size:.82rem;">Selecciona un ensamble para ver los lados...</span>');
+        return;
+    }
+    $cont.html('<span style="color:#b0b7d0;font-size:.82rem;"><i class="fas fa-spinner fa-spin"></i> Cargando...</span>');
+    $.get(PG.urls.getLadosPorEnsamble, { ensamble: id }, function (r) {
+        $cont.empty();
+        if (!r.lados || !r.lados.length) {
+            $cont.html('<span style="color:#ef4444;font-size:.82rem;">No se encontraron programas para este ensamble.</span>');
+            return;
+        }
+        $('#hdnProgramaSeleccionado').val(r.lados[0]);
+        r.lados.forEach(function (l) {
+            $cont.append('<span style="display:inline-block;background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe;border-radius:12px;padding:4px 12px;font-size:.82rem;font-weight:700;">' + l + '</span>');
+        });
+        if (r.lados.length > 1) {
+            $cont.append('<div style="width:100%;margin-top:4px;font-size:.75rem;color:#6b7280;"><i class="fas fa-info-circle"></i> Se cargarán todos los lados automáticamente.</div>');
+        }
+    });
 }
 
 // ?? Setup de Trolleys ???????????????????????????????????????
@@ -222,7 +247,7 @@ $(function () {
         var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
         $.post(PG.urls.createManual, {
             Id_Linea: $('#cbLinea').data('kendoDropDownList').value(),
-            Id_Programa: $('#cbPrograma').data('kendoDropDownList').value(),
+            Id_Programa: $('#hdnProgramaSeleccionado').val(),
             WorkOrder: $('#hdnWorkOrderFinal').val(),
             PiezasProgramadas: piezas,
             FechaCreacion: $('#FechaCreacion').val(),

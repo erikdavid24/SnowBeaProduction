@@ -75,7 +75,32 @@ namespace SnowTrolleyProduction.Controllers
                 item.Status        = "Creado";
                 item.FechaCreacion = DateTime.Now;
                 item.Trolleys      = "";
-                _svc.Create(item);
+
+                // Auto-insert all sibling lados of the same ensamble
+                var lados = _svc.GetLadosHermanos(item.Id_Programa);
+                if (lados != null && lados.Count > 1)
+                {
+                    foreach (var lado in lados)
+                    {
+                        var copia = new ProgramGestionViewModel
+                        {
+                            Id_Proceso = item.Id_Proceso,
+                            Id_Programa = lado,
+                            WorkOrder = item.WorkOrder,
+                            PiezasProgramadas = item.PiezasProgramadas,
+                            Trolleys = "",
+                            Status = item.Status,
+                            FechaCreacion = item.FechaCreacion,
+                            Id_Linea = item.Id_Linea,
+                            Comentarios = item.Comentarios
+                        };
+                        _svc.Create(copia);
+                    }
+                }
+                else
+                {
+                    _svc.Create(item);
+                }
                 return Json(new { success = true });
             }
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
