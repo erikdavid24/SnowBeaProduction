@@ -1,17 +1,4 @@
-// ============================================================
-//  programa-gestion.js  –  Kanban + CRUD + Trolley Setup
-// ============================================================
-
-function formatFecha(raw) {
-    if (!raw) return '—';
-    var fd = new Date(parseInt(raw.replace('/Date(', '').replace(')/', '')));
-    return isNaN(fd) ? '—' : String(fd.getDate()).padStart(2, '0') + '/' + String(fd.getMonth() + 1).padStart(2, '0') + '/' + fd.getFullYear();
-}
-
-function swal(title, text, type, extra) { Swal.fire($.extend({ title: title, text: text, type: type }, extra || {})); }
-function swalOk(title, text, extra) { swal(title, text, 'success', $.extend({ confirmButtonColor: '#1bc5bd' }, extra || {})); }
-function swalErr(title, text)       { swal(title, text, 'error',   { confirmButtonColor: '#f64e60' }); }
-function swalWarn(title, text)      { swal(title, text, 'warning', { confirmButtonColor: '#f64e60' }); }
+function g(a){if(!a)return'—';var b=new Date(parseInt(a.replace('/Date(','').replace(')/,'')));return isNaN(b)?'—':String(b.getDate()).padStart(2,'0')+'/'+String(b.getMonth()+1).padStart(2,'0')+'/'+b.getFullYear()}function h(a,b,c,d){Swal.fire($.extend({title:a,text:b,type:c},d||{}))}function i(a,b,c){h(a,b,'success',$.extend({confirmButtonColor:'#1bc5bd'},c||{}))}function j(a,b){h(a,b,'error',{confirmButtonColor:'#f64e60'})}function k(a,b){h(a,b,'warning',{confirmButtonColor:'#f64e60'})}
 
 // ?? Kanban ?????????????????????????????????????????????????
 function cargarKanban() {
