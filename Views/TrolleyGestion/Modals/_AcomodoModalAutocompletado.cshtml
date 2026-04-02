@@ -1,0 +1,148 @@
+@{
+    var programas = ViewBag.Programas as List<SnowTrolleyProduction.Models.ProgramaGestion>;
+    var equipos   = ViewBag.Trollies  as List<SnowTrolleyProduction.Models.EquipoGestion>;
+    var maquinas  = ViewBag.Maquinas  as List<SnowTrolleyProduction.Models.MaquinaGestion>;
+}
+
+<div class="my-3">
+    <label class="form-label">Programa:</label>
+    <select required id="acoPrograma" class="form-control">
+        <option value="">-- Selecciona Programa --</option>
+        @if (programas != null)
+        {
+            foreach (var p in programas)
+            {
+                <option value="@p.Id">@p.Numero</option>
+            }
+        }
+    </select>
+</div>
+
+@if (equipos != null && equipos.Count > 0)
+{
+    <div class="my-3">
+        <label class="form-label" style="font-weight:600;">Trolleys Disponibles</label>
+        <div class="aco-trolley-badges">
+            @foreach (var t in equipos)
+            {
+                <span class="aco-badge" draggable="true" data-id="@t.IdEquipo" data-desc="@t.EquipoDescripcion">@t.EquipoDescripcion</span>
+            }
+        </div>
+    </div>
+}
+
+<div class="aco-dual-machines">
+    @if (maquinas != null)
+    {
+        int idx = 0;
+        foreach (var m in maquinas)
+        {
+            idx++;
+            string suffix = idx == 1 ? "" : "_2";
+            <div class="aco-machine-wrap">
+                <input type="hidden" class="aco-maquina-id" data-idx="@idx" value="@m.Id" />
+                <div class="aco-machine-title">@m.Equipo.EquipoDescripcion</div>
+                <div class="aco-machine-box">
+                    <div class="aco-slots-row">
+                        <div class="aco-slot-cell"><span class="aco-slot-lbl">Z80</span><div class="aco-drop-zone" data-name="Z80@(suffix)" data-val="-1"><span class="aco-drop-text">-</span></div></div>
+                        <div class="aco-slot-cell"><span class="aco-slot-lbl">Z70</span><div class="aco-drop-zone" data-name="Z70@(suffix)" data-val="-1"><span class="aco-drop-text">-</span></div></div>
+                        <span class="aco-slot-gap"></span>
+                        <div class="aco-slot-cell"><span class="aco-slot-lbl">Z60</span><div class="aco-drop-zone" data-name="Z60@(suffix)" data-val="-1"><span class="aco-drop-text">-</span></div></div>
+                        <div class="aco-slot-cell"><span class="aco-slot-lbl">Z50</span><div class="aco-drop-zone" data-name="Z50@(suffix)" data-val="-1"><span class="aco-drop-text">-</span></div></div>
+                    </div>
+                    <div class="aco-machine-body">
+                        <div class="aco-slot-cell"><span class="aco-slot-lbl">Z90</span><div class="aco-drop-zone" data-name="Z90@(suffix)" data-val="-1"><span class="aco-drop-text">-</span></div></div>
+                    </div>
+                    <div class="aco-slots-row">
+                        <div class="aco-slot-cell"><div class="aco-drop-zone" data-name="Z10@(suffix)" data-val="-1"><span class="aco-drop-text">-</span></div><span class="aco-slot-lbl">Z10</span></div>
+                        <div class="aco-slot-cell"><div class="aco-drop-zone" data-name="Z20@(suffix)" data-val="-1"><span class="aco-drop-text">-</span></div><span class="aco-slot-lbl">Z20</span></div>
+                        <span class="aco-slot-gap"></span>
+                        <div class="aco-slot-cell"><div class="aco-drop-zone" data-name="Z30@(suffix)" data-val="-1"><span class="aco-drop-text">-</span></div><span class="aco-slot-lbl">Z30</span></div>
+                        <div class="aco-slot-cell"><div class="aco-drop-zone" data-name="Z40@(suffix)" data-val="-1"><span class="aco-drop-text">-</span></div><span class="aco-slot-lbl">Z40</span></div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<p id="alertaTrollies" style="display:none;color:#ef4444;font-size:.82rem;margin-top:6px;">
+    <i class="fas fa-exclamation-triangle"></i> No puedes poner un mismo trolley en dos locaciones diferentes.
+</p>
+
+<style>
+.aco-trolley-badges { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.aco-badge { display:inline-block; padding:4px 10px; border-radius:4px; font-size:.78rem; font-weight:700;
+    cursor:grab; user-select:none; background:#ef4444; color:#fff; border:1px solid #b91c1c; }
+.aco-badge:active { cursor:grabbing; }
+.aco-badge.aco-used { background:#9ca3af; border-color:#6b7280; opacity:.5; cursor:not-allowed; }
+.aco-dual-machines { display:flex; gap:16px; margin-top:14px; }
+.aco-machine-wrap { flex:1; min-width:0; }
+.aco-machine-title { font-weight:700; font-size:.8rem; text-align:center; margin-bottom:6px; color:#1e40af; }
+.aco-machine-box { border:1px solid #e0e0e0; border-radius:8px; padding:6px 4px; background:#fafafa; }
+.aco-slots-row { display:flex; justify-content:center; gap:4px; }
+.aco-slot-gap { width:12px; }
+.aco-slot-cell { display:flex; flex-direction:column; align-items:center; }
+.aco-slot-lbl { font-size:.68rem; font-weight:700; margin:2px 0; }
+.aco-drop-zone { width:56px; height:38px; border-radius:4px; border:2px solid #333;
+    background:#ef4444; display:flex; align-items:center; justify-content:center;
+    font-size:.7rem; font-weight:700; color:#fff; cursor:pointer; transition:background .15s; }
+.aco-drop-zone.aco-filled { background:#22c55e; }
+.aco-drop-zone.aco-drag-over { outline:2px dashed #3b82f6; outline-offset:2px; }
+.aco-machine-body { display:flex; align-items:center; justify-content:center; gap:10px;
+    background:lightgray; border:2px solid #333; border-radius:8px; padding:8px; margin:6px 0; }
+</style>
+
+<script>
+(function () {
+    var dragId = null, dragDesc = null;
+
+    // Drag from badges
+    $(document).off('dragstart.aco').on('dragstart.aco', '.aco-badge:not(.aco-used)', function (e) {
+        dragId = $(this).data('id').toString();
+        dragDesc = $(this).data('desc');
+        e.originalEvent.dataTransfer.setData('text/plain', dragId);
+    });
+
+    // Drop zones
+    $(document).off('dragover.aco').on('dragover.aco', '.aco-drop-zone', function (e) {
+        e.preventDefault();
+        $(this).addClass('aco-drag-over');
+    });
+    $(document).off('dragleave.aco').on('dragleave.aco', '.aco-drop-zone', function () {
+        $(this).removeClass('aco-drag-over');
+    });
+    $(document).off('drop.aco').on('drop.aco', '.aco-drop-zone', function (e) {
+        e.preventDefault();
+        $(this).removeClass('aco-drag-over');
+        if (!dragId) return;
+        // Remove from previous zone if already placed
+        $('.aco-drop-zone').each(function () {
+            if ($(this).data('val') == dragId) {
+                $(this).data('val', '-1').removeClass('aco-filled').find('.aco-drop-text').text('-');
+            }
+        });
+        $(this).data('val', dragId).addClass('aco-filled').find('.aco-drop-text').text(dragDesc);
+        refreshBadges();
+    });
+
+    // Click to remove from zone
+    $(document).off('click.acorm').on('click.acorm', '.aco-drop-zone.aco-filled', function () {
+        $(this).data('val', '-1').removeClass('aco-filled').find('.aco-drop-text').text('-');
+        refreshBadges();
+    });
+
+    function refreshBadges() {
+        var used = [];
+        $('.aco-drop-zone').each(function () {
+            var v = $(this).data('val').toString();
+            if (v !== '-1') used.push(v);
+        });
+        $('.aco-badge').each(function () {
+            var id = $(this).data('id').toString();
+            if ($.inArray(id, used) >= 0) $(this).addClass('aco-used').attr('draggable', 'false');
+            else $(this).removeClass('aco-used').attr('draggable', 'true');
+        });
+    }
+})();
+</script>

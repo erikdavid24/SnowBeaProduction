@@ -29,18 +29,11 @@
     </select>
 </div>
 
-<div id="acomodoAutoTarget">
-    @if (esEdicion)
-    {
-        <p style="color:#9aa0b8;font-size:.82rem;">Cargando datos...</p>
-    }
+<div id="acomodoAutoTarget" style="margin-top:12px;">
+    <p style="color:#9aa0b8;font-size:.82rem;"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>
 </div>
 
-<p id="alertaTrollies" style="display:none;color:#ef4444;font-size:.82rem;margin-top:6px;">
-    <i class="fas fa-exclamation-triangle"></i> No puedes poner un mismo trolley en dos locaciones diferentes.
-</p>
-
-<div class="form-actions">
+<div class="form-actions" style="margin-top:16px;">
     <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
     <button type="button" class="k-button k-primary" id="btnSubmitAcomodo"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
 </div>
@@ -48,108 +41,58 @@
 <script>
 (function () {
     var esEdicion = @(esEdicion ? "true" : "false");
-    var acomodoActual = esEdicion ? {
-        trolleyId: @(acomodo != null && acomodo.Trolley != null ? acomodo.Trolley.IdEquipo.ToString() : "null"),
-        maquinaLinea: @(acomodo != null && acomodo.Maquina != null && acomodo.Maquina.Linea != null ? acomodo.Maquina.Linea.Id_Linea.ToString() : "null")
-    } : null;
 
     function cargarAutocompletado() {
         var lineaId = $('#modalAcomodoLineaSelect').val();
-        $.get(TG.urls.acomodoAutocompletado, { linea: lineaId }, function (r) {
-            var $t = $('#acomodoAutoTarget').empty();
-            // Programa select
-            var progHtml = '<div class="form-group"><label class="form-label">Programa</label><select id="acomodoProgramaSelect" class="form-control">';
-            $.each(r.programas, function (i, p) { progHtml += '<option value="' + p.Id + '">' + p.Numero + '</option>'; });
-            progHtml += '</select></div>';
-            $t.append(progHtml);
-
-            // Maquina select
-            var maqHtml = '<div class="form-group"><label class="form-label">Máquina</label><select id="acomodMaquinaSelect" class="form-control">';
-            $.each(r.maquinas, function (i, m) { maqHtml += '<option value="' + m.Id + '">' + m.descripcion + '</option>'; });
-            maqHtml += '</select></div>';
-            $t.append(maqHtml);
-
-            // Zone layout
-            var zones = [80, 70, 60, 50, 90, 10, 20, 30, 40];
-            var zoneHtml = '<div class="acomodo-machine-layout">';
-            zoneHtml += '<div class="acomodo-slots-row">';
-            zoneHtml += buildSlot(80, r.trolleys) + buildSlot(70, r.trolleys);
-            zoneHtml += '<div class="acomodo-slot-spacer"></div>';
-            zoneHtml += buildSlot(60, r.trolleys) + buildSlot(50, r.trolleys);
-            zoneHtml += '</div>';
-            zoneHtml += '<div class="acomodo-machine-body">';
-            zoneHtml += '<div class="acomodo-slot-cell"><span class="acomodo-slot-label">Z90</span>' + buildSelect(90, r.trolleys, true) + '</div>';
-            zoneHtml += '<div class="acomodo-machine-rect"><i class="fas fa-microchip"></i> Máquina</div>';
-            zoneHtml += '</div>';
-            zoneHtml += '<div class="acomodo-slots-row">';
-            zoneHtml += buildSlotBottom(10, r.trolleys) + buildSlotBottom(20, r.trolleys);
-            zoneHtml += '<div class="acomodo-slot-spacer"></div>';
-            zoneHtml += buildSlotBottom(30, r.trolleys) + buildSlotBottom(40, r.trolleys);
-            zoneHtml += '</div>';
-            zoneHtml += '</div>';
-            $t.append(zoneHtml);
-
-            // Color init
-            $('.acomodo-trolley-slot').each(function () { colorSlot($(this)); });
+        $.get(TG.urls.acomodoAutocompletado, { linea: lineaId }, function (html) {
+            $('#acomodoAutoTarget').html(html);
         });
     }
-
-    function buildSelect(zone, trolleys, isZ90) {
-        var html = '<select class="acomodo-trolley-slot" data-zone="' + zone + '">';
-        html += '<option value="-1">--</option>';
-        if (isZ90) {
-            html += '<option value="333">MATRIX</option><option value="332">MANUAL</option>';
-        }
-        $.each(trolleys, function (i, t) { html += '<option value="' + t.IdEquipo + '">' + t.EquipoDescripcion + '</option>'; });
-        html += '</select>';
-        return html;
-    }
-
-    function buildSlot(zone, trolleys) {
-        return '<div class="acomodo-slot-cell"><span class="acomodo-slot-label">Z' + zone + '</span>' + buildSelect(zone, trolleys, false) + '</div>';
-    }
-
-    function buildSlotBottom(zone, trolleys) {
-        return '<div class="acomodo-slot-cell">' + buildSelect(zone, trolleys, false) + '<span class="acomodo-slot-label">Z' + zone + '</span></div>';
-    }
-
-    function colorSlot($sel) {
-        $sel.css('background-color', $sel.val() !== '-1' ? '#22c55e' : '#ef4444');
-    }
-
-    $(document).off('change.acoSlot').on('change.acoSlot', '.acomodo-trolley-slot', function () {
-        colorSlot($(this));
-        $('#alertaTrollies').hide();
-    });
 
     cargarAutocompletado();
     $('#modalAcomodoLineaSelect').on('change', cargarAutocompletado);
 
-    $('#btnSubmitAcomodo').on('click', function () {
-        var elegidos = [];
-        var hayDup = false;
-        $('.acomodo-trolley-slot').each(function () {
-            var v = parseInt($(this).val());
-            if (v > 0) {
-                if ($.inArray(v, elegidos) >= 0) hayDup = true;
-                elegidos.push(v);
-            }
-        });
-        if (hayDup) { $('#alertaTrollies').show(); return; }
+    $(document).off('click.submitAco').on('click.submitAco', '#btnSubmitAcomodo', function () {
+        var programaId = parseInt($('#acoPrograma').val());
+        if (!programaId || isNaN(programaId) || programaId <= 0) {
+            Swal.fire('Aviso', 'Selecciona un programa.', 'warning');
+            return;
+        }
 
-        var programaId = parseInt($('#acomodoProgramaSelect').val());
-        var maquinaId = parseInt($('#acomodMaquinaSelect').val());
-        var payload = { ProgramaId: programaId, MaquinaId: maquinaId };
-        $('.acomodo-trolley-slot').each(function () {
-            var z = $(this).data('zone');
-            payload['Z' + z] = parseInt($(this).val());
+        // Collect machine ids
+        var maquinaId = 0, maquinaId2 = 0;
+        $('.aco-maquina-id').each(function () {
+            var idx = parseInt($(this).data('idx'));
+            if (idx === 1) maquinaId = parseInt($(this).val()) || 0;
+            if (idx === 2) maquinaId2 = parseInt($(this).val()) || 0;
         });
 
-        var $btn = $(this).prop('disabled', true);
+        if (maquinaId <= 0 && maquinaId2 <= 0) {
+            Swal.fire('Aviso', 'No hay máquinas configuradas para esta línea.', 'warning');
+            return;
+        }
+
+        // Collect drop zones
+        var payload = { ProgramaId: programaId, MaquinaId: maquinaId, MaquinaId2: maquinaId2 };
+        $('.aco-drop-zone').each(function () {
+            var name = $(this).data('name');
+            var val = $(this).data('val');
+            if (name) payload[name] = parseInt(val) || -1;
+        });
+
+        var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
         $.post(TG.urls.agregarAcomodo, payload, function (r) {
-            if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarAcomodos(); }
-            else { alert(r.message); }
-        }).always(function () { $btn.prop('disabled', false); });
+            if (r.success) {
+                $('#wndGestion').data('kendoWindow').close();
+                cargarAcomodos();
+            } else {
+                Swal.fire('Error', r.message, 'error');
+            }
+        }).fail(function () {
+            Swal.fire('Error', 'Error de conexión', 'error');
+        }).always(function () {
+            $btn.prop('disabled', false).html('<i class="fas fa-save"></i> ' + (esEdicion ? 'Editar' : 'Agregar'));
+        });
     });
 })();
 </script>

@@ -112,7 +112,7 @@
                     return;
                 }
 
-                // Guardar trolleys del activo para semáforo
+                // Save trolleys of first active entry for semaphore
                 if (data[0].trolleys) {
                     refTrolleys = data[0].trolleys.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
                 }
@@ -124,12 +124,11 @@
                             if (t.trim()) bd += trolleyBadge(t.trim(), true) + ' ';
                         });
                     }
-                    // Mostrar lado como badge junto al programa
-                    var ladoBadge = '<span style="display:inline-block;background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe;border-radius:12px;padding:1px 7px;font-size:.7rem;font-weight:700;margin-left:4px;">' + (it.id_Programa || '') + '</span>';
                     var st = it.status === 'Arranque'
                         ? '<span class="badge-arranque">Arranque</span>'
                         : '<span class="badge-setup">Setup</span>';
-                    tb.append('<tr><td>' + (it.id_Programa || '') + '</td><td>' + (it.workOrder || '') + '</td><td>' + bd + '</td><td>' + st + '</td></tr>');
+                    // Show each individual programa (id_Programa is already the ensamble name from grouping, show as-is)
+                    tb.append('<tr><td><strong>' + (it.id_Programa || '') + '</strong></td><td>' + (it.workOrder || '') + '</td><td>' + bd + '</td><td>' + st + '</td></tr>');
                 });
 
                 $('#btnIrASetup').attr('href', TP.urls.irSetup + '?linea=' + linea);
@@ -146,7 +145,9 @@
                     return;
                 }
 
+                // Collect one id per row (one per side/programa)
                 var ids = $.map(proc, function (p) { return p.id_Proceso; });
+
                 $.post(TP.urls.trolleys, { idProcesos: ids }, function (data) {
                     pintarDisponibles(data);
                 }).fail(function () {
@@ -161,46 +162,34 @@
             var tb = $('#tablaProcesos tbody').empty();
             var hayActivo = refTrolleys.length > 0;
 
-            // Referencia: si hay activo, comparar contra él; si no, contra el primero de la lista
             var trolleysRef = hayActivo
                 ? refTrolleys
-                : (procesos.length && $.isArray(procesos[0].trolleys) ? procesos[0].trolleys : []);
+                : (procesos.length > 0 && $.isArray(procesos[0].trolleys) ? procesos[0].trolleys : []);
 
             $.each(procesos, function (i, p) {
                 var arr = $.isArray(p.trolleys) ? p.trolleys : [];
+                var tieneTrolleys = arr && arr.length > 0;
 
-                // Generar badges con semáforo
                 var badges = '';
                 $.each(arr, function (_, t) {
-                    var isPresente = trolleysRef.indexOf(t) >= 0;
-                    var esVerde = isPresente || (!hayActivo && i === 0);
+                    var esVerde = trolleysRef.indexOf(t) >= 0 || (!hayActivo && i === 0);
                     badges += trolleyBadge(t, esVerde) + ' ';
                 });
 
-                // Mostrar programa y lados
-                var progHtml = p.id_Programa || '';
-                if (p.lados && p.lados.length > 1) {
-                    progHtml = '<div><strong>' + (p.ensamble || p.id_Programa || '') + '</strong></div>';
-                    progHtml += '<div style="margin-top:3px;">';
-                    $.each(p.lados, function (_, l) {
-                        progHtml += '<span class="trolley-badge ok" style="background:#6366f1;font-size:.68rem;">' + l + '</span> ';
-                    });
-                    progHtml += '</div>';
-                }
-
-                // Acción: solo el primero puede iniciar Setup si NO hay activo
                 var accion = '';
-                if (!hayActivo && i === 0) {
+                if (!hayActivo && tieneTrolleys) {
                     accion = '<button class="k-button k-primary btn-rounded" onclick="iniciarSetup(' +
                         p.id_Proceso + ',\'' + (p.id_Programa || '') + '\')">' +
                         '<i class="fas fa-tools"></i> Setup</button>';
                 } else if (hayActivo) {
                     accion = '<span style="color:#9aa0b8;font-size:.8rem;">En espera</span>';
+                } else if (!tieneTrolleys) {
+                    accion = '<span style="color:#9aa0b8;font-size:.8rem;">Sin trolleys</span>';
                 }
 
                 tb.append(
                     '<tr>' +
-                    '<td>' + progHtml + '</td>' +
+                    '<td><strong>' + (p.id_Programa || '') + '</strong></td>' +
                     '<td>' + (p.workOrder || '') + '</td>' +
                     '<td>' + badges + '</td>' +
                     '<td>' + accion + '</td>' +

@@ -58,6 +58,7 @@ namespace SnowTrolleyProduction.Models
     public class AcomodoFormViewModel
     {
         public int ProgramaId { get; set; }
+        // Maquina 1
         public int MaquinaId { get; set; }
         public int? Z10 { get; set; }
         public int? Z20 { get; set; }
@@ -68,5 +69,16 @@ namespace SnowTrolleyProduction.Models
         public int? Z70 { get; set; }
         public int? Z80 { get; set; }
         public int? Z90 { get; set; }
+        // Maquina 2
+        public int MaquinaId2 { get; set; }
+        public int? Z10_2 { get; set; }
+        public int? Z20_2 { get; set; }
+        public int? Z30_2 { get; set; }
+        public int? Z40_2 { get; set; }
+        public int? Z50_2 { get; set; }
+        public int? Z60_2 { get; set; }
+        public int? Z70_2 { get; set; }
+        public int? Z80_2 { get; set; }
+        public int? Z90_2 { get; set; }
     }
 }

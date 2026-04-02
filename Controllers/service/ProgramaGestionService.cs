@@ -26,7 +26,7 @@ namespace SnowTrolleyProduction.Controllers.service
                 SELECT 
                     ts.Id, ts.Id_Proceso, ts.Id_Programa, ts.WorkOrder, ts.PiezasProgramadas,
                     ts.Trolleys, ts.Status, ts.FechaCreacion, ts.FechaFinalizacion, ts.Id_Linea, ts.Comentarios,
-                    e.EnsambleBase AS Ensamble,
+                    ISNULL(e.EnsambleBase, ts.Id_Programa) AS Ensamble,
                     STUFF((
                         SELECT ', ' + p2.Numero
                         FROM [Proccess].[Programas] p2
@@ -41,17 +41,32 @@ namespace SnowTrolleyProduction.Controllers.service
             using (var conn = new SqlConnection(GetConnectionString()))
             {
                 conn.Open();
+                List<ProgramGestionViewModel> rows;
                 if (string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate))
                 {
-                    return conn.Query<ProgramGestionViewModel>(sql).ToList();
+                    rows = conn.Query<ProgramGestionViewModel>(sql).ToList();
                 }
                 else
                 {
                     sql += " WHERE CAST(ts.FechaCreacion AS DATE) >= @start AND CAST(ts.FechaCreacion AS DATE) <= @end";
                     DateTime fechaInicio = DateTime.ParseExact(startDate, "yyyy/MM/dd", null);
                     DateTime fechaFin    = DateTime.ParseExact(endDate,   "yyyy/MM/dd", null);
-                    return conn.Query<ProgramGestionViewModel>(sql, new { start = fechaInicio.Date, end = fechaFin.Date }).ToList();
+                    rows = conn.Query<ProgramGestionViewModel>(sql, new { start = fechaInicio.Date, end = fechaFin.Date }).ToList();
                 }
+
+                // Group by Ensamble+WorkOrder+Status so sibling lados appear as one card
+                var grouped = new List<ProgramGestionViewModel>();
+                var seen = new Dictionary<string, ProgramGestionViewModel>();
+                foreach (var r in rows)
+                {
+                    string key = (r.Ensamble ?? r.Id_Programa ?? "") + "|" + (r.WorkOrder ?? "") + "|" + (r.Status ?? "");
+                    if (!seen.ContainsKey(key))
+                    {
+                        seen[key] = r;
+                        grouped.Add(r);
+                    }
+                }
+                return grouped;
             }
         }
 
@@ -317,6 +332,28 @@ namespace SnowTrolleyProduction.Controllers.service
                 {
                     conn.Open();
                     return conn.Query<string>(query, new { p0 = ensamble }).ToList();
+                }
+            }
+            catch { return new List<string>(); }
+        }
+
+        /// <summary>Given a programa number, returns all sibling lados from the same ensamble.</summary>
+        public List<string> GetLadosHermanos(string programaNumero)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(programaNumero)) return new List<string>();
+                string query = @"
+                    SELECT p2.Numero
+                    FROM [Proccess].[Programas] p1
+                    INNER JOIN [Proccess].[Programas] p2 ON p2.Ensamble = p1.Ensamble
+                    WHERE p1.Numero = @prog
+                      AND p2.Numero IS NOT NULL AND p2.Numero <> ''
+                    ORDER BY p2.Numero ASC";
+                using (var conn = new SqlConnection(GetConnectionString()))
+                {
+                    conn.Open();
+                    return conn.Query<string>(query, new { prog = programaNumero }).ToList();
                 }
             }
             catch { return new List<string>(); }

@@ -38,7 +38,7 @@
 
 <div id="acomodosContainer" class="gestion-panel" style="display:@(ventana == "acomodos" ? "block" : "none")"></div>
 
-@(Html.Kendo().Window().Name("wndGestion").Title("").Visible(false).Modal(true).Width(500)
+@(Html.Kendo().Window().Name("wndGestion").Title("").Visible(false).Modal(true).Width(820)
     .Events(e => e.Close("onWndGestionCerrar"))
     .Content(@<text><div id="wndGestionBody"></div></text>)
 )
@@ -76,3 +76,4 @@ var TG = {
 };
 </script>
 @Scripts.Render("~/Scripts/trolley-gestion.min.js")
+ 
