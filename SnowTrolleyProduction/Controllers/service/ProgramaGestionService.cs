@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using Dapper;
 
 namespace SnowTrolleyProduction.Controllers.service
 {
@@ -17,28 +18,40 @@ namespace SnowTrolleyProduction.Controllers.service
             BD = BDContext;
         }
 
+        private string GetConnectionString() => BD.Database.Connection.ConnectionString;
+
         public List<ProgramGestionViewModel> Read(string startDate, string endDate)
         {
             string sql = @"
                 SELECT 
-                    Id, Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, 
-                    Trolleys, Status, FechaCreacion, FechaFinalizacion, Id_Linea, Comentarios
-                FROM [Proccess].[TrolleySetup]";
+                    ts.Id, ts.Id_Proceso, ts.Id_Programa, ts.WorkOrder, ts.PiezasProgramadas,
+                    ts.Trolleys, ts.Status, ts.FechaCreacion, ts.FechaFinalizacion, ts.Id_Linea, ts.Comentarios,
+                    e.EnsambleBase AS Ensamble,
+                    STUFF((
+                        SELECT ', ' + p2.Numero
+                        FROM [Proccess].[Programas] p2
+                        WHERE p2.Ensamble = e.Id AND p2.Numero IS NOT NULL AND p2.Numero <> ''
+                        ORDER BY p2.Numero
+                        FOR XML PATH(''), TYPE
+                    ).value('.','NVARCHAR(MAX)'), 1, 2, '') AS Lados
+                FROM [Proccess].[TrolleySetup] ts
+                LEFT JOIN [Proccess].[Programas] p  ON p.Numero  = ts.Id_Programa
+                LEFT JOIN [Proccess].[Ensambles] e  ON e.Id      = p.Ensamble";
 
-            if (string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate))
+            using (var conn = new SqlConnection(GetConnectionString()))
             {
-                return BD.Database.SqlQuery<ProgramGestionViewModel>(sql).ToList();
-            }
-            else
-            {
-                sql += " WHERE CAST(FechaCreacion AS DATE) >= @start AND CAST(FechaCreacion AS DATE) <= @end";
-                DateTime fechaInicio = DateTime.ParseExact(startDate, "yyyy/MM/dd", null);
-                DateTime fechaFin = DateTime.ParseExact(endDate, "yyyy/MM/dd", null);
-
-                var paramStart = new SqlParameter("@start", fechaInicio.Date);
-                var paramEnd = new SqlParameter("@end", fechaFin.Date);
-
-                return BD.Database.SqlQuery<ProgramGestionViewModel>(sql, paramStart, paramEnd).ToList();
+                conn.Open();
+                if (string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate))
+                {
+                    return conn.Query<ProgramGestionViewModel>(sql).ToList();
+                }
+                else
+                {
+                    sql += " WHERE CAST(ts.FechaCreacion AS DATE) >= @start AND CAST(ts.FechaCreacion AS DATE) <= @end";
+                    DateTime fechaInicio = DateTime.ParseExact(startDate, "yyyy/MM/dd", null);
+                    DateTime fechaFin    = DateTime.ParseExact(endDate,   "yyyy/MM/dd", null);
+                    return conn.Query<ProgramGestionViewModel>(sql, new { start = fechaInicio.Date, end = fechaFin.Date }).ToList();
+                }
             }
         }
 
@@ -46,165 +59,168 @@ namespace SnowTrolleyProduction.Controllers.service
         {
             string sql = @"INSERT INTO [Proccess].[TrolleySetup] 
                    (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea) 
-                   VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9)";
+                   VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
 
-            BD.Database.ExecuteSqlCommand(sql,
-                model.Id_Proceso,
-                model.Id_Programa ?? (object)DBNull.Value,
-                model.WorkOrder ?? (object)DBNull.Value,
-                model.PiezasProgramadas,
-                model.Trolleys ?? (object)DBNull.Value,
-                model.Status ?? "Pendiente", // <-- CORRECCIÓN: Estado compatible
-                model.FechaCreacion != DateTime.MinValue ? model.FechaCreacion : DateTime.Now,
-                model.Id_Linea ?? (object)DBNull.Value,
-                model.Comentarios ?? (object)DBNull.Value,
-                model.Id_Linea ?? 0 // <-- CORRECCIÓN: Evitamos que la línea quede en 0
-            );
+            using (var conn = new SqlConnection(GetConnectionString()))
+            {
+                conn.Open();
+                conn.Execute(sql, new
+                {
+                    IdProceso = model.Id_Proceso,
+                    IdPrograma = (object)model.Id_Programa ?? DBNull.Value,
+                    WorkOrder = (object)model.WorkOrder ?? DBNull.Value,
+                    PiezasProgramadas = model.PiezasProgramadas,
+                    Trolleys = (object)model.Trolleys ?? DBNull.Value,
+                    Status = model.Status ?? "Pendiente",
+                    FechaCreacion = model.FechaCreacion != DateTime.MinValue ? model.FechaCreacion : DateTime.Now,
+                    IdLinea = (object)model.Id_Linea ?? DBNull.Value,
+                    Comentarios = (object)model.Comentarios ?? DBNull.Value,
+                    Linea = model.Id_Linea ?? 0
+                });
+            }
         }
 
         public int CargarDesdeExcel(Stream streamArchivo, string nombreArchivo)
         {
             int conteoInsertados = 0;
+            string anioActual = DateTime.Now.Year.ToString().Substring(2);
 
-            string digitosArchivo = new string(nombreArchivo.Where(char.IsDigit).ToArray());
-            string semanaPlan = digitosArchivo.Length >= 2 ? digitosArchivo.Substring(0, 2) : "01";
-            string anioActual = DateTime.Now.Year.ToString();
+            string sqlInsert = @"INSERT INTO [Proccess].[TrolleySetup] 
+                   (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea) 
+                   VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
 
             using (var workBook = new XLWorkbook(streamArchivo))
+            using (var conn = new SqlConnection(GetConnectionString()))
             {
+                conn.Open();
+
+                // Buscar hoja "SMT Run Plan" (ej: "FW 10 SMT Run Plan")
                 var sheet = workBook.Worksheets.FirstOrDefault(w => w.Name.IndexOf("SMT Run Plan", StringComparison.OrdinalIgnoreCase) >= 0);
                 if (sheet == null) sheet = workBook.Worksheet(3);
 
-                var rows = sheet.RangeUsed().RowsUsed().Skip(1);
+                // Extraer semana del nombre de la hoja (ej: "FW 10 SMT Run Plan" ? "10")
+                string nombreHoja = sheet.Name ?? "";
+                string digitosHoja = new string(nombreHoja.Where(char.IsDigit).ToArray());
+                string semanaPlan = digitosHoja.Length >= 2 ? digitosHoja.Substring(0, 2)
+                                  : digitosHoja.Length == 1 ? digitosHoja.PadLeft(2, '0')
+                                  : "01";
+
+                var rows = sheet.RangeUsed().RowsUsed().Skip(1).ToList();
+                var registros = new List<object>();
 
                 foreach (var row in rows)
                 {
                     var filaReal = row.WorksheetRow();
 
-                    // 1. EL FILTRO DEFINITIVO DE FECHA
                     DateTime? fechaPlanOpt = ObtenerFechaDeExcel(filaReal.Cell("A"));
                     if (!fechaPlanOpt.HasValue) continue;
-
                     DateTime fechaPlan = fechaPlanOpt.Value;
 
-                    // 2. Col B: Programa (corresponde a EnsambleBase)
                     string programaBaseExcel = filaReal.Cell("B").GetString()?.Trim();
                     if (string.IsNullOrWhiteSpace(programaBaseExcel)) continue;
 
-                    // 3. Col H: Linea
                     string lineaExcelStr = filaReal.Cell("H").GetString()?.Trim() ?? "";
                     int? lineaFinal = null;
-                    if (int.TryParse(lineaExcelStr, out int parsedLine))
-                    {
-                        lineaFinal = parsedLine;
-                    }
+                    if (int.TryParse(lineaExcelStr, out int parsedLine)) lineaFinal = parsedLine;
 
-                    // 4. Col Y: Piezas
                     int piezas = ObtenerEntero(filaReal.Cell("Y"));
 
-                    // 5. Buscar el ensamble padre en la BD que coincida con EnsambleBase y Linea
-                    var infoEnsamble = BD.Ensambles.FirstOrDefault(e => e.EnsambleBase == programaBaseExcel && e.Linea1 == lineaFinal);
+                    var infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
+                        "SELECT TOP 1 Id, Linea1 FROM [Proccess].[Ensambles] WHERE EnsambleBase = @eb AND Linea1 = @ln",
+                        new { eb = programaBaseExcel, ln = lineaFinal });
 
-                    // Si no se encontró con línea, intentar solo por EnsambleBase
                     if (infoEnsamble == null)
-                    {
-                        infoEnsamble = BD.Ensambles.FirstOrDefault(e => e.EnsambleBase == programaBaseExcel);
-                    }
+                        infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
+                            "SELECT TOP 1 Id, Linea1 FROM [Proccess].[Ensambles] WHERE EnsambleBase = @eb",
+                            new { eb = programaBaseExcel });
 
-                    // Tomar la línea de la BD si existe
-                    if (infoEnsamble != null && infoEnsamble.Linea1 != null)
-                    {
+                    if (infoEnsamble != null && infoEnsamble.Linea1.HasValue)
                         lineaFinal = infoEnsamble.Linea1;
-                    }
 
-                    // 6. Obtener la lista REAL de programas hijos desde [Proccess].[Programas]
                     List<string> programasReales = new List<string>();
                     if (infoEnsamble != null)
                     {
-                        programasReales = BD.Programas
-                            .Where(p => p.Ensamble == infoEnsamble.Id && p.Numero != null && p.Numero != "")
-                            .Select(p => p.Numero)
-                            .ToList();
+                        programasReales = conn.Query<string>(
+                            "SELECT Numero FROM [Proccess].[Programas] WHERE Ensamble = @eid AND Numero IS NOT NULL AND Numero <> '' ORDER BY Numero ASC",
+                            new { eid = infoEnsamble.Id }).ToList();
                     }
 
-                    // 7. Fallback: si no hay hijos en catálogo, insertar el nombre tal cual del Excel
-                    if (!programasReales.Any())
-                    {
-                        programasReales.Add(programaBaseExcel);
-                    }
+                    if (!programasReales.Any()) programasReales.Add(programaBaseExcel);
 
-                    // 8. Iterar sobre los programas REALES para insertar las tarjetas
                     foreach (var programaReal in programasReales)
                     {
                         string woLinea = lineaFinal.HasValue ? lineaFinal.Value.ToString() : "0";
                         string workOrderGenerado = $"L{woLinea}{semanaPlan}{anioActual}000";
 
-                        InsertarTarjeta(programaReal, fechaPlan, lineaFinal, piezas, workOrderGenerado);
-                        conteoInsertados++;
+                        registros.Add(new
+                        {
+                            IdProceso         = 1,
+                            IdPrograma        = (object)programaReal,
+                            WorkOrder         = (object)workOrderGenerado,
+                            PiezasProgramadas = piezas,
+                            Trolleys          = "",
+                            Status            = "Creado",
+                            FechaCreacion     = fechaPlan,
+                            IdLinea           = (object)lineaFinal ?? DBNull.Value,
+                            Comentarios       = "Carga Excel",
+                            Linea             = lineaFinal ?? 0
+                        });
                     }
+                }
+
+                using (var transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (var reg in registros) { conn.Execute(sqlInsert, reg, transaction); conteoInsertados++; }
+                        transaction.Commit();
+                    }
+                    catch { transaction.Rollback(); throw; }
                 }
             }
 
             return conteoInsertados;
         }
 
-        private void InsertarTarjeta(string programa, DateTime fecha, int? linea, int piezas, string workOrder)
+        public void Update(ProgramGestionViewModel model)
         {
-            Create(new ProgramGestionViewModel
+            string sql = @"
+                UPDATE [Proccess].[TrolleySetup]
+                SET Id_Proceso = @p0,
+                    Id_Programa = ISNULL(@p1, Id_Programa),
+                    WorkOrder = @p2,
+                    PiezasProgramadas = @p3,
+                    Trolleys = ISNULL(@p4, ''),
+                    Id_Linea = @p6, Comentarios = @p7,
+                    Linea = @p6
+                WHERE Id = @p8";
+
+            using (var conn = new SqlConnection(GetConnectionString()))
             {
-                Id_Proceso = 1,
-                WorkOrder = workOrder,
-                Id_Programa = programa,
-                PiezasProgramadas = piezas,
-                Trolleys = "",
-                Id_Linea = linea,
-                Comentarios = "Carga Excel",
-                Status = "Pendiente", // <-- CORRECCIÓN
-                FechaCreacion = DateTime.Now
-            });
-        }
-
-        private DateTime? ObtenerFechaDeExcel(IXLCell celda)
-        {
-            try
-            {
-                if (celda.IsEmpty()) return null;
-
-                if (celda.TryGetValue(out DateTime dt)) return dt.Date;
-
-                string texto = celda.GetString() ?? "";
-                if (string.IsNullOrWhiteSpace(texto)) return null;
-
-                if (DateTime.TryParse(texto, out DateTime fechaConvertida)) return fechaConvertida.Date;
-
-                if (double.TryParse(texto, out double oaDate)) return DateTime.FromOADate(oaDate).Date;
-
-                if (DateTime.TryParse(texto, new System.Globalization.CultureInfo("en-US"), System.Globalization.DateTimeStyles.None, out DateTime fechaUS))
-                    return fechaUS.Date;
+                conn.Open();
+                conn.Execute(sql, new
+                {
+                    p0 = model.Id_Proceso > 0 ? model.Id_Proceso : 1,
+                    p1 = (object)model.Id_Programa ?? DBNull.Value,
+                    p2 = (object)model.WorkOrder   ?? DBNull.Value,
+                    p3 = model.PiezasProgramadas,
+                    p4 = string.IsNullOrEmpty(model.Trolleys) ? "" : model.Trolleys,
+                    p6 = (object)model.Id_Linea    ?? DBNull.Value,
+                    p7 = (object)model.Comentarios ?? DBNull.Value,
+                    p8 = model.Id
+                });
             }
-            catch { }
-
-            return null;
         }
 
-        private int ObtenerEntero(IXLCell celda)
+        public void Delete(ProgramGestionViewModel model)
         {
-            try
+            string sql = "DELETE FROM [Proccess].[TrolleySetup] WHERE Id = @p0";
+            using (var conn = new SqlConnection(GetConnectionString()))
             {
-                string texto = celda.GetString() ?? "";
-                if (string.IsNullOrWhiteSpace(texto)) return 0;
-
-                if (double.TryParse(texto, out double numero))
-                    return (int)Math.Round(numero);
+                conn.Open();
+                conn.Execute(sql, new { p0 = model.Id });
             }
-            catch { }
-
-            return 0;
         }
-
-        // ==============================================================================
-        // MÉTODOS PARA LLENAR LOS COMBOBOX (Extraídos DE LA BD)
-        // ==============================================================================
 
         public List<SelectItemDto> GetLineas()
         {
@@ -217,10 +233,12 @@ namespace SnowTrolleyProduction.Controllers.service
                     WHERE e.EnsambleBase IS NOT NULL AND e.EnsambleBase <> ''
                     ORDER BY l.Numero_Linea ASC";
 
-                return BD.Database.SqlQuery<int>(query)
-                    .ToList()
-                    .Select(x => new SelectItemDto { Text = "Línea " + x, Value = x.ToString() })
-                    .ToList();
+                using (var conn = new SqlConnection(GetConnectionString()))
+                {
+                    conn.Open();
+                    var result = conn.Query<int>(query).ToList();
+                    return result.Select(x => new SelectItemDto { Text = "Línea " + x, Value = x.ToString() }).ToList();
+                }
             }
             catch (Exception ex)
             {
@@ -241,11 +259,12 @@ namespace SnowTrolleyProduction.Controllers.service
                     AND e.EnsambleBase IS NOT NULL AND e.EnsambleBase <> ''
                     ORDER BY e.EnsambleBase ASC";
 
-                return BD.Database.SqlQuery<string>(query, lineaId)
-                    .ToList()
-                    .Where(x => !string.IsNullOrEmpty(x))
-                    .Select(x => new SelectItemDto { Text = x, Value = x })
-                    .ToList();
+                using (var conn = new SqlConnection(GetConnectionString()))
+                {
+                    conn.Open();
+                    var items = conn.Query<string>(query, new { p0 = lineaId }).ToList();
+                    return items.Where(x => !string.IsNullOrEmpty(x)).Select(x => new SelectItemDto { Text = x, Value = x }).ToList();
+                }
             }
             catch (Exception ex)
             {
@@ -258,8 +277,7 @@ namespace SnowTrolleyProduction.Controllers.service
         {
             try
             {
-                if (string.IsNullOrEmpty(ensamble))
-                    return new List<SelectItemDto>();
+                if (string.IsNullOrEmpty(ensamble)) return new List<SelectItemDto>();
 
                 string query = @"
                     SELECT DISTINCT p.Numero
@@ -269,11 +287,12 @@ namespace SnowTrolleyProduction.Controllers.service
                     AND p.Numero IS NOT NULL AND p.Numero <> ''
                     ORDER BY p.Numero ASC";
 
-                return BD.Database.SqlQuery<string>(query, ensamble)
-                    .ToList()
-                    .Where(x => !string.IsNullOrEmpty(x))
-                    .Select(x => new SelectItemDto { Text = x, Value = x })
-                    .ToList();
+                using (var conn = new SqlConnection(GetConnectionString()))
+                {
+                    conn.Open();
+                    var items = conn.Query<string>(query, new { p0 = ensamble }).ToList();
+                    return items.Where(x => !string.IsNullOrEmpty(x)).Select(x => new SelectItemDto { Text = x, Value = x }).ToList();
+                }
             }
             catch (Exception ex)
             {
@@ -282,33 +301,124 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        public void Update(ProgramGestionViewModel model)
+        public List<string> GetLadosPorEnsamble(string ensamble)
         {
-            string sql = @"
-                UPDATE [Proccess].[TrolleySetup]
-                SET Id_Proceso = @p0, Id_Programa = @p1, WorkOrder = @p2, PiezasProgramadas = @p3,
-                    Trolleys = @p4, Status = @p5, Id_Linea = @p6, Comentarios = @p7,
-                    FechaFinalizacion = CASE WHEN @p5 = 'Completado' AND FechaFinalizacion IS NULL THEN GETDATE() ELSE FechaFinalizacion END,
-                    Linea = @p6 -- <-- CORRECCIÓN: Para que la línea principal se mantenga sincronizada
-                WHERE Id = @p8";
-
-            BD.Database.ExecuteSqlCommand(sql,
-                new SqlParameter("@p0", model.Id_Proceso),
-                new SqlParameter("@p1", (object)model.Id_Programa ?? DBNull.Value),
-                new SqlParameter("@p2", (object)model.WorkOrder ?? DBNull.Value),
-                new SqlParameter("@p3", model.PiezasProgramadas),
-                new SqlParameter("@p4", (object)model.Trolleys ?? DBNull.Value),
-                new SqlParameter("@p5", (object)model.Status ?? DBNull.Value),
-                new SqlParameter("@p6", (object)model.Id_Linea ?? DBNull.Value),
-                new SqlParameter("@p7", (object)model.Comentarios ?? DBNull.Value),
-                new SqlParameter("@p8", model.Id)
-            );
+            try
+            {
+                if (string.IsNullOrEmpty(ensamble)) return new List<string>();
+                string query = @"
+                    SELECT p.Numero
+                    FROM [Proccess].[Programas] p
+                    INNER JOIN [Proccess].[Ensambles] e ON p.Ensamble = e.Id
+                    WHERE e.EnsambleBase = @p0
+                    AND p.Numero IS NOT NULL AND p.Numero <> ''
+                    ORDER BY p.Numero ASC";
+                using (var conn = new SqlConnection(GetConnectionString()))
+                {
+                    conn.Open();
+                    return conn.Query<string>(query, new { p0 = ensamble }).ToList();
+                }
+            }
+            catch { return new List<string>(); }
         }
 
-        public void Delete(ProgramGestionViewModel model)
+        private DateTime? ObtenerFechaDeExcel(IXLCell celda)
         {
-            string sql = "DELETE FROM [Proccess].[TrolleySetup] WHERE Id = @p0";
-            BD.Database.ExecuteSqlCommand(sql, new SqlParameter("@p0", model.Id));
+            try
+            {
+                if (celda.IsEmpty()) return null;
+                if (celda.TryGetValue(out DateTime dt)) return dt.Date;
+
+                string texto = celda.GetString() ?? "";
+                if (string.IsNullOrWhiteSpace(texto)) return null;
+
+                if (DateTime.TryParse(texto, out DateTime fechaConvertida)) return fechaConvertida.Date;
+                if (double.TryParse(texto, out double oaDate)) return DateTime.FromOADate(oaDate).Date;
+                if (DateTime.TryParse(texto, new System.Globalization.CultureInfo("en-US"), System.Globalization.DateTimeStyles.None, out DateTime fechaUS))
+                    return fechaUS.Date;
+            }
+            catch { }
+
+            return null;
+        }
+
+        private int ObtenerEntero(IXLCell celda)
+        {
+            try
+            {
+                string texto = celda.GetString() ?? "";
+                if (string.IsNullOrWhiteSpace(texto)) return 0;
+                if (double.TryParse(texto, out double numero)) return (int)Math.Round(numero);
+            }
+            catch { }
+            return 0;
+        }
+
+        private class EnsambleDto
+        {
+            public int Id { get; set; }
+            public int? Linea1 { get; set; }
+        }
+
+        private class FiscalWeekDto
+        {
+            public int FiscalWeek { get; set; }
+            public int FiscalYear { get; set; }
+        }
+
+        public string GetSemanaFiscal(DateTime fecha)
+        {
+            try
+            {
+                using (var conn = new SqlConnection(GetConnectionString()))
+                {
+                    conn.Open();
+                    var row = conn.QueryFirstOrDefault<FiscalWeekDto>(
+                        "SELECT TOP 1 FiscalWeek, FiscalYear FROM dbo.FiscalCalendar WHERE CAST([Date] AS DATE) = CAST(@fecha AS DATE)",
+                        new { fecha = fecha.Date });
+
+                    if (row != null)
+                        return row.FiscalWeek.ToString().PadLeft(2, '0') + "|" + row.FiscalYear.ToString().Substring(2);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error GetSemanaFiscal BD: " + ex.Message);
+            }
+
+            // Fallback: calcular semana fiscal manualmente
+            // El año fiscal BAE empieza el último sábado de diciembre del año anterior
+            return CalcularSemanaFiscal(fecha);
+        }
+
+        private string CalcularSemanaFiscal(DateTime fecha)
+        {
+            // Encontrar el último sábado de diciembre del año anterior al año fiscal
+            // El año fiscal empieza en el último sábado de diciembre del año calendario anterior
+            // Determinar a qué año fiscal pertenece la fecha
+            int anioFiscal = fecha.Year;
+
+            // El inicio del año fiscal es el último sábado de diciembre del año anterior
+            DateTime inicioFiscal = UltimoSabadoDiciembre(anioFiscal - 1);
+
+            // Si la fecha es anterior al inicio del año fiscal actual, pertenece al año fiscal anterior
+            if (fecha.Date < inicioFiscal.Date)
+            {
+                anioFiscal--;
+                inicioFiscal = UltimoSabadoDiciembre(anioFiscal - 1);
+            }
+
+            int diasDesdeInicio = (fecha.Date - inicioFiscal.Date).Days;
+            int semana = (diasDesdeInicio / 7) + 1;
+
+            return semana.ToString().PadLeft(2, '0') + "|" + anioFiscal.ToString().Substring(2);
+        }
+
+        private DateTime UltimoSabadoDiciembre(int anio)
+        {
+            DateTime ultimoDic = new DateTime(anio, 12, 31);
+            int diasHastaSabado = ((int)ultimoDic.DayOfWeek - (int)DayOfWeek.Saturday + 7) % 7;
+            return ultimoDic.AddDays(-diasHastaSabado);
         }
     }
 }

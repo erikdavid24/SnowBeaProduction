@@ -26,6 +26,5 @@ namespace SnowTrolleyProduction.Models
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Acomodo> Acomodoes { get; set; }
-        public virtual Ensambles_T Ensambles_T { get; set; }
     }
 }

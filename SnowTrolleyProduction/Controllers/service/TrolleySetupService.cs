@@ -1,0 +1,561 @@
+using Dapper;
+using SnowTrolleyProduction.Models;
+using SnowTrolleyProduction.Models.Dtos;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+namespace SnowTrolleyProduction.Controllers.service
+{
+    /// <summary>
+    /// Encapsula toda la lógica de datos para la pantalla de Setup de Trolleys:
+    /// carga del SVG, inicio de proceso, finalización y autorización.
+    /// </summary>
+    public class TrolleySetupService
+    {
+        private readonly string _connStr;
+
+        public TrolleySetupService(BAESystemsGuaymasEntities ctx)
+        {
+            _connStr = ctx.Database.Connection.ConnectionString;
+        }
+
+        // ?? Datos del Setup (SVG) ?????????????????????????????????????????????
+
+        /// <summary>
+        /// Devuelve el programa activo ('En Proceso') para una línea y
+        /// las posiciones de trolleys para pintar el SVG.
+        /// Retorna null si no hay trabajo activo.
+        /// </summary>
+        public SetupDatosDto GetDatosPorLinea(int linea)
+        {
+            const string sqlWorks = @"
+                SELECT
+                    Id               AS IdProceso,
+                    Id_Programa      AS ProgramaSeleccionado,
+                    PiezasProgramadas,
+                    Status
+                FROM  [Proccess].[TrolleySetup]
+                WHERE  Linea   = @linea
+                  AND  Status IN ('Setup', 'Arranque')
+                ORDER  BY
+                    CASE WHEN Status = 'Arranque' THEN 1 ELSE 2 END ASC,
+                    FechaCreacion ASC";
+
+            const string sqlProgId = @"
+                SELECT Id FROM [Proccess].[Programas]
+                WHERE  Numero = @prog;";
+
+            const string sqlAcomodo = @"
+                SELECT
+                    et.Equipo_descripcion  AS noTrolley,
+                    a.Locacion             AS noPosicion,
+                    em.Equipo_descripcion  AS nombreMaquina
+                FROM  [Proccess].[Acomodo]  a
+                INNER JOIN [Proccess].[Equipos]  et ON a.TrolleyId  = et.Id_Equipo
+                INNER JOIN [Proccess].[Maquinas]  m ON a.MaquinaId  =  m.Id
+                INNER JOIN [Proccess].[Equipos]  em ON m.EquipoId   = em.Id_Equipo
+                WHERE  a.ProgramaId = @programaId;";
+
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+
+                var works = conn.Query<dynamic>(sqlWorks, new { linea }).ToList();
+                if (works == null || works.Count == 0) return null;
+
+                // Use the first record as the primary reference
+                var primary = works[0];
+
+                var positions = new List<TrolleyPosition>();
+                var allIds = new List<int>();
+
+                // Gather trolley positions from ALL active records (both sides)
+                foreach (var work in works)
+                {
+                    allIds.Add((int)work.IdProceso);
+
+                    int programaIdInt = conn.QueryFirstOrDefault<int>(
+                        sqlProgId, new { prog = (string)work.ProgramaSeleccionado });
+
+                    if (programaIdInt > 0)
+                    {
+                        var rows = conn.Query<dynamic>(sqlAcomodo, new { programaId = programaIdInt });
+                        foreach (var row in rows)
+                        {
+                            string maquina = ((string)row.nombreMaquina ?? "").Trim();
+                            int cabezal = maquina.Contains("-2 ") ? 2 : 1;
+
+                            positions.Add(new TrolleyPosition
+                            {
+                                noTrolley     = (string)row.noTrolley,
+                                noPosicion    = (int)row.noPosicion,
+                                nombreMaquina = maquina,
+                                noCabezal     = cabezal
+                            });
+                        }
+                    }
+                }
+
+                // Determine overall status: if ANY is 'Arranque', report Arranque
+                string overallStatus = works.Any(w => (string)w.Status == "Arranque")
+                    ? "Arranque"
+                    : (string)primary.Status;
+
+                return new SetupDatosDto
+                {
+                    programaSeleccionado = (string)primary.ProgramaSeleccionado,
+                    piezasProgramadas    = (int)primary.PiezasProgramadas,
+                    idProceso            = (int)primary.IdProceso,
+                    pzaTerminadas        = 0,
+                    status               = overallStatus,
+                    trolleyPositions     = positions
+                };
+            }
+        }
+
+        // ?? Trolleys disponibles + acomodo actual ?????????????????????????????
+
+        /// <summary>
+        /// Devuelve los trolleys disponibles en la línea y
+        /// el acomodo actual del programa dado.
+        /// (Usado por el modal de Setup en ProgramGestion.)
+        /// </summary>
+        public TrolleySetupDataDto GetTrolleysSetup(int linea, int programaId)
+        {
+            const string sqlTrolleys = @"
+                SELECT e.Id_Equipo AS Id, e.Equipo_descripcion AS Descripcion
+                FROM   [Proccess].[Equipos] e
+                INNER  JOIN [Proccess].[Lineas] l ON e.LineaId = l.Id_Linea
+                WHERE  l.Numero_Linea = @linea
+                  AND  (   (e.Equipo_descripcion LIKE 'A%'
+                         OR e.Equipo_descripcion LIKE 'B%'
+                         OR e.Equipo_descripcion LIKE 'C%')
+                       AND LEN(e.Equipo_descripcion) = 3
+                       OR  e.Equipo_descripcion = 'MANUAL'
+                       OR  e.Equipo_descripcion = 'MATRIX')
+                ORDER  BY e.Equipo_descripcion";
+
+            const string sqlAcomodo = @"
+                SELECT a.Locacion, a.TrolleyId, a.MaquinaId,
+                       em.Equipo_descripcion AS MaquinaNombre
+                FROM   [Proccess].[Acomodo] a
+                INNER  JOIN [Proccess].[Programas]    p  ON a.ProgramaId = p.Id
+                INNER  JOIN [Proccess].[TrolleySetup] ts ON ts.Id_Programa = p.Numero
+                LEFT   JOIN [Proccess].[Maquinas]     m  ON a.MaquinaId = m.Id
+                LEFT   JOIN [Proccess].[Equipos]      em ON m.EquipoId  = em.Id_Equipo
+                WHERE  ts.Id = @programaId
+                ORDER  BY a.MaquinaId, a.Locacion";
+
+            const string sqlMaquinas = @"
+                SELECT m.Id, e.Equipo_descripcion AS Descripcion
+                FROM   [Proccess].[Maquinas] m
+                INNER  JOIN [Proccess].[Equipos] e ON m.EquipoId = e.Id_Equipo
+                WHERE  m.LineaId = (SELECT TOP 1 l.Id_Linea FROM [Proccess].[Lineas] l WHERE l.Numero_Linea = @linea)
+                ORDER  BY e.Equipo_descripcion";
+
+            var result = new TrolleySetupDataDto
+            {
+                Trolleys   = new List<TrolleyItemDto>(),
+                Maquinas   = new List<TrolleyItemDto>(),
+                Cabezales  = new List<CabezalAcomodoDto>(),
+                Acomodo    = new Dictionary<string, int>(),
+                MaquinaId  = 0
+            };
+
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                result.Trolleys = conn.Query<TrolleyItemDto>(sqlTrolleys, new { linea }).ToList();
+                result.Maquinas = conn.Query<TrolleyItemDto>(sqlMaquinas, new { linea }).ToList();
+
+                var acomodoRows = conn.Query<dynamic>(sqlAcomodo, new { programaId }).ToList();
+
+                // Group acomodos by machine (cabezal)
+                var byMachine = new Dictionary<int, CabezalAcomodoDto>();
+                foreach (var row in acomodoRows)
+                {
+                    int maqId = row.MaquinaId != null ? (int)row.MaquinaId : 0;
+                    string maqName = row.MaquinaNombre != null ? ((string)row.MaquinaNombre).Trim() : "";
+                    int cabezal = maqName.Contains("-2 ") ? 2 : 1;
+
+                    if (!byMachine.ContainsKey(maqId))
+                    {
+                        byMachine[maqId] = new CabezalAcomodoDto
+                        {
+                            Cabezal       = cabezal,
+                            MaquinaId     = maqId,
+                            MaquinaNombre = maqName,
+                            Acomodo       = new Dictionary<string, int>()
+                        };
+                    }
+
+                    byMachine[maqId].Acomodo["Z" + row.Locacion] = (int)row.TrolleyId;
+                }
+
+                result.Cabezales = byMachine.Values.OrderBy(c => c.Cabezal).ToList();
+
+                // Backwards compat: flat acomodo (merge all)
+                foreach (var cab in result.Cabezales)
+                {
+                    foreach (var kv in cab.Acomodo)
+                    {
+                        if (!result.Acomodo.ContainsKey(kv.Key))
+                            result.Acomodo[kv.Key] = kv.Value;
+                    }
+                    if (result.MaquinaId == 0 && cab.MaquinaId > 0)
+                        result.MaquinaId = cab.MaquinaId;
+                }
+            }
+
+            return result;
+        }
+
+        // ?? Guardar acomodo de trolleys ???????????????????????????????????????
+
+        /// <summary>
+        /// Reemplaza los registros de dbo.Acomodo para el programa indicado
+        /// con las zonas/trolleys del diccionario { locacion ? trolleyId }.
+        /// </summary>
+        public void GuardarSetupTrolleys(int programaId, Dictionary<int, int> zonas, int? maquinaIdOverride = null)
+        {
+            const string sqlGetProg = @"
+                SELECT TOP 1 p.Id
+                FROM   [Proccess].[Programas]    p
+                INNER  JOIN [Proccess].[TrolleySetup] ts ON ts.Id_Programa = p.Numero
+                WHERE  ts.Id = @programaId";
+
+            const string sqlGetMaquina = @"
+                SELECT TOP 1 m.Id
+                FROM   [Proccess].[Maquinas] m
+                INNER  JOIN [Proccess].[Lineas]        l  ON m.LineaId    = l.Id_Linea
+                INNER  JOIN [Proccess].[TrolleySetup]  ts ON l.Numero_Linea = ts.Linea
+                WHERE  ts.Id = @programaId
+                ORDER  BY m.Id";
+
+            const string sqlDelete = "DELETE FROM [Proccess].[Acomodo] WHERE ProgramaId = @progId";
+
+            const string sqlInsert = @"
+                INSERT INTO [Proccess].[Acomodo] (ProgramaId, TrolleyId, Locacion, MaquinaId)
+                VALUES (@progId, @trolleyId, @locacion, @maquinaId)";
+
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+
+                int progId = conn.QueryFirstOrDefault<int>(sqlGetProg, new { programaId });
+                if (progId == 0) return;
+
+                int maquinaId = maquinaIdOverride.HasValue && maquinaIdOverride.Value > 0
+                    ? maquinaIdOverride.Value
+                    : conn.QueryFirstOrDefault<int>(sqlGetMaquina, new { programaId });
+
+                using (var tx = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        conn.Execute(sqlDelete, new { progId }, tx);
+
+                        foreach (var kvp in zonas)
+                        {
+                            conn.Execute(sqlInsert, new
+                            {
+                                progId,
+                                trolleyId = kvp.Value,
+                                locacion  = kvp.Key,
+                                maquinaId = maquinaId > 0 ? maquinaId : (int?)null
+                            }, tx);
+                        }
+
+                        tx.Commit();
+                    }
+                    catch
+                    {
+                        tx.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        // ?? Guardar acomodo cabezal 2 (appends, does not delete) ??????????????
+
+        /// <summary>
+        /// Appends acomodo records for the second machine (cabezal 2) for the same programa.
+        /// Should be called after GuardarSetupTrolleys which deletes+inserts cabezal 1.
+        /// </summary>
+        public void GuardarSetupTrolleysCabezal2(int programaId, Dictionary<int, int> zonas, int maquinaId)
+        {
+            const string sqlGetProg = @"
+                SELECT TOP 1 p.Id
+                FROM   [Proccess].[Programas]    p
+                INNER  JOIN [Proccess].[TrolleySetup] ts ON ts.Id_Programa = p.Numero
+                WHERE  ts.Id = @programaId";
+
+            const string sqlInsert = @"
+                INSERT INTO [Proccess].[Acomodo] (ProgramaId, TrolleyId, Locacion, MaquinaId)
+                VALUES (@progId, @trolleyId, @locacion, @maquinaId)";
+
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+
+                int progId = conn.QueryFirstOrDefault<int>(sqlGetProg, new { programaId });
+                if (progId == 0) return;
+
+                foreach (var kvp in zonas)
+                {
+                    conn.Execute(sqlInsert, new
+                    {
+                        progId,
+                        trolleyId = kvp.Value,
+                        locacion  = kvp.Key,
+                        maquinaId
+                    });
+                }
+            }
+        }
+
+        // ?? Finalizar proceso ?????????????????????????????????????????????????
+
+        /// <summary>
+        /// Finaliza el proceso:
+        /// - Si piezasProducidas >= programadas ? Status = 'Completado'.
+        /// - Si es parcial ? Status = 'Completado' + crea nuevo registro 'Creado'
+        ///   con las piezas pendientes y una WorkOrder derivada.
+        /// </summary>
+        public void FinalizarProceso(int idProceso, int piezasProducidas, string comentarios)
+        {
+            const string sqlSelect = @"
+                SELECT Id, WorkOrder, Linea, Id_Programa, PiezasProgramadas
+                FROM   [Proccess].[TrolleySetup]
+                WHERE  Id = @id AND Status IN ('Setup', 'Arranque')";
+
+            const string sqlCompletado = @"
+                UPDATE [Proccess].[TrolleySetup]
+                SET    Status = 'Completado', FechaFinalizacion = GETDATE()
+                WHERE  Id = @id";
+
+            const string sqlParcial = @"
+                UPDATE [Proccess].[TrolleySetup]
+                SET    Status = 'Completado', FechaFinalizacion = GETDATE(), Comentarios = @coment
+                WHERE  Id = @id";
+
+            const string sqlIdLinea = @"
+                SELECT TOP 1 Id_Linea
+                FROM   [Proccess].[Lineas]
+                WHERE  Numero_Linea = @l";
+
+            const string sqlInsertPendiente = @"
+                INSERT INTO [Proccess].[TrolleySetup]
+                    (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas,
+                     Trolleys, Status, FechaCreacion, Id_Linea, Linea, Comentarios)
+                VALUES
+                    (1, @prog, @wo, @pzas,
+                     '', 'Creado', GETDATE(), @idLinea, @linea, 'Generado por cierre parcial')";
+
+            // Find sibling sides that are also active
+            const string sqlSiblings = @"
+                SELECT ts2.Id
+                FROM   [Proccess].[TrolleySetup] ts1
+                INNER JOIN [Proccess].[Programas] p1 ON p1.Numero = ts1.Id_Programa
+                INNER JOIN [Proccess].[Programas] p2 ON p2.Ensamble = p1.Ensamble AND p2.Numero <> p1.Numero
+                INNER JOIN [Proccess].[TrolleySetup] ts2 ON ts2.Id_Programa = p2.Numero
+                WHERE  ts1.Id = @id
+                  AND  ts2.Linea = ts1.Linea
+                  AND  ts2.Status IN ('Setup', 'Arranque')";
+
+            const string sqlSiblingSelect = @"
+                SELECT Id, WorkOrder, Linea, Id_Programa, PiezasProgramadas
+                FROM   [Proccess].[TrolleySetup]
+                WHERE  Id = @id";
+
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                var tx = conn.BeginTransaction();
+                try
+                {
+                    var current = conn.QueryFirstOrDefault<dynamic>(sqlSelect, new { id = idProceso }, tx);
+                    if (current == null) throw new Exception("Proceso no encontrado.");
+
+                    int pzasProg = (int)current.PiezasProgramadas;
+
+                    if (piezasProducidas >= pzasProg)
+                    {
+                        conn.Execute(sqlCompletado, new { id = idProceso }, tx);
+                    }
+                    else
+                    {
+                        conn.Execute(sqlParcial, new { id = idProceso, coment = comentarios ?? string.Empty }, tx);
+
+                        int    linea    = (int)current.Linea;
+                        string programa = (string)current.Id_Programa;
+                        string nuevaWO  = GenerarNuevaWorkOrder((string)current.WorkOrder);
+                        int    pendientes = pzasProg - piezasProducidas;
+
+                        int idLineaFk = conn.QueryFirstOrDefault<int>(sqlIdLinea, new { l = linea }, tx);
+
+                        conn.Execute(sqlInsertPendiente, new
+                        {
+                            prog    = programa,
+                            wo      = nuevaWO,
+                            pzas    = pendientes,
+                            idLinea = idLineaFk,
+                            linea
+                        }, tx);
+                    }
+
+                    // Also finalize sibling sides
+                    var siblingIds = conn.Query<int>(sqlSiblings, new { id = idProceso }, tx).ToList();
+                    foreach (var sibId in siblingIds)
+                    {
+                        var sibling = conn.QueryFirstOrDefault<dynamic>(sqlSiblingSelect, new { id = sibId }, tx);
+                        if (sibling == null) continue;
+
+                        if (piezasProducidas >= (int)sibling.PiezasProgramadas)
+                        {
+                            conn.Execute(sqlCompletado, new { id = sibId }, tx);
+                        }
+                        else
+                        {
+                            conn.Execute(sqlParcial, new { id = sibId, coment = comentarios ?? string.Empty }, tx);
+
+                            int    sibLinea    = (int)sibling.Linea;
+                            string sibPrograma = (string)sibling.Id_Programa;
+                            string sibNuevaWO  = GenerarNuevaWorkOrder((string)sibling.WorkOrder);
+                            int    sibPendientes = (int)sibling.PiezasProgramadas - piezasProducidas;
+
+                            int sibIdLinea = conn.QueryFirstOrDefault<int>(sqlIdLinea, new { l = sibLinea }, tx);
+
+                            conn.Execute(sqlInsertPendiente, new
+                            {
+                                prog    = sibPrograma,
+                                wo      = sibNuevaWO,
+                                pzas    = sibPendientes,
+                                idLinea = sibIdLinea,
+                                linea   = sibLinea
+                            }, tx);
+                        }
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        // ?? Arranque ???????????????????????????????????????????????????????????
+
+        /// <summary>
+        /// Cambia el status de 'En Proceso' a 'Arranque', marcando la fecha.
+        /// Equivalente al botón "INICIAR PROCESO" de SnowBAEGym.
+        /// </summary>
+        public (bool Success, string Message) ActualizarArranque(int idProceso)
+        {
+            const string sql = @"
+                UPDATE [Proccess].[TrolleySetup]
+                SET    Status = 'Arranque'
+                WHERE  Id = @id AND Status = 'Setup'";
+
+            // Find sibling sides in Setup on the same line
+            const string sqlSiblings = @"
+                SELECT ts2.Id
+                FROM   [Proccess].[TrolleySetup] ts1
+                INNER JOIN [Proccess].[Programas] p1 ON p1.Numero = ts1.Id_Programa
+                INNER JOIN [Proccess].[Programas] p2 ON p2.Ensamble = p1.Ensamble AND p2.Numero <> p1.Numero
+                INNER JOIN [Proccess].[TrolleySetup] ts2 ON ts2.Id_Programa = p2.Numero
+                WHERE  ts1.Id = @id
+                  AND  ts2.Linea = ts1.Linea
+                  AND  ts2.Status = 'Setup'";
+
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                int rows = conn.Execute(sql, new { id = idProceso });
+
+                // Also update sibling sides to Arranque
+                var siblingIds = conn.Query<int>(sqlSiblings, new { id = idProceso }).ToList();
+                foreach (var sibId in siblingIds)
+                {
+                    conn.Execute(sql, new { id = sibId });
+                }
+
+                return rows > 0
+                    ? (true, "Arranque iniciado.")
+                    : (false, "No se pudo iniciar el arranque.");
+            }
+        }
+
+        // ?? Verificaciones ????????????????????????????????????????????????????
+
+        /// <summary>Comprueba si existe algún proceso activo ('En Proceso'),
+        /// opcionalmente filtrado por línea.</summary>
+        public (bool Exists, int Linea) GetProcesoActivo(int? linea)
+        {
+            string sql = @"
+                SELECT TOP 1 Id AS Id_Proceso, Linea
+                FROM   [Proccess].[TrolleySetup]
+                WHERE  Status IN ('Setup', 'Arranque')";
+
+            if (linea.HasValue) sql += " AND Linea = @linea";
+
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                var row = conn.QueryFirstOrDefault<dynamic>(sql, new { linea });
+                if (row != null)
+                    return (true, (int)row.Linea);
+
+                return (false, 0);
+            }
+        }
+
+        /// <summary>Valida credenciales de Admin/Supervisor/Ingeniero.
+        /// TODO: Implementar validación real contra [Proccess].[Users] cuando se integre autenticación.
+        /// Por ahora siempre retorna true para testing.
+        /// </summary>
+        public bool VerificarAdmin(string userNumber, string password)
+        {
+            // TODO: Descomentar cuando implementes autenticación de usuarios
+            /*
+            const string sql = "SELECT Password, UserType FROM [Proccess].[Users] WHERE UserNumber = @userNumber";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                var row = conn.QueryFirstOrDefault<dynamic>(sql, new { userNumber });
+                if (row == null) return false;
+
+                string dbPass = (string)row.Password;
+                string dbType = (string)row.UserType;
+
+                return dbPass == password &&
+                       (dbType == "Administrador" || dbType == "Supervisor" || dbType == "Ingeniero");
+            }
+            */
+            
+            // Temporal: permitir todos los usuarios para testing
+            return !string.IsNullOrEmpty(userNumber) && !string.IsNullOrEmpty(password);
+        }
+
+        // ?? Helpers privados ??????????????????????????????????????????????????
+
+        private static string GenerarNuevaWorkOrder(string woActual)
+        {
+            var match = Regex.Match(woActual ?? string.Empty, @"-(\d+)$");
+            if (match.Success)
+            {
+                int numero   = int.Parse(match.Groups[1].Value) + 1;
+                string baseW = woActual.Substring(0, match.Index);
+                return string.Format("{0}-{1}", baseW, numero);
+            }
+            return (woActual ?? string.Empty) + "-1";
+        }
+    }
+}

@@ -1,60 +1,71 @@
-﻿using BAEClassLibrary;
-using Kendo.Mvc.Extensions;
-using Kendo.Mvc.UI;
-using SHE.SafetyTours.Models;
-using SHE.SafetyTours.Models.Service;
+using BAEClassLibrary;
+using SnowTrolleyProduction.Controllers.service;
 using SnowTrolleyProduction.Models;
 using System.Web.Mvc;
 
-namespace SHE.SafetyTours.Controllers
+namespace SnowTrolleyProduction.Controllers
 {
     public class TrolleySetupController : BAEController
     {
-        TrolleySetupServices svc = new TrolleySetupServices(new BAESystemsGuaymasEntities1());
+        private readonly TrolleySetupService _svc =
+            new TrolleySetupService(new BAESystemsGuaymasEntities());
 
-        public ActionResult Index() => View();
-
-        public JsonResult Read([DataSourceRequest] DataSourceRequest req, string start, string end)
+        [HttpGet]
+        public ActionResult Index(int? linea)
         {
-            var data = svc.Read(start, end);
-            return Json(data.ToDataSourceResult(req), JsonRequestBehavior.AllowGet);
+            ViewBag.LineaSeleccionada = linea;
+            return View();
         }
 
-        public ActionResult Create([DataSourceRequest] DataSourceRequest req, TrolleySetupViewModel item)
+        [HttpPost]
+        public JsonResult ObtenerDatosPorLinea(int linea)
         {
-            if (item != null && ModelState.IsValid)
-                svc.Create(item);
+            var datos = _svc.GetDatosPorLinea(linea);
+            if (datos == null)
+                return Json(new { programaSeleccionado = "", message = "No hay trabajos En Proceso para esta l�nea." });
 
-            return Json(new[] { item }.ToDataSourceResult(req, ModelState));
+            return Json(datos);
         }
 
-        public ActionResult Update([DataSourceRequest] DataSourceRequest req, TrolleySetupViewModel item)
+        [HttpPost]
+        public JsonResult FinalizarProceso(int idProceso, int piezasProducidas, int piezasProgramadas, string comentarios)
         {
-            svc.Update(item);
-            return Json(new[] { item }.ToDataSourceResult(req, ModelState));
-        }
-
-        public ActionResult Delete([DataSourceRequest] DataSourceRequest req, TrolleySetupViewModel item)
-        {
-            svc.Delete(item);
-            return Json(new[] { item }.ToDataSourceResult(req, ModelState));
-        }
-
-        public JsonResult GuardarRapido(TrolleySetupViewModel item)
-        {
-            var res = new AnswerResult();
-
-            if (item == null) return Json(res);
-
-            if (string.IsNullOrEmpty(item.WorkOrder))
+            try
             {
-                res.AddWarning("La Orden de Trabajo no puede estar vacía.");
-                return Json(res);
+                _svc.FinalizarProceso(idProceso, piezasProducidas, comentarios);
+                return Json(new { success = true });
             }
+            catch (System.Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
 
-            svc.Create(item);
-            res.AddSuccess("Trolley configurado correctamente.");
-            return Json(res);
+        [HttpPost]
+        public JsonResult ActualizarArranque(int idProceso)
+        {
+            var (success, message) = _svc.ActualizarArranque(idProceso);
+            return Json(new { success, message });
+        }
+
+        [HttpGet]
+        public JsonResult GetProcesoActivo(int? linea)
+        {
+            var (exists, lineaActiva) = _svc.GetProcesoActivo(linea);
+
+            if (exists)
+                return Json(new { exists = true, linea = lineaActiva }, JsonRequestBehavior.AllowGet);
+
+            return Json(new { exists = false }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        public JsonResult VerificarPasswordAdmin(string userNumber, string password)
+        {
+            bool ok = _svc.VerificarAdmin(userNumber, password);
+            return ok
+                ? Json(new { success = true })
+                : Json(new { success = false, message = "Credenciales incorrectas." });
         }
     }
 }

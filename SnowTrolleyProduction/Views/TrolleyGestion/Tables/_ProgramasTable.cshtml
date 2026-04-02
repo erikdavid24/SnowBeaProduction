@@ -1,0 +1,26 @@
+@model List<SnowTrolleyProduction.Models.ProgramaGestion>
+
+<table class="table table-striped gestion-table">
+    <thead>
+        <tr>
+            <th>Programa</th>
+            <th>Ensamble</th>
+            <th>Línea</th>
+            <th style="width:1%;white-space:nowrap;">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var prog in Model)
+        {
+            <tr>
+                <td>@prog.Numero</td>
+                <td>@prog.Ensamble.Numero</td>
+                <td>@prog.Ensamble.Linea.Numero_Linea</td>
+                <td style="white-space:nowrap;">
+                    <button class="k-button btn-rounded btn-edit-programa" data-id="@prog.Id"><i class="fas fa-edit"></i> Editar</button>
+                    <button class="k-button btn-rounded btn-del-programa" data-id="@prog.Id" style="color:#ef4444;border-color:#fecaca;"><i class="fas fa-trash-alt"></i> Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

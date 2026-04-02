@@ -1,118 +1,247 @@
-ï»¿@model SHE.SafetyTours.Models.TrolleySetupViewModel
 @{
-    ViewBag.Title = "Gestionde Programa";
+    ViewBag.Title = "Setup de Trolleys";
 }
 
-<style>
-    .ts-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 18px;
-    }
+@section Styles {
+    <link href="~/Content/css/programa-gestion.css" rel="stylesheet" />
+    <style>
+        .svg-container { display: flex; justify-content: center; align-items: center; width: 100%; margin-top: 10px; }
+        svg { width: 85%; max-width: 960px; height: auto; }
+        .slot    { stroke: black; stroke-width: 2; filter: drop-shadow(2px 2px 5px rgba(0,0,0,.3)); }
+        .machine { filter: drop-shadow(4px 4px 8px rgba(0,0,0,.4)); }
+        svg text { font-size: 16px; font-weight: bold; }
+        .ts-setup-panel { background: #fff; border: 1px solid #e8ecf1; border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 5px rgba(0,0,0,.06); margin-bottom: 16px; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 9000; justify-content: center; align-items: center; }
+        .overlay-box { background: #fff; border-radius: 12px; padding: 28px 30px; width: 340px; box-shadow: 0 8px 32px rgba(0,0,0,.18); }
+        .overlay-box h5 { margin-bottom: 14px; font-weight: 700; color: #3d4465; }
+        .overlay-box input, .overlay-box textarea { width: 100%; padding: 8px 12px; border: 1px solid #e8ecf1; border-radius: 6px; font-size: .88rem; margin-bottom: 10px; box-sizing: border-box; }
+        .overlay-actions { display: flex; gap: 8px; margin-top: 6px; }
+        .overlay-actions button { flex: 1; }
+    </style>
+}
 
-        .ts-header h4 {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #3d4465;
-            margin: 0;
-        }
+<div class="ts-header" style="margin-bottom:14px;">
+    <h4><i class="fas fa-tools" style="color:#5d78ff;margin-right:8px;"></i>Setup de Trolleys</h4>
+    <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded"><span class="k-icon k-i-arrow-chevron-left"></span> Ir a Trabajos</a>
+</div>
 
-    .ts-toolbar {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
+<div class="ts-setup-panel">
+    <div class="form-row" style="gap:16px;align-items:flex-end;">
+        <div class="form-col">
+            <label class="form-label">Programa</label>
+            <input type="text" id="txtPrograma" class="form-control" readonly />
+        </div>
+        <div class="form-col">
+            <label class="form-label">Pzas. Programadas</label>
+            <input type="number" id="txtPzasProg" class="form-control" readonly />
+        </div>
+        <div class="form-col" style="display:flex;gap:10px;">
+            <button type="button" id="btnEnProceso" class="k-button k-primary btn-rounded" style="flex:1;"><i class="fas fa-play-circle"></i> Iniciar Proceso</button>
+            <button type="button" id="btnFinalizar" class="k-button k-danger btn-rounded" disabled style="flex:1;"><i class="fas fa-stop-circle"></i> Finalizar</button>
+        </div>
+    </div>
+    <input type="hidden" id="hfIdProceso" />
+    <input type="hidden" id="hfPzasYa" />
+</div>
 
-        .ts-toolbar label {
-            color: #7d8499;
-            font-size: .78rem;
-            font-weight: 600;
-            margin: 0;
-        }
+<div class="svg-container">
+    <svg viewBox="0 0 900 400">
+        <rect id="machineBody1" class="machine" x="50"  y="70" width="300" height="180" fill="lightgray" stroke="black" stroke-width="2" rx="10" ry="10"/>
+        <rect id="machineBody2" class="machine" x="550" y="70" width="300" height="180" fill="lightgray" stroke="black" stroke-width="2" rx="10" ry="10"/>
+        <text id="machineName1" x="120" y="140" fill="blue">Europlacer IINEO</text>
+        <text id="machineName2" x="620" y="140" fill="blue">Europlacer IINEO</text>
+        <text x="140" y="160" fill="red" id="enProceso1" style="display:none;">En Proceso</text>
+        <text x="640" y="160" fill="red" id="enProceso2" style="display:none;">En Proceso</text>
+        <g id="engrane1" transform="translate(180,200) scale(2)" style="display:none;"><circle cx="0" cy="0" r="10" stroke="black" stroke-width="2" fill="gray"/><path d="M -10,-5 L 10,-5 L 10,5 L -10,5 Z" fill="black"/><animateTransform attributeType="XML" attributeName="transform" type="rotate" from="0" to="360" dur="2s" repeatCount="indefinite" additive="sum"/></g>
+        <g id="engrane2" transform="translate(680,200) scale(2)" style="display:none;"><circle cx="0" cy="0" r="10" stroke="black" stroke-width="2" fill="gray"/><path d="M -10,-5 L 10,-5 L 10,5 L -10,5 Z" fill="black"/><animateTransform attributeType="XML" attributeName="transform" type="rotate" from="0" to="360" dur="2s" repeatCount="indefinite" additive="sum"/></g>
+        <rect class="machine" x="400" y="130" width="100" height="40" fill="gray" stroke="black" stroke-width="2" rx="10" ry="10"/>
+        <!-- Slots M1 top -->
+        <rect id="Z90_1" class="slot" x="60"  y="80" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z80_1" class="slot" x="70"  y="20" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z70_1" class="slot" x="130" y="20" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z60_1" class="slot" x="230" y="20" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z50_1" class="slot" x="300" y="20" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <!-- Slots M1 bottom -->
+        <rect id="Z10_1" class="slot" x="70"  y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z20_1" class="slot" x="130" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z30_1" class="slot" x="230" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z40_1" class="slot" x="300" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <!-- Slots M2 top -->
+        <rect id="Z90_2" class="slot" x="560" y="80"  width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z80_2" class="slot" x="570" y="20"  width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z70_2" class="slot" x="630" y="20"  width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z60_2" class="slot" x="730" y="20"  width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z50_2" class="slot" x="800" y="20"  width="40" height="40" fill="red" rx="5" ry="5"/>
+        <!-- Slots M2 bottom -->
+        <rect id="Z10_2" class="slot" x="570" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z20_2" class="slot" x="630" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z30_2" class="slot" x="730" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z40_2" class="slot" x="800" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <!-- Labels M1 -->
+        <text x="65"  y="135" fill="black" font-size="14px">Z90</text>
+        <text x="70"  y="15" fill="black">Z80</text><text x="130" y="15" fill="black">Z70</text>
+        <text x="230" y="15" fill="black">Z60</text><text x="300" y="15" fill="black">Z50</text>
+        <text x="70" y="315" fill="black">Z10</text><text x="130" y="315" fill="black">Z20</text>
+        <text x="230" y="315" fill="black">Z30</text><text x="300" y="315" fill="black">Z40</text>
+        <!-- Labels M2 -->
+        <text x="565" y="135" fill="black" font-size="14px">Z90</text>
+        <text x="570" y="15" fill="black">Z80</text><text x="630" y="15" fill="black">Z70</text>
+        <text x="730" y="15" fill="black">Z60</text><text x="800" y="15" fill="black">Z50</text>
+        <text x="570" y="315" fill="black">Z10</text><text x="630" y="315" fill="black">Z20</text>
+        <text x="730" y="315" fill="black">Z30</text><text x="800" y="315" fill="black">Z40</text>
+    </svg>
+</div>
 
-    #lvTrolley {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 14px;
-        padding: 4px 2px;
-    }
-
-        #lvTrolley + .k-pager {
-            border-top: 1px solid #e8ecf1;
-            margin-top: 10px;
-            background: #fafbfc;
-        }
-</style>
-
-<div class="ts-header">
-    <h4>
-        <i class="fas fa-cogs" style="color:#5d78ff;margin-right:8px;"></i>
-        GestiÃ³n de Trolleys (Setup)
-    </h4>
-    <div class="ts-toolbar">
-        @if (BAEClassLibrary.UserContext.ModulePermissions.Create("Gestion de programa"))
-        {
-            <a id="btnAdd" href="#" class="k-button k-primary" style="border-radius:6px;" onclick="addNew(event)">
-                <span class="k-icon k-i-plus"></span> Nuevo Setup
-            </a>
-        }
-        <label>De</label>
-        <input id="startDate" style="width:125px;" />
-        <label>a</label>
-        <input id="endDate" style="width:125px;" />
-        <a href="#" class="k-button" style="border-radius:6px;" onclick="reload(event)">
-            <span class="k-icon k-i-zoom"></span> Buscar
-        </a>
+<!-- Overlay piezas -->
+<div class="overlay" id="ovPiezas">
+    <div class="overlay-box">
+        <h5><i class="fas fa-check-circle" style="color:#22c55e;margin-right:6px;"></i>Finalizar Proceso</h5>
+        <label class="form-label">Piezas producidas</label>
+        <input type="number" id="inputPzas" placeholder="Ingrese piezas" min="0" />
+        <div class="overlay-actions">
+            <button class="k-button" onclick="$('#ovPiezas').fadeOut();">Cancelar</button>
+            <button class="k-button k-primary" id="btnConfPiezas">Confirmar</button>
+        </div>
     </div>
 </div>
 
-@(Html.Kendo().ListView<SHE.SafetyTours.Models.TrolleySetupViewModel>()
-    .Name("lvTrolley")
-    .TagName("div")
-    .ClientTemplateId("cardTemplate")
-    .DataSource(ds => ds
-        .Model(m => m.Id(p => p.Id))
-        .PageSize(9)
-        .Sort(s => s.Add("FechaCreacion").Descending())
-        .Read(r => r.Action("Read", "TrolleySetup").Data("getFilter"))
-        .Create(r => r.Action("Create", "TrolleySetup"))
-        .Update(r => r.Action("Update", "TrolleySetup"))
-        .Destroy(r => r.Action("Delete", "TrolleySetup"))
-    )
-    .Pageable()
-    .Editable()
-)
+<!-- Overlay admin -->
+<div class="overlay" id="ovAdmin">
+    <div class="overlay-box">
+        <h5><i class="fas fa-lock" style="color:#f59e0b;margin-right:6px;"></i>Requiere Autorización</h5>
+        <p style="color:#9aa0b8;font-size:.82rem;margin-bottom:12px;">Se produjeron menos piezas de las programadas.</p>
+        <label class="form-label">No. Empleado Admin</label>
+        <input type="text" id="admUser" placeholder="Número de empleado" />
+        <label class="form-label">Contraseña</label>
+        <input type="password" id="admPass" placeholder="Contraseña" />
+        <label class="form-label">Motivo / Comentarios</label>
+        <textarea id="admComent" rows="2" maxlength="500" placeholder="Mínimo 10 caracteres..."></textarea>
+        <div class="overlay-actions">
+            <button class="k-button" onclick="$('#ovAdmin').fadeOut();">Cancelar</button>
+            <button class="k-button k-primary" id="btnConfAdmin">Confirmar Cierre</button>
+        </div>
+    </div>
+</div>
 
-@Html.Partial("CardTemplate")
-
-<script>
-    $(function () {
-        var now = new Date();
-        var from = new Date(now.getFullYear(), now.getMonth(), 1);
-        $("#startDate").kendoDatePicker({ value: from, format: "yyyy/MM/dd" });
-        $("#endDate").kendoDatePicker({ value: now, format: "yyyy/MM/dd" });
-    });
-
-    function addNew(e) {
-        e.preventDefault();
-        $("#lvTrolley").data("kendoListView").add();
-    }
-
-    function reload(e) {
-        if (e) e.preventDefault();
-        $("#lvTrolley").data("kendoListView").dataSource.read();
-    }
-
-    function getFilter() {
-        var s = $("#startDate").data("kendoDatePicker");
-        var e = $("#endDate").data("kendoDatePicker");
-        return {
-            startDate: s ? kendo.toString(s.value(), "yyyy/MM/dd") : "",
-            endDate: e ? kendo.toString(e.value(), "yyyy/MM/dd") : ""
+@section Scripts {
+    <script>
+        var U = {
+            datos:     '@Url.Action("ObtenerDatosPorLinea",  "TrolleySetup")',
+            arranque:  '@Url.Action("ActualizarArranque",    "TrolleySetup")',
+            finalizar: '@Url.Action("FinalizarProceso",      "TrolleySetup")',
+            admin:     '@Url.Action("VerificarPasswordAdmin","TrolleySetup")'
         };
-    }
-</script>
+        var linea = @Html.Raw(ViewBag.LineaSeleccionada != null ? ViewBag.LineaSeleccionada.ToString() : "null");
+        var m1 = false, m2 = false;
+
+        function reset() {
+            $('text[id$="_text"]').remove();
+            $('rect.slot').attr('fill', 'red');
+            $('rect.machine').attr('fill', 'lightgray');
+            $('#enProceso1,#enProceso2,#engrane1,#engrane2').hide();
+            $('#txtPrograma,#txtPzasProg,#hfPzasYa').val('');
+            $('#hfIdProceso').val('');
+            $('#btnEnProceso').prop('disabled', false);
+            $('#btnFinalizar').prop('disabled', true);
+            m1 = m2 = false;
+        }
+
+        function svgText($r, id, txt) {
+            var x = parseFloat($r.attr('x')) + 20, y = parseFloat($r.attr('y')) + 20;
+            $('#' + id + '_text').remove();
+            var el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            el.setAttribute('id', id + '_text'); el.setAttribute('x', x); el.setAttribute('y', y);
+            el.setAttribute('text-anchor', 'middle'); el.setAttribute('dominant-baseline', 'central');
+            el.setAttribute('font-size', '11'); el.setAttribute('font-weight', 'bold'); el.setAttribute('fill', 'white');
+            el.textContent = txt;
+            $r.closest('svg').append(el);
+        }
+
+        function activarMaquinas() {
+            if (m1) { $('#machineBody1').attr('fill', 'green'); $('#enProceso1,#engrane1').show(); }
+            if (m2) { $('#machineBody2').attr('fill', 'green'); $('#enProceso2,#engrane2').show(); }
+            $('#btnEnProceso').prop('disabled', true);
+            $('#btnFinalizar').prop('disabled', false);
+        }
+
+        function cargar(l) {
+            if (!l) return;
+            reset();
+            $.post(U.datos, { linea: l }, function (r) {
+                if (r.message) { $('#txtPrograma').val('Sin proceso activo'); return; }
+                var tp = r.trolleyPositions || [];
+                m1 = tp.some(function (t) { return t.noCabezal === 1; });
+                m2 = tp.some(function (t) { return t.noCabezal === 2; });
+                $('#hfPzasYa').val(r.pzaTerminadas || 0);
+                $('#txtPrograma').val(r.programaSeleccionado);
+                $('#txtPzasProg').val(r.piezasProgramadas);
+                $('#hfIdProceso').val(r.idProceso);
+                $('#machineName1').text('Europlacer IINEO');
+                $('#machineName2').text('Europlacer IINEO');
+                if (tp.length) {
+                    var a = tp.find(function (t) { return t.noCabezal === 1; });
+                    var b = tp.find(function (t) { return t.noCabezal === 2; });
+                    if (a && a.nombreMaquina) $('#machineName1').text(a.nombreMaquina);
+                    if (b && b.nombreMaquina) $('#machineName2').text(b.nombreMaquina);
+                    $.each(tp, function (_, t) {
+                        var rid = 'Z' + t.noPosicion + '_' + t.noCabezal, $r = $('#' + rid);
+                        if ($r.length) { $r.attr('fill', 'green'); svgText($r, rid, t.noTrolley); }
+                    });
+                }
+                if (r.status === 'Arranque') activarMaquinas();
+            });
+        }
+
+        // Iniciar Proceso
+        $('#btnEnProceso').on('click', function () {
+            var id = $('#hfIdProceso').val();
+            if (!id) { Swal.fire('Aviso', 'No hay proceso cargado.', 'warning'); return; }
+            $.post(U.arranque, { idProceso: id }, function (r) {
+                if (r.success) {
+                    activarMaquinas();
+                    Swal.fire({ title: '¡Iniciado!', text: r.message, type: 'success', timer: 1500, showConfirmButton: false });
+                } else { Swal.fire('Error', r.message, 'error'); }
+            });
+        });
+
+        // Finalizar
+        $('#btnFinalizar').on('click', function () { $('#inputPzas').val(''); $('#ovPiezas').fadeIn().css('display', 'flex'); });
+
+        $('#btnConfPiezas').on('click', function () {
+            var v = $('#inputPzas').val();
+            if (v === '') { Swal.fire('Aviso', 'Ingrese piezas.', 'warning'); return; }
+            var pzas = parseInt(v), prog = parseInt($('#txtPzasProg').val()), ya = parseInt($('#hfPzasYa').val() || 0);
+            if ((pzas + ya) >= prog) {
+                $('#ovPiezas').fadeOut();
+                finalizar($('#hfIdProceso').val(), pzas, prog, '');
+            } else {
+                $('#ovPiezas').fadeOut();
+                $('#admUser,#admPass,#admComent').val('');
+                $('#ovAdmin').fadeIn().css('display', 'flex');
+            }
+        });
+
+        $('#btnConfAdmin').on('click', function () {
+            var u = $('#admUser').val(), p = $('#admPass').val(), c = $('#admComent').val();
+            if (c.length < 10) { Swal.fire('Aviso', 'Mínimo 10 caracteres en el motivo.', 'warning'); return; }
+            if (!u || !p) { Swal.fire('Aviso', 'Faltan credenciales.', 'warning'); return; }
+            $.post(U.admin, { userNumber: u, password: p }, function (r) {
+                if (r.success) { $('#ovAdmin').fadeOut(); finalizar($('#hfIdProceso').val(), parseInt($('#inputPzas').val()), parseInt($('#txtPzasProg').val()), c); }
+                else { Swal.fire('Error', r.message || 'Credenciales inválidas.', 'error'); }
+            });
+        });
+
+        function finalizar(id, pzas, prog, coment) {
+            $.post(U.finalizar, { idProceso: id, piezasProducidas: pzas, piezasProgramadas: prog, comentarios: coment }, function (r) {
+                if (r.success) {
+                    Swal.fire({ title: '¡Completado!', text: 'Proceso finalizado.', type: 'success', confirmButtonColor: '#1bc5bd' })
+                        .then(function () { reset(); if (linea) cargar(linea); });
+                } else { Swal.fire('Error', r.message, 'error'); }
+                $('#ovPiezas,#ovAdmin').fadeOut();
+                $('#admUser,#admPass,#admComent').val('');
+            });
+        }
+
+        $(function () { if (linea) cargar(linea); });
+    </script>
+}

@@ -4,7 +4,32 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="BAESystemsGuaymasModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="BAESystemsGuaymasModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <!--Errors Found During Generation:
+warning 6002: The table/view 'BAESystemsGuaymas.dbo.FiscalCalendar' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+        <EntityType Name="FiscalCalendar">
+          <Key>
+            <PropertyRef Name="Date" />
+            <PropertyRef Name="FiscalDay" />
+            <PropertyRef Name="FiscalWeek" />
+            <PropertyRef Name="FiscalMonth" />
+            <PropertyRef Name="FiscalQuarter" />
+            <PropertyRef Name="CalendarDayOfYear" />
+            <PropertyRef Name="CalendarWeekOfYear" />
+            <PropertyRef Name="CalendarMonth" />
+            <PropertyRef Name="CalendarQuarter" />
+          </Key>
+          <Property Name="Date" Type="date" Nullable="false" />
+          <Property Name="FiscalDay" Type="int" Nullable="false" />
+          <Property Name="FiscalWeek" Type="int" Nullable="false" />
+          <Property Name="FiscalMonth" Type="int" Nullable="false" />
+          <Property Name="FiscalQuarter" Type="int" Nullable="false" />
+          <Property Name="CalendarDayOfYear" Type="int" Nullable="false" />
+          <Property Name="CalendarWeekOfYear" Type="int" Nullable="false" />
+          <Property Name="CalendarMonth" Type="int" Nullable="false" />
+          <Property Name="CalendarQuarter" Type="int" Nullable="false" />
+          <Property Name="FiscalYear" Type="int" />
+        </EntityType>
         <EntityType Name="Acomodo">
           <Key>
             <PropertyRef Name="Id" />
@@ -22,65 +47,15 @@
           <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="Nombre" Type="nvarchar" MaxLength="100" Nullable="false" />
         </EntityType>
-        <EntityType Name="Auditoria">
+        <EntityType Name="Ensambles">
           <Key>
             <PropertyRef Name="Id" />
           </Key>
           <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="Fecha" Type="datetime" />
-          <Property Name="Auditado_Por" Type="int" />
-          <Property Name="Checklist" Type="int" />
-        </EntityType>
-        <EntityType Name="Auditoria_Respuestas">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="PreguntaId" Type="int" />
-          <Property Name="AuditoriaId" Type="int" />
-          <Property Name="Respuesta" Type="bit" />
-        </EntityType>
-        <EntityType Name="Checklist">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="Fecha" Type="datetime" Nullable="false" />
-          <Property Name="Contestado_Por" Type="int" />
-          <Property Name="Equipo_Id" Type="int" />
-        </EntityType>
-        <EntityType Name="Checklist_Preguntas">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="Pregunta" Type="varchar" MaxLength="255" />
-          <Property Name="Respuesta_Deseada" Type="bit" />
-          <Property Name="Equipo" Type="int" />
-          <Property Name="Lunes" Type="bit" Nullable="false" />
-          <Property Name="Martes" Type="bit" Nullable="false" />
-          <Property Name="Miercoles" Type="bit" Nullable="false" />
-          <Property Name="Jueves" Type="bit" Nullable="false" />
-          <Property Name="Viernes" Type="bit" Nullable="false" />
-          <Property Name="Sabado" Type="bit" Nullable="false" />
-          <Property Name="Domingo" Type="bit" Nullable="false" />
-        </EntityType>
-        <EntityType Name="Checklist_Respuestas">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="Respuesta" Type="bit" />
-          <Property Name="Pregunta_Id" Type="int" />
-          <Property Name="Checklist_Id" Type="int" />
-        </EntityType>
-        <EntityType Name="Ensambles_T">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="Numero" Type="varchar" MaxLength="255" />
-          <Property Name="LineaId" Type="int" />
+          <Property Name="EnsambleBase" Type="nvarchar" MaxLength="150" />
+          <Property Name="EnsambleEspecifico" Type="nvarchar" MaxLength="150" />
+          <Property Name="Linea1" Type="int" />
+          <Property Name="Linea2" Type="int" />
         </EntityType>
         <EntityType Name="Equipos">
           <Key>
@@ -93,21 +68,6 @@
           <Property Name="AreaId" Type="int" />
           <Property Name="LineaId" Type="int" />
           <Property Name="Activo" Type="bit" Nullable="false" />
-        </EntityType>
-        <!--Errors Found During Generation:
-warning 6013: The table/view 'BAESystemsGuaymas.Proccess.Errores de pegado' does not have a primary key defined and no valid primary key could be inferred. This table/view has been excluded. To use the entity, you will need to review your schema, add the correct keys, and uncomment it.
-        <EntityType Name="Errores de pegado">
-          <Property Name="Id_destino" Type="nvarchar" MaxLength="255" />
-        </EntityType>-->
-        <!--Errors Found During Generation:
-warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Fallas' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
-        <EntityType Name="Fallas">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="int" Nullable="false" />
-          <Property Name="Descripcion" Type="nvarchar" MaxLength="255" />
-          <Property Name="AreaId" Type="int" />
         </EntityType>
         <!--Errors Found During Generation:
 warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Id_Status' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
@@ -143,45 +103,8 @@ warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Id_Status' does not hav
             <PropertyRef Name="Id" />
           </Key>
           <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="Numero" Type="varchar" MaxLength="255" />
+          <Property Name="Numero" Type="nvarchar" MaxLength="150" />
           <Property Name="Ensamble" Type="int" />
-        </EntityType>
-        <EntityType Name="Request">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="Id_status" Type="nvarchar" MaxLength="255" />
-          <Property Name="Equipo" Type="nvarchar(max)" />
-          <Property Name="Usuario" Type="nvarchar" MaxLength="255" />
-          <Property Name="No_part" Type="nvarchar" MaxLength="255" />
-          <Property Name="WorkOrder" Type="nvarchar" MaxLength="255" />
-          <Property Name="Description" Type="nvarchar(max)" />
-          <Property Name="Accion_correctiva" Type="nvarchar(max)" />
-          <Property Name="Falla_Tecnico" Type="nvarchar(max)" />
-          <Property Name="No_Operador" Type="nvarchar" MaxLength="255" />
-          <Property Name="Fecha_Reporte" Type="datetime" />
-          <Property Name="Nombre_Modifico" Type="nvarchar" MaxLength="255" />
-          <Property Name="fecha_modificacion" Type="datetime" />
-          <Property Name="Nombre_Cierre" Type="nvarchar" MaxLength="255" />
-          <Property Name="Fecha_Cierre" Type="datetime" />
-          <Property Name="Contribuidor" Type="nvarchar" MaxLength="255" />
-          <Property Name="Urgent" Type="nvarchar" MaxLength="255" />
-          <Property Name="Tiempo_atencion" Type="float" />
-          <Property Name="Week_apertura" Type="int" />
-          <Property Name="Week_cierre" Type="int" />
-          <Property Name="Comentarios" Type="nvarchar(max)" />
-          <Property Name="AreaId" Type="int" />
-        </EntityType>
-        <!--Errors Found During Generation:
-warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Request_Status' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
-        <EntityType Name="Request_Status">
-          <Key>
-            <PropertyRef Name="id" />
-          </Key>
-          <Property Name="id" Type="int" Nullable="false" />
-          <Property Name="Id_Trolley" Type="nvarchar" MaxLength="255" />
-          <Property Name="Id_Status" Type="nvarchar" MaxLength="255" />
         </EntityType>
         <!--Errors Found During Generation:
 warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Trolley_Program' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
@@ -200,32 +123,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Trolley_Program' does n
         <EntityType Name="TrolleySetup">
           <Key>
             <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="Id_Proceso" Type="int" Nullable="false" />
-          <Property Name="Id_Programa" Type="nvarchar(max)" />
-          <Property Name="WorkOrder" Type="nvarchar" MaxLength="50" Nullable="false" />
-          <Property Name="PiezasProgramadas" Type="int" Nullable="false" />
-          <Property Name="Trolleys" Type="nvarchar(max)" Nullable="false" />
-          <Property Name="Status" Type="nvarchar" MaxLength="20" Nullable="false" />
-          <Property Name="FechaCreacion" Type="datetime" Nullable="false" />
-          <Property Name="FechaFinalizacion" Type="datetime" />
-          <Property Name="Linea" Type="int" Nullable="false" />
-          <Property Name="Id_Linea" Type="int" />
-          <Property Name="Comentarios" Type="nvarchar(max)" />
-        </EntityType>
-        <!--Errors Found During Generation:
-warning 6002: The table/view 'BAESystemsGuaymas.Proccess.TrolleySetup_Backup' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
-        <EntityType Name="TrolleySetup_Backup">
-          <Key>
-            <PropertyRef Name="Id" />
-            <PropertyRef Name="Id_Proceso" />
-            <PropertyRef Name="WorkOrder" />
-            <PropertyRef Name="PiezasProgramadas" />
-            <PropertyRef Name="Trolleys" />
-            <PropertyRef Name="Status" />
-            <PropertyRef Name="FechaCreacion" />
-            <PropertyRef Name="Linea" />
           </Key>
           <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="Id_Proceso" Type="int" Nullable="false" />
@@ -286,97 +183,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Works_Backup' does not 
           <Property Name="Fecha_Proyectada" Type="datetime" />
           <Property Name="Id_Linea" Type="int" />
         </EntityType>
-        <EntityType Name="Employees">
-          <Key>
-            <PropertyRef Name="EmployeeID" />
-          </Key>
-          <Property Name="EmployeeID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="UserName" Type="varchar" MaxLength="30" />
-          <Property Name="Password" Type="varchar" MaxLength="60" />
-          <Property Name="JobTitleID" Type="int" />
-          <Property Name="EmployeeNumber" Type="varchar" MaxLength="12" />
-          <Property Name="EmployeeStampNumber" Type="varchar" MaxLength="8" />
-          <Property Name="Name" Type="varchar" MaxLength="50" Nullable="false" />
-          <Property Name="FatherLastName" Type="varchar" MaxLength="50" />
-          <Property Name="MotherLastName" Type="varchar" MaxLength="50" />
-          <Property Name="NameViewChar" Type="varchar" MaxLength="50" />
-          <Property Name="ShiftID" Type="int" Nullable="false" />
-          <Property Name="Email" Type="varchar" MaxLength="50" />
-          <Property Name="MobilePhone" Type="varchar" MaxLength="15" />
-          <Property Name="Extension" Type="varchar" MaxLength="4" />
-          <Property Name="Location" Type="varchar" MaxLength="50" />
-          <Property Name="EmployeeStatus" Type="bit" Nullable="false" />
-          <Property Name="StartDate" Type="date" Nullable="false" />
-          <Property Name="EmployeeClassID" Type="int" />
-          <Property Name="EmployeeContractTypeID" Type="int" />
-          <Property Name="LineID" Type="int" />
-          <Property Name="EmployeeTypeID" Type="int" />
-          <Property Name="BuildingID" Type="int" />
-          <Property Name="RecordAddedDate" Type="datetime" Nullable="false" />
-          <Property Name="RecordDeleted" Type="bit" Nullable="false" />
-          <Property Name="RecordDeletedDate" Type="datetime" />
-          <Property Name="PasswordHash" Type="nvarchar" MaxLength="256" />
-        </EntityType>
-        <!--Errors Found During Generation:
-warning 6002: The table/view 'BAESystemsGuaymas.Process.CRDays' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
-        <EntityType Name="CRDays">
-          <Key>
-            <PropertyRef Name="CRID" />
-          </Key>
-          <Property Name="CRID" Type="int" Nullable="false" />
-          <Property Name="date_difference" Type="int" />
-        </EntityType>
-        <!--Errors Found During Generation:
-warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
-        <EntityType Name="EmployeeFullInfo">
-          <Key>
-            <PropertyRef Name="EmployeeID" />
-            <PropertyRef Name="EmployeeStatus" />
-            <PropertyRef Name="Name" />
-            <PropertyRef Name="StartDate" />
-            <PropertyRef Name="ShowInOrgChart" />
-          </Key>
-          <Property Name="EmployeeID" Type="int" Nullable="false" />
-          <Property Name="EmployeeStatus" Type="bit" Nullable="false" />
-          <Property Name="UserName" Type="varchar" MaxLength="30" />
-          <Property Name="Password" Type="varchar" MaxLength="60" />
-          <Property Name="EmployeeNumber" Type="varchar" MaxLength="12" />
-          <Property Name="EmployeeStampNumber" Type="varchar" MaxLength="8" />
-          <Property Name="Name" Type="varchar" MaxLength="50" Nullable="false" />
-          <Property Name="FatherLastName" Type="varchar" MaxLength="50" />
-          <Property Name="MotherLastName" Type="varchar" MaxLength="50" />
-          <Property Name="FullName" Type="varchar" MaxLength="8000" />
-          <Property Name="NameViewChar" Type="varchar" MaxLength="50" />
-          <Property Name="EmployeeReportToID" Type="int" />
-          <Property Name="EmployeeReportToNumber" Type="varchar" MaxLength="12" />
-          <Property Name="ReportToName" Type="varchar" MaxLength="50" />
-          <Property Name="JobTitleName" Type="varchar" MaxLength="80" />
-          <Property Name="DepartmentName" Type="varchar" MaxLength="80" />
-          <Property Name="StartDate" Type="date" Nullable="false" />
-          <Property Name="EndDate" Type="date" />
-          <Property Name="Code" Type="varchar" MaxLength="95" />
-          <Property Name="EmployeeType" Type="varchar" MaxLength="60" />
-          <Property Name="Email" Type="varchar" MaxLength="50" />
-          <Property Name="MobilePhone" Type="varchar" MaxLength="15" />
-          <Property Name="BirthDate" Type="date" />
-          <Property Name="PersonalPhone" Type="varchar" MaxLength="100" />
-          <Property Name="Gender" Type="varchar" MaxLength="10" />
-          <Property Name="BloodType" Type="varchar" MaxLength="10" />
-          <Property Name="Scholarship" Type="varchar" MaxLength="100" />
-          <Property Name="ChildrenNumber" Type="int" />
-          <Property Name="EconomicDependents" Type="int" />
-          <Property Name="ContractTypeName" Type="varchar" MaxLength="60" />
-          <Property Name="ClassName" Type="varchar" MaxLength="50" />
-          <Property Name="BuildingName" Type="varchar" MaxLength="15" />
-          <Property Name="MaritalStatus" Type="varchar" MaxLength="80" />
-          <Property Name="LineID" Type="int" />
-          <Property Name="Line" Type="varchar" MaxLength="80" />
-          <Property Name="ShowInOrgChart" Type="bit" Nullable="false" />
-          <Property Name="StatusTraining" Type="bit" />
-          <Property Name="Extension" Type="varchar" MaxLength="4" />
-          <Property Name="ShiftBAE" Type="int" />
-          <Property Name="ShiftID" Type="int" />
-        </EntityType>
         <Association Name="FK__Acomodo__Program__686C721B">
           <End Role="Programas" Type="Self.Programas" Multiplicity="0..1" />
           <End Role="Acomodo" Type="Self.Acomodo" Multiplicity="*" />
@@ -400,32 +206,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             </Principal>
             <Dependent Role="Acomodo">
               <PropertyRef Name="TrolleyId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK__Checklist__Pregu__503BEA1C">
-          <End Role="Checklist_Preguntas" Type="Self.Checklist_Preguntas" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Checklist_Respuestas" Type="Self.Checklist_Respuestas" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Checklist_Preguntas">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Checklist_Respuestas">
-              <PropertyRef Name="Pregunta_Id" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK__Ensambles__Linea__700D93E3">
-          <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
-          <End Role="Ensambles_T" Type="Self.Ensambles_T" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Lineas">
-              <PropertyRef Name="Id_Linea" />
-            </Principal>
-            <Dependent Role="Ensambles_T">
-              <PropertyRef Name="LineaId" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -467,100 +247,33 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Programas__Ensam">
-          <End Role="Ensambles_T" Type="Self.Ensambles_T" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Programas" Type="Self.Programas" Multiplicity="*" />
+        <Association Name="FK_Ensambles_Linea1">
+          <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
+          <End Role="Ensambles" Type="Self.Ensambles" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Ensambles_T">
-              <PropertyRef Name="Id" />
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
             </Principal>
-            <Dependent Role="Programas">
-              <PropertyRef Name="Ensamble" />
+            <Dependent Role="Ensambles">
+              <PropertyRef Name="Linea1" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Auditoria_Employees">
-          <End Role="Employees" Type="Self.Employees" Multiplicity="0..1" />
-          <End Role="Auditoria" Type="Self.Auditoria" Multiplicity="*" />
+        <Association Name="FK_Ensambles_Linea2">
+          <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
+          <End Role="Ensambles" Type="Self.Ensambles" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Employees">
-              <PropertyRef Name="EmployeeID" />
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
             </Principal>
-            <Dependent Role="Auditoria">
-              <PropertyRef Name="Auditado_Por" />
+            <Dependent Role="Ensambles">
+              <PropertyRef Name="Linea2" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Auditoria_Equipos">
-          <End Role="Checklist" Type="Self.Checklist" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Auditoria" Type="Self.Auditoria" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Checklist">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Auditoria">
-              <PropertyRef Name="Checklist" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_Auditoria_Respuestas_Auditoria">
-          <End Role="Auditoria" Type="Self.Auditoria" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Auditoria_Respuestas" Type="Self.Auditoria_Respuestas" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Auditoria">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Auditoria_Respuestas">
-              <PropertyRef Name="AuditoriaId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_Checklist_Employees">
-          <End Role="Employees" Type="Self.Employees" Multiplicity="0..1" />
-          <End Role="Checklist" Type="Self.Checklist" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Employees">
-              <PropertyRef Name="EmployeeID" />
-            </Principal>
-            <Dependent Role="Checklist">
-              <PropertyRef Name="Contestado_Por" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_Checklist_Equipos">
-          <End Role="Equipos" Type="Self.Equipos" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Checklist" Type="Self.Checklist" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Equipos">
-              <PropertyRef Name="Id_Equipo" />
-            </Principal>
-            <Dependent Role="Checklist">
-              <PropertyRef Name="Equipo_Id" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_ChecklistRespuestas_Checklist">
-          <End Role="Checklist" Type="Self.Checklist" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Checklist_Respuestas" Type="Self.Checklist_Respuestas" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Checklist">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Checklist_Respuestas">
-              <PropertyRef Name="Checklist_Id" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
+        <!--Errors Found During Generation:
+warning 6035: The relationship 'FK_Ensambles_Programas' has columns that are not part of the key of the table on the primary side of the relationship. The relationship was excluded.
+        <Association Name="FK_Ensambles_Programas" />-->
         <Association Name="FK_Equipos_Lineas">
           <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
           <End Role="Equipos" Type="Self.Equipos" Multiplicity="*" />
@@ -609,42 +322,28 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="PreguntaId">
-          <End Role="Checklist_Preguntas" Type="Self.Checklist_Preguntas" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Auditoria_Respuestas" Type="Self.Auditoria_Respuestas" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Checklist_Preguntas">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Auditoria_Respuestas">
-              <PropertyRef Name="PreguntaId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
         <EntityContainer Name="BAESystemsGuaymasModelStoreContainer">
           <EntitySet Name="Acomodo" EntityType="Self.Acomodo" Schema="Proccess" store:Type="Tables" />
           <EntitySet Name="Areas" EntityType="Self.Areas" Schema="Proccess" store:Type="Tables" />
-          <EntitySet Name="Auditoria" EntityType="Self.Auditoria" Schema="Proccess" store:Type="Tables" />
-          <EntitySet Name="Auditoria_Respuestas" EntityType="Self.Auditoria_Respuestas" Schema="Proccess" store:Type="Tables" />
-          <EntitySet Name="Checklist" EntityType="Self.Checklist" Schema="Proccess" store:Type="Tables" />
-          <EntitySet Name="Checklist_Preguntas" EntityType="Self.Checklist_Preguntas" Schema="Proccess" store:Type="Tables" />
-          <EntitySet Name="Checklist_Respuestas" EntityType="Self.Checklist_Respuestas" Schema="Proccess" store:Type="Tables" />
-          <EntitySet Name="Ensambles_T" EntityType="Self.Ensambles_T" Schema="Proccess" store:Type="Tables" />
+          <EntitySet Name="Ensambles" EntityType="Self.Ensambles" Schema="Proccess" store:Type="Tables" />
           <EntitySet Name="Equipos" EntityType="Self.Equipos" Schema="Proccess" store:Type="Tables" />
           <EntitySet Name="Lineas" EntityType="Self.Lineas" Schema="Proccess" store:Type="Tables" />
           <EntitySet Name="Maquinas" EntityType="Self.Maquinas" Schema="Proccess" store:Type="Tables" />
           <EntitySet Name="Programas" EntityType="Self.Programas" Schema="Proccess" store:Type="Tables" />
-          <EntitySet Name="Request" EntityType="Self.Request" Schema="Proccess" store:Type="Tables" />
           <EntitySet Name="TrolleySetup" EntityType="Self.TrolleySetup" Schema="Proccess" store:Type="Tables" />
-          <EntitySet Name="Employees" EntityType="Self.Employees" Schema="RH" store:Type="Tables" />
-          <EntitySet Name="Fallas" EntityType="Self.Fallas" store:Type="Tables" store:Schema="Proccess">
+          <EntitySet Name="FiscalCalendar" EntityType="Self.FiscalCalendar" store:Type="Tables" store:Schema="dbo">
             <DefiningQuery>SELECT 
-    [Fallas].[Id] AS [Id], 
-    [Fallas].[Descripcion] AS [Descripcion], 
-    [Fallas].[AreaId] AS [AreaId]
-    FROM [Proccess].[Fallas] AS [Fallas]</DefiningQuery>
+    [FiscalCalendar].[Date] AS [Date], 
+    [FiscalCalendar].[FiscalDay] AS [FiscalDay], 
+    [FiscalCalendar].[FiscalWeek] AS [FiscalWeek], 
+    [FiscalCalendar].[FiscalMonth] AS [FiscalMonth], 
+    [FiscalCalendar].[FiscalQuarter] AS [FiscalQuarter], 
+    [FiscalCalendar].[CalendarDayOfYear] AS [CalendarDayOfYear], 
+    [FiscalCalendar].[CalendarWeekOfYear] AS [CalendarWeekOfYear], 
+    [FiscalCalendar].[CalendarMonth] AS [CalendarMonth], 
+    [FiscalCalendar].[CalendarQuarter] AS [CalendarQuarter], 
+    [FiscalCalendar].[FiscalYear] AS [FiscalYear]
+    FROM [dbo].[FiscalCalendar] AS [FiscalCalendar]</DefiningQuery>
           </EntitySet>
           <EntitySet Name="Id_Status" EntityType="Self.Id_Status" store:Type="Tables" store:Schema="Proccess">
             <DefiningQuery>SELECT 
@@ -652,13 +351,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
     [Id_Status].[Description] AS [Description], 
     [Id_Status].[Campo1] AS [Campo1]
     FROM [Proccess].[Id_Status] AS [Id_Status]</DefiningQuery>
-          </EntitySet>
-          <EntitySet Name="Request_Status" EntityType="Self.Request_Status" store:Type="Tables" store:Schema="Proccess">
-            <DefiningQuery>SELECT 
-    [Request_Status].[id] AS [id], 
-    [Request_Status].[Id_Trolley] AS [Id_Trolley], 
-    [Request_Status].[Id_Status] AS [Id_Status]
-    FROM [Proccess].[Request_Status] AS [Request_Status]</DefiningQuery>
           </EntitySet>
           <EntitySet Name="Trolley_Program" EntityType="Self.Trolley_Program" store:Type="Tables" store:Schema="Proccess">
             <DefiningQuery>SELECT 
@@ -670,22 +362,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
     [Trolley_Program].[No_Trolley] AS [No_Trolley], 
     [Trolley_Program].[Id_Linea] AS [Id_Linea]
     FROM [Proccess].[Trolley_Program] AS [Trolley_Program]</DefiningQuery>
-          </EntitySet>
-          <EntitySet Name="TrolleySetup_Backup" EntityType="Self.TrolleySetup_Backup" store:Type="Tables" store:Schema="Proccess">
-            <DefiningQuery>SELECT 
-    [TrolleySetup_Backup].[Id] AS [Id], 
-    [TrolleySetup_Backup].[Id_Proceso] AS [Id_Proceso], 
-    [TrolleySetup_Backup].[Id_Programa] AS [Id_Programa], 
-    [TrolleySetup_Backup].[WorkOrder] AS [WorkOrder], 
-    [TrolleySetup_Backup].[PiezasProgramadas] AS [PiezasProgramadas], 
-    [TrolleySetup_Backup].[Trolleys] AS [Trolleys], 
-    [TrolleySetup_Backup].[Status] AS [Status], 
-    [TrolleySetup_Backup].[FechaCreacion] AS [FechaCreacion], 
-    [TrolleySetup_Backup].[FechaFinalizacion] AS [FechaFinalizacion], 
-    [TrolleySetup_Backup].[Linea] AS [Linea], 
-    [TrolleySetup_Backup].[Id_Linea] AS [Id_Linea], 
-    [TrolleySetup_Backup].[Comentarios] AS [Comentarios]
-    FROM [Proccess].[TrolleySetup_Backup] AS [TrolleySetup_Backup]</DefiningQuery>
           </EntitySet>
           <EntitySet Name="Works" EntityType="Self.Works" store:Type="Tables" store:Schema="Proccess">
             <DefiningQuery>SELECT 
@@ -727,56 +403,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
     [Works_Backup].[Id_Linea] AS [Id_Linea]
     FROM [Proccess].[Works_Backup] AS [Works_Backup]</DefiningQuery>
           </EntitySet>
-          <EntitySet Name="CRDays" EntityType="Self.CRDays" store:Type="Views" store:Schema="Process">
-            <DefiningQuery>SELECT 
-    [CRDays].[CRID] AS [CRID], 
-    [CRDays].[date_difference] AS [date_difference]
-    FROM [Process].[CRDays] AS [CRDays]</DefiningQuery>
-          </EntitySet>
-          <EntitySet Name="EmployeeFullInfo" EntityType="Self.EmployeeFullInfo" store:Type="Views" store:Schema="RH">
-            <DefiningQuery>SELECT 
-    [EmployeeFullInfo].[EmployeeID] AS [EmployeeID], 
-    [EmployeeFullInfo].[EmployeeStatus] AS [EmployeeStatus], 
-    [EmployeeFullInfo].[UserName] AS [UserName], 
-    [EmployeeFullInfo].[Password] AS [Password], 
-    [EmployeeFullInfo].[EmployeeNumber] AS [EmployeeNumber], 
-    [EmployeeFullInfo].[EmployeeStampNumber] AS [EmployeeStampNumber], 
-    [EmployeeFullInfo].[Name] AS [Name], 
-    [EmployeeFullInfo].[FatherLastName] AS [FatherLastName], 
-    [EmployeeFullInfo].[MotherLastName] AS [MotherLastName], 
-    [EmployeeFullInfo].[FullName] AS [FullName], 
-    [EmployeeFullInfo].[NameViewChar] AS [NameViewChar], 
-    [EmployeeFullInfo].[EmployeeReportToID] AS [EmployeeReportToID], 
-    [EmployeeFullInfo].[EmployeeReportToNumber] AS [EmployeeReportToNumber], 
-    [EmployeeFullInfo].[ReportToName] AS [ReportToName], 
-    [EmployeeFullInfo].[JobTitleName] AS [JobTitleName], 
-    [EmployeeFullInfo].[DepartmentName] AS [DepartmentName], 
-    [EmployeeFullInfo].[StartDate] AS [StartDate], 
-    [EmployeeFullInfo].[EndDate] AS [EndDate], 
-    [EmployeeFullInfo].[Code] AS [Code], 
-    [EmployeeFullInfo].[EmployeeType] AS [EmployeeType], 
-    [EmployeeFullInfo].[Email] AS [Email], 
-    [EmployeeFullInfo].[MobilePhone] AS [MobilePhone], 
-    [EmployeeFullInfo].[BirthDate] AS [BirthDate], 
-    [EmployeeFullInfo].[PersonalPhone] AS [PersonalPhone], 
-    [EmployeeFullInfo].[Gender] AS [Gender], 
-    [EmployeeFullInfo].[BloodType] AS [BloodType], 
-    [EmployeeFullInfo].[Scholarship] AS [Scholarship], 
-    [EmployeeFullInfo].[ChildrenNumber] AS [ChildrenNumber], 
-    [EmployeeFullInfo].[EconomicDependents] AS [EconomicDependents], 
-    [EmployeeFullInfo].[ContractTypeName] AS [ContractTypeName], 
-    [EmployeeFullInfo].[ClassName] AS [ClassName], 
-    [EmployeeFullInfo].[BuildingName] AS [BuildingName], 
-    [EmployeeFullInfo].[MaritalStatus] AS [MaritalStatus], 
-    [EmployeeFullInfo].[LineID] AS [LineID], 
-    [EmployeeFullInfo].[Line] AS [Line], 
-    [EmployeeFullInfo].[ShowInOrgChart] AS [ShowInOrgChart], 
-    [EmployeeFullInfo].[StatusTraining] AS [StatusTraining], 
-    [EmployeeFullInfo].[Extension] AS [Extension], 
-    [EmployeeFullInfo].[ShiftBAE] AS [ShiftBAE], 
-    [EmployeeFullInfo].[ShiftID] AS [ShiftID]
-    FROM [RH].[EmployeeFullInfo] AS [EmployeeFullInfo]</DefiningQuery>
-          </EntitySet>
           <AssociationSet Name="FK__Acomodo__Program__686C721B" Association="Self.FK__Acomodo__Program__686C721B">
             <End Role="Programas" EntitySet="Programas" />
             <End Role="Acomodo" EntitySet="Acomodo" />
@@ -784,14 +410,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
           <AssociationSet Name="FK__Acomodo__Trolley__69609654" Association="Self.FK__Acomodo__Trolley__69609654">
             <End Role="Equipos" EntitySet="Equipos" />
             <End Role="Acomodo" EntitySet="Acomodo" />
-          </AssociationSet>
-          <AssociationSet Name="FK__Checklist__Pregu__503BEA1C" Association="Self.FK__Checklist__Pregu__503BEA1C">
-            <End Role="Checklist_Preguntas" EntitySet="Checklist_Preguntas" />
-            <End Role="Checklist_Respuestas" EntitySet="Checklist_Respuestas" />
-          </AssociationSet>
-          <AssociationSet Name="FK__Ensambles__Linea__700D93E3" Association="Self.FK__Ensambles__Linea__700D93E3">
-            <End Role="Lineas" EntitySet="Lineas" />
-            <End Role="Ensambles_T" EntitySet="Ensambles_T" />
           </AssociationSet>
           <AssociationSet Name="FK__Lineas__AreaId__71F5DC55" Association="Self.FK__Lineas__AreaId__71F5DC55">
             <End Role="Areas" EntitySet="Areas" />
@@ -805,33 +423,13 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             <End Role="Lineas" EntitySet="Lineas" />
             <End Role="Maquinas" EntitySet="Maquinas" />
           </AssociationSet>
-          <AssociationSet Name="FK__Programas__Ensam" Association="Self.FK__Programas__Ensam">
-            <End Role="Ensambles_T" EntitySet="Ensambles_T" />
-            <End Role="Programas" EntitySet="Programas" />
+          <AssociationSet Name="FK_Ensambles_Linea1" Association="Self.FK_Ensambles_Linea1">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Ensambles" EntitySet="Ensambles" />
           </AssociationSet>
-          <AssociationSet Name="FK_Auditoria_Employees" Association="Self.FK_Auditoria_Employees">
-            <End Role="Employees" EntitySet="Employees" />
-            <End Role="Auditoria" EntitySet="Auditoria" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Auditoria_Equipos" Association="Self.FK_Auditoria_Equipos">
-            <End Role="Checklist" EntitySet="Checklist" />
-            <End Role="Auditoria" EntitySet="Auditoria" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Auditoria_Respuestas_Auditoria" Association="Self.FK_Auditoria_Respuestas_Auditoria">
-            <End Role="Auditoria" EntitySet="Auditoria" />
-            <End Role="Auditoria_Respuestas" EntitySet="Auditoria_Respuestas" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Checklist_Employees" Association="Self.FK_Checklist_Employees">
-            <End Role="Employees" EntitySet="Employees" />
-            <End Role="Checklist" EntitySet="Checklist" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Checklist_Equipos" Association="Self.FK_Checklist_Equipos">
-            <End Role="Equipos" EntitySet="Equipos" />
-            <End Role="Checklist" EntitySet="Checklist" />
-          </AssociationSet>
-          <AssociationSet Name="FK_ChecklistRespuestas_Checklist" Association="Self.FK_ChecklistRespuestas_Checklist">
-            <End Role="Checklist" EntitySet="Checklist" />
-            <End Role="Checklist_Respuestas" EntitySet="Checklist_Respuestas" />
+          <AssociationSet Name="FK_Ensambles_Linea2" Association="Self.FK_Ensambles_Linea2">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Ensambles" EntitySet="Ensambles" />
           </AssociationSet>
           <AssociationSet Name="FK_Equipos_Lineas" Association="Self.FK_Equipos_Lineas">
             <End Role="Lineas" EntitySet="Lineas" />
@@ -849,13 +447,8 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             <End Role="Lineas" EntitySet="Lineas" />
             <End Role="Works" EntitySet="Works" />
           </AssociationSet>
-          <AssociationSet Name="PreguntaId" Association="Self.PreguntaId">
-            <End Role="Checklist_Preguntas" EntitySet="Checklist_Preguntas" />
-            <End Role="Auditoria_Respuestas" EntitySet="Auditoria_Respuestas" />
-          </AssociationSet>
         </EntityContainer>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="BAESystemsGuaymasModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -879,80 +472,17 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
           <Property Name="Nombre" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
           <NavigationProperty Name="Lineas" Relationship="Self.FK__Lineas__AreaId__71F5DC55" FromRole="Areas" ToRole="Lineas" />
         </EntityType>
-        <EntityType Name="Auditoria">
+        <EntityType Name="Ensamble">
           <Key>
             <PropertyRef Name="Id" />
           </Key>
           <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Fecha" Type="DateTime" Precision="3" />
-          <Property Name="Auditado_Por" Type="Int32" />
-          <Property Name="Checklist" Type="Int32" />
-          <NavigationProperty Name="Employee" Relationship="Self.FK_Auditoria_Employees" FromRole="Auditoria" ToRole="Employees" />
-          <NavigationProperty Name="Checklist1" Relationship="Self.FK_Auditoria_Equipos" FromRole="Auditoria" ToRole="Checklist" />
-          <NavigationProperty Name="Auditoria_Respuestas" Relationship="Self.FK_Auditoria_Respuestas_Auditoria" FromRole="Auditoria" ToRole="Auditoria_Respuestas" />
-        </EntityType>
-        <EntityType Name="Auditoria_Respuestas">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="PreguntaId" Type="Int32" />
-          <Property Name="AuditoriaId" Type="Int32" />
-          <Property Name="Respuesta" Type="Boolean" />
-          <NavigationProperty Name="Auditoria" Relationship="Self.FK_Auditoria_Respuestas_Auditoria" FromRole="Auditoria_Respuestas" ToRole="Auditoria" />
-          <NavigationProperty Name="Checklist_Preguntas" Relationship="Self.PreguntaId" FromRole="Auditoria_Respuestas" ToRole="Checklist_Preguntas" />
-        </EntityType>
-        <EntityType Name="Checklist">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Fecha" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="Contestado_Por" Type="Int32" />
-          <Property Name="Equipo_Id" Type="Int32" />
-          <NavigationProperty Name="Auditorias" Relationship="Self.FK_Auditoria_Equipos" FromRole="Checklist" ToRole="Auditoria" />
-          <NavigationProperty Name="Employee" Relationship="Self.FK_Checklist_Employees" FromRole="Checklist" ToRole="Employees" />
-          <NavigationProperty Name="Equipos" Relationship="Self.FK_Checklist_Equipos" FromRole="Checklist" ToRole="Equipos" />
-          <NavigationProperty Name="Checklist_Respuestas" Relationship="Self.FK_ChecklistRespuestas_Checklist" FromRole="Checklist" ToRole="Checklist_Respuestas" />
-        </EntityType>
-        <EntityType Name="Checklist_Preguntas">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Pregunta" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
-          <Property Name="Respuesta_Deseada" Type="Boolean" />
-          <Property Name="Equipo" Type="Int32" />
-          <Property Name="Lunes" Type="Boolean" Nullable="false" />
-          <Property Name="Martes" Type="Boolean" Nullable="false" />
-          <Property Name="Miercoles" Type="Boolean" Nullable="false" />
-          <Property Name="Jueves" Type="Boolean" Nullable="false" />
-          <Property Name="Viernes" Type="Boolean" Nullable="false" />
-          <Property Name="Sabado" Type="Boolean" Nullable="false" />
-          <Property Name="Domingo" Type="Boolean" Nullable="false" />
-          <NavigationProperty Name="Auditoria_Respuestas" Relationship="Self.PreguntaId" FromRole="Checklist_Preguntas" ToRole="Auditoria_Respuestas" />
-          <NavigationProperty Name="Checklist_Respuestas" Relationship="Self.FK__Checklist__Pregu__503BEA1C" FromRole="Checklist_Preguntas" ToRole="Checklist_Respuestas" />
-        </EntityType>
-        <EntityType Name="Checklist_Respuestas">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Respuesta" Type="Boolean" />
-          <Property Name="Pregunta_Id" Type="Int32" />
-          <Property Name="Checklist_Id" Type="Int32" />
-          <NavigationProperty Name="Checklist" Relationship="Self.FK_ChecklistRespuestas_Checklist" FromRole="Checklist_Respuestas" ToRole="Checklist" />
-          <NavigationProperty Name="Checklist_Preguntas" Relationship="Self.FK__Checklist__Pregu__503BEA1C" FromRole="Checklist_Respuestas" ToRole="Checklist_Preguntas" />
-        </EntityType>
-        <EntityType Name="Ensambles_T">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Numero" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
-          <Property Name="LineaId" Type="Int32" />
-          <NavigationProperty Name="Linea" Relationship="Self.FK__Ensambles__Linea__700D93E3" FromRole="Ensambles_T" ToRole="Lineas" />
-          <NavigationProperty Name="Programas" Relationship="Self.FK__Programas__Ensam" FromRole="Ensambles_T" ToRole="Programas" />
+          <Property Name="EnsambleBase" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="EnsambleEspecifico" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="Linea1" Type="Int32" />
+          <Property Name="Linea2" Type="Int32" />
+          <NavigationProperty Name="Linea" Relationship="Self.FK_Ensambles_Linea1" FromRole="Ensambles" ToRole="Lineas" />
+          <NavigationProperty Name="Linea3" Relationship="Self.FK_Ensambles_Linea2" FromRole="Ensambles" ToRole="Lineas" />
         </EntityType>
         <EntityType Name="Equipos">
           <Key>
@@ -966,7 +496,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
           <Property Name="LineaId" Type="Int32" />
           <Property Name="Activo" Type="Boolean" Nullable="false" />
           <NavigationProperty Name="Acomodoes" Relationship="Self.FK__Acomodo__Trolley__69609654" FromRole="Equipos" ToRole="Acomodo" />
-          <NavigationProperty Name="Checklists" Relationship="Self.FK_Checklist_Equipos" FromRole="Equipos" ToRole="Checklist" />
           <NavigationProperty Name="Maquinas" Relationship="Self.FK__Maquinas__Equipo__72EA008E" FromRole="Equipos" ToRole="Maquinas" />
           <NavigationProperty Name="Linea" Relationship="Self.FK_Equipos_Lineas" FromRole="Equipos" ToRole="Lineas" />
         </EntityType>
@@ -978,12 +507,13 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
           <Property Name="Numero_Linea" Type="Int32" Nullable="false" />
           <Property Name="AreaId" Type="Int32" Nullable="false" />
           <NavigationProperty Name="Area" Relationship="Self.FK__Lineas__AreaId__71F5DC55" FromRole="Lineas" ToRole="Areas" />
-          <NavigationProperty Name="Ensambles_T" Relationship="Self.FK__Ensambles__Linea__700D93E3" FromRole="Lineas" ToRole="Ensambles_T" />
+          <NavigationProperty Name="Ensambles" Relationship="Self.FK_Ensambles_Linea1" FromRole="Lineas" ToRole="Ensambles" />
+          <NavigationProperty Name="Ensambles1" Relationship="Self.FK_Ensambles_Linea2" FromRole="Lineas" ToRole="Ensambles" />
           <NavigationProperty Name="Equipos" Relationship="Self.FK_Equipos_Lineas" FromRole="Lineas" ToRole="Equipos" />
           <NavigationProperty Name="Maquinas" Relationship="Self.FK__Maquinas__LineaI__73DE24C7" FromRole="Lineas" ToRole="Maquinas" />
-          <NavigationProperty Name="Trolley_Program" Relationship="Self.FK_TrolleyProgram_Lineas" FromRole="Lineas" ToRole="Trolley_Program" />
           <NavigationProperty Name="TrolleySetups" Relationship="Self.FK_TrolleySetup_Lineas" FromRole="Lineas" ToRole="TrolleySetup" />
           <NavigationProperty Name="Works" Relationship="Self.FK_Works_Lineas" FromRole="Lineas" ToRole="Works" />
+          <NavigationProperty Name="Trolley_Program" Relationship="BAESystemsGuaymasModel.FK_TrolleyProgram_Lineas" FromRole="Linea" ToRole="Trolley_Program" />
         </EntityType>
         <EntityType Name="Maquina">
           <Key>
@@ -1003,37 +533,9 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             <PropertyRef Name="Id" />
           </Key>
           <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Numero" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
+          <Property Name="Numero" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
           <Property Name="Ensamble" Type="Int32" />
           <NavigationProperty Name="Acomodoes" Relationship="Self.FK__Acomodo__Program__686C721B" FromRole="Programas" ToRole="Acomodo" />
-          <NavigationProperty Name="Ensambles_T" Relationship="Self.FK__Programas__Ensam" FromRole="Programas" ToRole="Ensambles_T" />
-        </EntityType>
-        <EntityType Name="Request">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Id_status" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="Equipo" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <Property Name="Usuario" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="No_part" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="WorkOrder" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="Description" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <Property Name="Accion_correctiva" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <Property Name="Falla_Tecnico" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <Property Name="No_Operador" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="Fecha_Reporte" Type="DateTime" Precision="3" />
-          <Property Name="Nombre_Modifico" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="fecha_modificacion" Type="DateTime" Precision="3" />
-          <Property Name="Nombre_Cierre" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="Fecha_Cierre" Type="DateTime" Precision="3" />
-          <Property Name="Contribuidor" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="Urgent" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="Tiempo_atencion" Type="Double" />
-          <Property Name="Week_apertura" Type="Int32" />
-          <Property Name="Week_cierre" Type="Int32" />
-          <Property Name="Comentarios" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <Property Name="AreaId" Type="Int32" />
         </EntityType>
         <EntityType Name="TrolleySetup">
           <Key>
@@ -1053,47 +555,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
           <Property Name="Comentarios" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="Linea1" Relationship="Self.FK_TrolleySetup_Lineas" FromRole="TrolleySetup" ToRole="Lineas" />
         </EntityType>
-        <EntityType Name="Employee">
-          <Key>
-            <PropertyRef Name="EmployeeID" />
-          </Key>
-          <Property Name="EmployeeID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="UserName" Type="String" MaxLength="30" FixedLength="false" Unicode="false" />
-          <Property Name="Password" Type="String" MaxLength="60" FixedLength="false" Unicode="false" />
-          <Property Name="JobTitleID" Type="Int32" />
-          <Property Name="EmployeeNumber" Type="String" MaxLength="12" FixedLength="false" Unicode="false" />
-          <Property Name="EmployeeStampNumber" Type="String" MaxLength="8" FixedLength="false" Unicode="false" />
-          <Property Name="Name" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
-          <Property Name="FatherLastName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="MotherLastName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="NameViewChar" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="ShiftID" Type="Int32" Nullable="false" />
-          <Property Name="Email" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="MobilePhone" Type="String" MaxLength="15" FixedLength="false" Unicode="false" />
-          <Property Name="Extension" Type="String" MaxLength="4" FixedLength="false" Unicode="false" />
-          <Property Name="Location" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="EmployeeStatus" Type="Boolean" Nullable="false" />
-          <Property Name="StartDate" Type="DateTime" Nullable="false" Precision="0" />
-          <Property Name="EmployeeClassID" Type="Int32" />
-          <Property Name="EmployeeContractTypeID" Type="Int32" />
-          <Property Name="LineID" Type="Int32" />
-          <Property Name="EmployeeTypeID" Type="Int32" />
-          <Property Name="BuildingID" Type="Int32" />
-          <Property Name="RecordAddedDate" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="RecordDeleted" Type="Boolean" Nullable="false" />
-          <Property Name="RecordDeletedDate" Type="DateTime" Precision="3" />
-          <Property Name="PasswordHash" Type="String" MaxLength="256" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="Auditorias" Relationship="Self.FK_Auditoria_Employees" FromRole="Employees" ToRole="Auditoria" />
-          <NavigationProperty Name="Checklists" Relationship="Self.FK_Checklist_Employees" FromRole="Employees" ToRole="Checklist" />
-        </EntityType>
-        <EntityType Name="Falla">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" />
-          <Property Name="Descripcion" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="AreaId" Type="Int32" />
-        </EntityType>
         <EntityType Name="Id_Status">
           <Key>
             <PropertyRef Name="Id_Status1" />
@@ -1101,51 +562,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
           <Property Name="Id_Status1" Type="Int32" Nullable="false" />
           <Property Name="Description" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
           <Property Name="Campo1" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-        </EntityType>
-        <EntityType Name="Request_Status">
-          <Key>
-            <PropertyRef Name="id" />
-          </Key>
-          <Property Name="id" Type="Int32" Nullable="false" />
-          <Property Name="Id_Trolley" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="Id_Status" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-        </EntityType>
-        <EntityType Name="Trolley_Program">
-          <Key>
-            <PropertyRef Name="Id" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" />
-          <Property Name="Id_Programa" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="No_linea" Type="Int32" />
-          <Property Name="No_Cabezal" Type="Int32" />
-          <Property Name="No_Posicion" Type="Int32" />
-          <Property Name="No_Trolley" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="Id_Linea" Type="Int32" />
-          <NavigationProperty Name="Linea" Relationship="Self.FK_TrolleyProgram_Lineas" FromRole="Trolley_Program" ToRole="Lineas" />
-        </EntityType>
-        <EntityType Name="TrolleySetup_Backup">
-          <Key>
-            <PropertyRef Name="Id" />
-            <PropertyRef Name="Id_Proceso" />
-            <PropertyRef Name="WorkOrder" />
-            <PropertyRef Name="PiezasProgramadas" />
-            <PropertyRef Name="Trolleys" />
-            <PropertyRef Name="Status" />
-            <PropertyRef Name="FechaCreacion" />
-            <PropertyRef Name="Linea" />
-          </Key>
-          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Id_Proceso" Type="Int32" Nullable="false" />
-          <Property Name="Id_Programa" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <Property Name="WorkOrder" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
-          <Property Name="PiezasProgramadas" Type="Int32" Nullable="false" />
-          <Property Name="Trolleys" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
-          <Property Name="Status" Type="String" MaxLength="20" FixedLength="false" Unicode="true" Nullable="false" />
-          <Property Name="FechaCreacion" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="FechaFinalizacion" Type="DateTime" Precision="3" />
-          <Property Name="Linea" Type="Int32" Nullable="false" />
-          <Property Name="Id_Linea" Type="Int32" />
-          <Property Name="Comentarios" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityType Name="Work">
           <Key>
@@ -1190,62 +606,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
           <Property Name="Fecha_Proyectada" Type="DateTime" Precision="3" />
           <Property Name="Id_Linea" Type="Int32" />
         </EntityType>
-        <EntityType Name="CRDay">
-          <Key>
-            <PropertyRef Name="CRID" />
-          </Key>
-          <Property Name="CRID" Type="Int32" Nullable="false" />
-          <Property Name="date_difference" Type="Int32" />
-        </EntityType>
-        <EntityType Name="EmployeeFullInfo">
-          <Key>
-            <PropertyRef Name="EmployeeID" />
-            <PropertyRef Name="EmployeeStatus" />
-            <PropertyRef Name="Name" />
-            <PropertyRef Name="StartDate" />
-            <PropertyRef Name="ShowInOrgChart" />
-          </Key>
-          <Property Name="EmployeeID" Type="Int32" Nullable="false" />
-          <Property Name="EmployeeStatus" Type="Boolean" Nullable="false" />
-          <Property Name="UserName" Type="String" MaxLength="30" FixedLength="false" Unicode="false" />
-          <Property Name="Password" Type="String" MaxLength="60" FixedLength="false" Unicode="false" />
-          <Property Name="EmployeeNumber" Type="String" MaxLength="12" FixedLength="false" Unicode="false" />
-          <Property Name="EmployeeStampNumber" Type="String" MaxLength="8" FixedLength="false" Unicode="false" />
-          <Property Name="Name" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
-          <Property Name="FatherLastName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="MotherLastName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="FullName" Type="String" MaxLength="8000" FixedLength="false" Unicode="false" />
-          <Property Name="NameViewChar" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="EmployeeReportToID" Type="Int32" />
-          <Property Name="EmployeeReportToNumber" Type="String" MaxLength="12" FixedLength="false" Unicode="false" />
-          <Property Name="ReportToName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="JobTitleName" Type="String" MaxLength="80" FixedLength="false" Unicode="false" />
-          <Property Name="DepartmentName" Type="String" MaxLength="80" FixedLength="false" Unicode="false" />
-          <Property Name="StartDate" Type="DateTime" Nullable="false" Precision="0" />
-          <Property Name="EndDate" Type="DateTime" Precision="0" />
-          <Property Name="Code" Type="String" MaxLength="95" FixedLength="false" Unicode="false" />
-          <Property Name="EmployeeType" Type="String" MaxLength="60" FixedLength="false" Unicode="false" />
-          <Property Name="Email" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="MobilePhone" Type="String" MaxLength="15" FixedLength="false" Unicode="false" />
-          <Property Name="BirthDate" Type="DateTime" Precision="0" />
-          <Property Name="PersonalPhone" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
-          <Property Name="Gender" Type="String" MaxLength="10" FixedLength="false" Unicode="false" />
-          <Property Name="BloodType" Type="String" MaxLength="10" FixedLength="false" Unicode="false" />
-          <Property Name="Scholarship" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
-          <Property Name="ChildrenNumber" Type="Int32" />
-          <Property Name="EconomicDependents" Type="Int32" />
-          <Property Name="ContractTypeName" Type="String" MaxLength="60" FixedLength="false" Unicode="false" />
-          <Property Name="ClassName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="BuildingName" Type="String" MaxLength="15" FixedLength="false" Unicode="false" />
-          <Property Name="MaritalStatus" Type="String" MaxLength="80" FixedLength="false" Unicode="false" />
-          <Property Name="LineID" Type="Int32" />
-          <Property Name="Line" Type="String" MaxLength="80" FixedLength="false" Unicode="false" />
-          <Property Name="ShowInOrgChart" Type="Boolean" Nullable="false" />
-          <Property Name="StatusTraining" Type="Boolean" />
-          <Property Name="Extension" Type="String" MaxLength="4" FixedLength="false" Unicode="false" />
-          <Property Name="ShiftBAE" Type="Int32" />
-          <Property Name="ShiftID" Type="Int32" />
-        </EntityType>
         <Association Name="FK__Acomodo__Program__686C721B">
           <End Role="Programas" Type="Self.Programa" Multiplicity="0..1" />
           <End Role="Acomodo" Type="Self.Acomodo" Multiplicity="*" />
@@ -1284,137 +644,27 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Auditoria_Employees">
-          <End Role="Employees" Type="Self.Employee" Multiplicity="0..1" />
-          <End Role="Auditoria" Type="Self.Auditoria" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Employees">
-              <PropertyRef Name="EmployeeID" />
-            </Principal>
-            <Dependent Role="Auditoria">
-              <PropertyRef Name="Auditado_Por" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_Auditoria_Equipos">
-          <End Role="Checklist" Type="Self.Checklist" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Auditoria" Type="Self.Auditoria" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Checklist">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Auditoria">
-              <PropertyRef Name="Checklist" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_Auditoria_Respuestas_Auditoria">
-          <End Role="Auditoria" Type="Self.Auditoria" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Auditoria_Respuestas" Type="Self.Auditoria_Respuestas" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Auditoria">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Auditoria_Respuestas">
-              <PropertyRef Name="AuditoriaId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="PreguntaId">
-          <End Role="Checklist_Preguntas" Type="Self.Checklist_Preguntas" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Auditoria_Respuestas" Type="Self.Auditoria_Respuestas" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Checklist_Preguntas">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Auditoria_Respuestas">
-              <PropertyRef Name="PreguntaId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_Checklist_Employees">
-          <End Role="Employees" Type="Self.Employee" Multiplicity="0..1" />
-          <End Role="Checklist" Type="Self.Checklist" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Employees">
-              <PropertyRef Name="EmployeeID" />
-            </Principal>
-            <Dependent Role="Checklist">
-              <PropertyRef Name="Contestado_Por" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_Checklist_Equipos">
-          <End Role="Equipos" Type="Self.Equipos" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Checklist" Type="Self.Checklist" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Equipos">
-              <PropertyRef Name="Id_Equipo" />
-            </Principal>
-            <Dependent Role="Checklist">
-              <PropertyRef Name="Equipo_Id" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_ChecklistRespuestas_Checklist">
-          <End Role="Checklist" Type="Self.Checklist" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Checklist_Respuestas" Type="Self.Checklist_Respuestas" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Checklist">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Checklist_Respuestas">
-              <PropertyRef Name="Checklist_Id" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK__Checklist__Pregu__503BEA1C">
-          <End Role="Checklist_Preguntas" Type="Self.Checklist_Preguntas" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Checklist_Respuestas" Type="Self.Checklist_Respuestas" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Checklist_Preguntas">
-              <PropertyRef Name="Id" />
-            </Principal>
-            <Dependent Role="Checklist_Respuestas">
-              <PropertyRef Name="Pregunta_Id" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK__Ensambles__Linea__700D93E3">
+        <Association Name="FK_Ensambles_Linea1">
           <End Role="Lineas" Type="Self.Linea" Multiplicity="0..1" />
-          <End Role="Ensambles_T" Type="Self.Ensambles_T" Multiplicity="*" />
+          <End Role="Ensambles" Type="Self.Ensamble" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Lineas">
               <PropertyRef Name="Id_Linea" />
             </Principal>
-            <Dependent Role="Ensambles_T">
-              <PropertyRef Name="LineaId" />
+            <Dependent Role="Ensambles">
+              <PropertyRef Name="Linea1" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Programas__Ensam">
-          <End Role="Ensambles_T" Type="Self.Ensambles_T" Multiplicity="0..1">
-            <OnDelete Action="Cascade" />
-          </End>
-          <End Role="Programas" Type="Self.Programa" Multiplicity="*" />
+        <Association Name="FK_Ensambles_Linea2">
+          <End Role="Lineas" Type="Self.Linea" Multiplicity="0..1" />
+          <End Role="Ensambles" Type="Self.Ensamble" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Ensambles_T">
-              <PropertyRef Name="Id" />
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
             </Principal>
-            <Dependent Role="Programas">
-              <PropertyRef Name="Ensamble" />
+            <Dependent Role="Ensambles">
+              <PropertyRef Name="Linea2" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -1456,18 +706,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_TrolleyProgram_Lineas">
-          <End Role="Lineas" Type="Self.Linea" Multiplicity="0..1" />
-          <End Role="Trolley_Program" Type="Self.Trolley_Program" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Lineas">
-              <PropertyRef Name="Id_Linea" />
-            </Principal>
-            <Dependent Role="Trolley_Program">
-              <PropertyRef Name="Id_Linea" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
         <Association Name="FK_TrolleySetup_Lineas">
           <End Role="Lineas" Type="Self.Linea" Multiplicity="0..1" />
           <End Role="TrolleySetup" Type="Self.TrolleySetup" Multiplicity="*" />
@@ -1492,31 +730,18 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <EntityContainer Name="BAESystemsGuaymasEntities1" annotation:LazyLoadingEnabled="true">
+        <EntityContainer Name="BAESystemsGuaymasEntities" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Acomodoes" EntityType="Self.Acomodo" />
           <EntitySet Name="Areas" EntityType="Self.Area" />
-          <EntitySet Name="Auditorias" EntityType="Self.Auditoria" />
-          <EntitySet Name="Auditoria_Respuestas" EntityType="Self.Auditoria_Respuestas" />
-          <EntitySet Name="Checklists" EntityType="Self.Checklist" />
-          <EntitySet Name="Checklist_Preguntas" EntityType="Self.Checklist_Preguntas" />
-          <EntitySet Name="Checklist_Respuestas" EntityType="Self.Checklist_Respuestas" />
-          <EntitySet Name="Ensambles_T" EntityType="Self.Ensambles_T" />
+          <EntitySet Name="Ensambles" EntityType="Self.Ensamble" />
           <EntitySet Name="Equipos" EntityType="Self.Equipos" />
           <EntitySet Name="Lineas" EntityType="Self.Linea" />
           <EntitySet Name="Maquinas" EntityType="Self.Maquina" />
           <EntitySet Name="Programas" EntityType="Self.Programa" />
-          <EntitySet Name="Requests" EntityType="Self.Request" />
           <EntitySet Name="TrolleySetups" EntityType="Self.TrolleySetup" />
-          <EntitySet Name="Employees" EntityType="Self.Employee" />
-          <EntitySet Name="Fallas" EntityType="Self.Falla" />
           <EntitySet Name="Id_Status" EntityType="Self.Id_Status" />
-          <EntitySet Name="Request_Status" EntityType="Self.Request_Status" />
-          <EntitySet Name="Trolley_Program" EntityType="Self.Trolley_Program" />
-          <EntitySet Name="TrolleySetup_Backup" EntityType="Self.TrolleySetup_Backup" />
           <EntitySet Name="Works" EntityType="Self.Work" />
           <EntitySet Name="Works_Backup" EntityType="Self.Works_Backup" />
-          <EntitySet Name="CRDays" EntityType="Self.CRDay" />
-          <EntitySet Name="EmployeeFullInfoes" EntityType="Self.EmployeeFullInfo" />
           <AssociationSet Name="FK__Acomodo__Program__686C721B" Association="Self.FK__Acomodo__Program__686C721B">
             <End Role="Programas" EntitySet="Programas" />
             <End Role="Acomodo" EntitySet="Acomodoes" />
@@ -1529,45 +754,13 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             <End Role="Areas" EntitySet="Areas" />
             <End Role="Lineas" EntitySet="Lineas" />
           </AssociationSet>
-          <AssociationSet Name="FK_Auditoria_Employees" Association="Self.FK_Auditoria_Employees">
-            <End Role="Employees" EntitySet="Employees" />
-            <End Role="Auditoria" EntitySet="Auditorias" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Auditoria_Equipos" Association="Self.FK_Auditoria_Equipos">
-            <End Role="Checklist" EntitySet="Checklists" />
-            <End Role="Auditoria" EntitySet="Auditorias" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Auditoria_Respuestas_Auditoria" Association="Self.FK_Auditoria_Respuestas_Auditoria">
-            <End Role="Auditoria" EntitySet="Auditorias" />
-            <End Role="Auditoria_Respuestas" EntitySet="Auditoria_Respuestas" />
-          </AssociationSet>
-          <AssociationSet Name="PreguntaId" Association="Self.PreguntaId">
-            <End Role="Checklist_Preguntas" EntitySet="Checklist_Preguntas" />
-            <End Role="Auditoria_Respuestas" EntitySet="Auditoria_Respuestas" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Checklist_Employees" Association="Self.FK_Checklist_Employees">
-            <End Role="Employees" EntitySet="Employees" />
-            <End Role="Checklist" EntitySet="Checklists" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Checklist_Equipos" Association="Self.FK_Checklist_Equipos">
-            <End Role="Equipos" EntitySet="Equipos" />
-            <End Role="Checklist" EntitySet="Checklists" />
-          </AssociationSet>
-          <AssociationSet Name="FK_ChecklistRespuestas_Checklist" Association="Self.FK_ChecklistRespuestas_Checklist">
-            <End Role="Checklist" EntitySet="Checklists" />
-            <End Role="Checklist_Respuestas" EntitySet="Checklist_Respuestas" />
-          </AssociationSet>
-          <AssociationSet Name="FK__Checklist__Pregu__503BEA1C" Association="Self.FK__Checklist__Pregu__503BEA1C">
-            <End Role="Checklist_Preguntas" EntitySet="Checklist_Preguntas" />
-            <End Role="Checklist_Respuestas" EntitySet="Checklist_Respuestas" />
-          </AssociationSet>
-          <AssociationSet Name="FK__Ensambles__Linea__700D93E3" Association="Self.FK__Ensambles__Linea__700D93E3">
+          <AssociationSet Name="FK_Ensambles_Linea1" Association="Self.FK_Ensambles_Linea1">
             <End Role="Lineas" EntitySet="Lineas" />
-            <End Role="Ensambles_T" EntitySet="Ensambles_T" />
+            <End Role="Ensambles" EntitySet="Ensambles" />
           </AssociationSet>
-          <AssociationSet Name="FK__Programas__Ensam" Association="Self.FK__Programas__Ensam">
-            <End Role="Ensambles_T" EntitySet="Ensambles_T" />
-            <End Role="Programas" EntitySet="Programas" />
+          <AssociationSet Name="FK_Ensambles_Linea2" Association="Self.FK_Ensambles_Linea2">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Ensambles" EntitySet="Ensambles" />
           </AssociationSet>
           <AssociationSet Name="FK__Maquinas__Equipo__72EA008E" Association="Self.FK__Maquinas__Equipo__72EA008E">
             <End Role="Equipos" EntitySet="Equipos" />
@@ -1581,10 +774,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             <End Role="Lineas" EntitySet="Lineas" />
             <End Role="Maquinas" EntitySet="Maquinas" />
           </AssociationSet>
-          <AssociationSet Name="FK_TrolleyProgram_Lineas" Association="Self.FK_TrolleyProgram_Lineas">
-            <End Role="Lineas" EntitySet="Lineas" />
-            <End Role="Trolley_Program" EntitySet="Trolley_Program" />
-          </AssociationSet>
           <AssociationSet Name="FK_TrolleySetup_Lineas" Association="Self.FK_TrolleySetup_Lineas">
             <End Role="Lineas" EntitySet="Lineas" />
             <End Role="TrolleySetup" EntitySet="TrolleySetups" />
@@ -1593,13 +782,67 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
             <End Role="Lineas" EntitySet="Lineas" />
             <End Role="Works" EntitySet="Works" />
           </AssociationSet>
+          <EntitySet Name="FiscalCalendars" EntityType="BAESystemsGuaymasModel.FiscalCalendar" />
+          <EntitySet Name="Trolley_Program" EntityType="BAESystemsGuaymasModel.Trolley_Program" />
+          <AssociationSet Name="FK_TrolleyProgram_Lineas" Association="BAESystemsGuaymasModel.FK_TrolleyProgram_Lineas">
+            <End Role="Linea" EntitySet="Lineas" />
+            <End Role="Trolley_Program" EntitySet="Trolley_Program" />
+          </AssociationSet>
         </EntityContainer>
+        <EntityType Name="FiscalCalendar">
+          <Key>
+            <PropertyRef Name="Date" />
+            <PropertyRef Name="FiscalDay" />
+            <PropertyRef Name="FiscalWeek" />
+            <PropertyRef Name="FiscalMonth" />
+            <PropertyRef Name="FiscalQuarter" />
+            <PropertyRef Name="CalendarDayOfYear" />
+            <PropertyRef Name="CalendarWeekOfYear" />
+            <PropertyRef Name="CalendarMonth" />
+            <PropertyRef Name="CalendarQuarter" />
+          </Key>
+          <Property Name="Date" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="FiscalDay" Type="Int32" Nullable="false" />
+          <Property Name="FiscalWeek" Type="Int32" Nullable="false" />
+          <Property Name="FiscalMonth" Type="Int32" Nullable="false" />
+          <Property Name="FiscalQuarter" Type="Int32" Nullable="false" />
+          <Property Name="CalendarDayOfYear" Type="Int32" Nullable="false" />
+          <Property Name="CalendarWeekOfYear" Type="Int32" Nullable="false" />
+          <Property Name="CalendarMonth" Type="Int32" Nullable="false" />
+          <Property Name="CalendarQuarter" Type="Int32" Nullable="false" />
+          <Property Name="FiscalYear" Type="Int32" />
+        </EntityType>
+        <EntityType Name="Trolley_Program">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" />
+          <Property Name="Id_Programa" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="No_linea" Type="Int32" />
+          <Property Name="No_Cabezal" Type="Int32" />
+          <Property Name="No_Posicion" Type="Int32" />
+          <Property Name="No_Trolley" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Id_Linea" Type="Int32" />
+          <NavigationProperty Name="Linea" Relationship="BAESystemsGuaymasModel.FK_TrolleyProgram_Lineas" FromRole="Trolley_Program" ToRole="Linea" />
+        </EntityType>
+        <Association Name="FK_TrolleyProgram_Lineas">
+          <End Type="BAESystemsGuaymasModel.Linea" Role="Linea" Multiplicity="0..1" />
+          <End Type="BAESystemsGuaymasModel.Trolley_Program" Role="Trolley_Program" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Linea">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Trolley_Program">
+              <PropertyRef Name="Id_Linea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
-        <EntityContainerMapping StorageEntityContainer="BAESystemsGuaymasModelStoreContainer" CdmEntityContainer="BAESystemsGuaymasEntities1">
+        <EntityContainerMapping StorageEntityContainer="BAESystemsGuaymasModelStoreContainer" CdmEntityContainer="BAESystemsGuaymasEntities">
           <EntitySetMapping Name="Acomodoes">
             <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Acomodo">
               <MappingFragment StoreEntitySet="Acomodo">
@@ -1619,69 +862,14 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="Auditorias">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Auditoria">
-              <MappingFragment StoreEntitySet="Auditoria">
+          <EntitySetMapping Name="Ensambles">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Ensamble">
+              <MappingFragment StoreEntitySet="Ensambles">
                 <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Fecha" ColumnName="Fecha" />
-                <ScalarProperty Name="Auditado_Por" ColumnName="Auditado_Por" />
-                <ScalarProperty Name="Checklist" ColumnName="Checklist" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Auditoria_Respuestas">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Auditoria_Respuestas">
-              <MappingFragment StoreEntitySet="Auditoria_Respuestas">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="PreguntaId" ColumnName="PreguntaId" />
-                <ScalarProperty Name="AuditoriaId" ColumnName="AuditoriaId" />
-                <ScalarProperty Name="Respuesta" ColumnName="Respuesta" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Checklists">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Checklist">
-              <MappingFragment StoreEntitySet="Checklist">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Fecha" ColumnName="Fecha" />
-                <ScalarProperty Name="Contestado_Por" ColumnName="Contestado_Por" />
-                <ScalarProperty Name="Equipo_Id" ColumnName="Equipo_Id" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Checklist_Preguntas">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Checklist_Preguntas">
-              <MappingFragment StoreEntitySet="Checklist_Preguntas">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Pregunta" ColumnName="Pregunta" />
-                <ScalarProperty Name="Respuesta_Deseada" ColumnName="Respuesta_Deseada" />
-                <ScalarProperty Name="Equipo" ColumnName="Equipo" />
-                <ScalarProperty Name="Lunes" ColumnName="Lunes" />
-                <ScalarProperty Name="Martes" ColumnName="Martes" />
-                <ScalarProperty Name="Miercoles" ColumnName="Miercoles" />
-                <ScalarProperty Name="Jueves" ColumnName="Jueves" />
-                <ScalarProperty Name="Viernes" ColumnName="Viernes" />
-                <ScalarProperty Name="Sabado" ColumnName="Sabado" />
-                <ScalarProperty Name="Domingo" ColumnName="Domingo" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Checklist_Respuestas">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Checklist_Respuestas">
-              <MappingFragment StoreEntitySet="Checklist_Respuestas">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Respuesta" ColumnName="Respuesta" />
-                <ScalarProperty Name="Pregunta_Id" ColumnName="Pregunta_Id" />
-                <ScalarProperty Name="Checklist_Id" ColumnName="Checklist_Id" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Ensambles_T">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Ensambles_T">
-              <MappingFragment StoreEntitySet="Ensambles_T">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Numero" ColumnName="Numero" />
-                <ScalarProperty Name="LineaId" ColumnName="LineaId" />
+                <ScalarProperty Name="EnsambleBase" ColumnName="EnsambleBase" />
+                <ScalarProperty Name="EnsambleEspecifico" ColumnName="EnsambleEspecifico" />
+                <ScalarProperty Name="Linea1" ColumnName="Linea1" />
+                <ScalarProperty Name="Linea2" ColumnName="Linea2" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -1728,34 +916,6 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="Requests">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Request">
-              <MappingFragment StoreEntitySet="Request">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Id_status" ColumnName="Id_status" />
-                <ScalarProperty Name="Equipo" ColumnName="Equipo" />
-                <ScalarProperty Name="Usuario" ColumnName="Usuario" />
-                <ScalarProperty Name="No_part" ColumnName="No_part" />
-                <ScalarProperty Name="WorkOrder" ColumnName="WorkOrder" />
-                <ScalarProperty Name="Description" ColumnName="Description" />
-                <ScalarProperty Name="Accion_correctiva" ColumnName="Accion_correctiva" />
-                <ScalarProperty Name="Falla_Tecnico" ColumnName="Falla_Tecnico" />
-                <ScalarProperty Name="No_Operador" ColumnName="No_Operador" />
-                <ScalarProperty Name="Fecha_Reporte" ColumnName="Fecha_Reporte" />
-                <ScalarProperty Name="Nombre_Modifico" ColumnName="Nombre_Modifico" />
-                <ScalarProperty Name="fecha_modificacion" ColumnName="fecha_modificacion" />
-                <ScalarProperty Name="Nombre_Cierre" ColumnName="Nombre_Cierre" />
-                <ScalarProperty Name="Fecha_Cierre" ColumnName="Fecha_Cierre" />
-                <ScalarProperty Name="Contribuidor" ColumnName="Contribuidor" />
-                <ScalarProperty Name="Urgent" ColumnName="Urgent" />
-                <ScalarProperty Name="Tiempo_atencion" ColumnName="Tiempo_atencion" />
-                <ScalarProperty Name="Week_apertura" ColumnName="Week_apertura" />
-                <ScalarProperty Name="Week_cierre" ColumnName="Week_cierre" />
-                <ScalarProperty Name="Comentarios" ColumnName="Comentarios" />
-                <ScalarProperty Name="AreaId" ColumnName="AreaId" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
           <EntitySetMapping Name="TrolleySetups">
             <EntityTypeMapping TypeName="BAESystemsGuaymasModel.TrolleySetup">
               <MappingFragment StoreEntitySet="TrolleySetup">
@@ -1774,93 +934,12 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="Employees">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Employee">
-              <MappingFragment StoreEntitySet="Employees">
-                <ScalarProperty Name="EmployeeID" ColumnName="EmployeeID" />
-                <ScalarProperty Name="UserName" ColumnName="UserName" />
-                <ScalarProperty Name="Password" ColumnName="Password" />
-                <ScalarProperty Name="JobTitleID" ColumnName="JobTitleID" />
-                <ScalarProperty Name="EmployeeNumber" ColumnName="EmployeeNumber" />
-                <ScalarProperty Name="EmployeeStampNumber" ColumnName="EmployeeStampNumber" />
-                <ScalarProperty Name="Name" ColumnName="Name" />
-                <ScalarProperty Name="FatherLastName" ColumnName="FatherLastName" />
-                <ScalarProperty Name="MotherLastName" ColumnName="MotherLastName" />
-                <ScalarProperty Name="NameViewChar" ColumnName="NameViewChar" />
-                <ScalarProperty Name="ShiftID" ColumnName="ShiftID" />
-                <ScalarProperty Name="Email" ColumnName="Email" />
-                <ScalarProperty Name="MobilePhone" ColumnName="MobilePhone" />
-                <ScalarProperty Name="Extension" ColumnName="Extension" />
-                <ScalarProperty Name="Location" ColumnName="Location" />
-                <ScalarProperty Name="EmployeeStatus" ColumnName="EmployeeStatus" />
-                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
-                <ScalarProperty Name="EmployeeClassID" ColumnName="EmployeeClassID" />
-                <ScalarProperty Name="EmployeeContractTypeID" ColumnName="EmployeeContractTypeID" />
-                <ScalarProperty Name="LineID" ColumnName="LineID" />
-                <ScalarProperty Name="EmployeeTypeID" ColumnName="EmployeeTypeID" />
-                <ScalarProperty Name="BuildingID" ColumnName="BuildingID" />
-                <ScalarProperty Name="RecordAddedDate" ColumnName="RecordAddedDate" />
-                <ScalarProperty Name="RecordDeleted" ColumnName="RecordDeleted" />
-                <ScalarProperty Name="RecordDeletedDate" ColumnName="RecordDeletedDate" />
-                <ScalarProperty Name="PasswordHash" ColumnName="PasswordHash" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Fallas">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Falla">
-              <MappingFragment StoreEntitySet="Fallas">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Descripcion" ColumnName="Descripcion" />
-                <ScalarProperty Name="AreaId" ColumnName="AreaId" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
           <EntitySetMapping Name="Id_Status">
             <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Id_Status">
               <MappingFragment StoreEntitySet="Id_Status">
                 <ScalarProperty Name="Id_Status1" ColumnName="Id_Status" />
                 <ScalarProperty Name="Description" ColumnName="Description" />
                 <ScalarProperty Name="Campo1" ColumnName="Campo1" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Request_Status">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Request_Status">
-              <MappingFragment StoreEntitySet="Request_Status">
-                <ScalarProperty Name="id" ColumnName="id" />
-                <ScalarProperty Name="Id_Trolley" ColumnName="Id_Trolley" />
-                <ScalarProperty Name="Id_Status" ColumnName="Id_Status" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Trolley_Program">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Trolley_Program">
-              <MappingFragment StoreEntitySet="Trolley_Program">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Id_Programa" ColumnName="Id_Programa" />
-                <ScalarProperty Name="No_linea" ColumnName="No_linea" />
-                <ScalarProperty Name="No_Cabezal" ColumnName="No_Cabezal" />
-                <ScalarProperty Name="No_Posicion" ColumnName="No_Posicion" />
-                <ScalarProperty Name="No_Trolley" ColumnName="No_Trolley" />
-                <ScalarProperty Name="Id_Linea" ColumnName="Id_Linea" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="TrolleySetup_Backup">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.TrolleySetup_Backup">
-              <MappingFragment StoreEntitySet="TrolleySetup_Backup">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Id_Proceso" ColumnName="Id_Proceso" />
-                <ScalarProperty Name="Id_Programa" ColumnName="Id_Programa" />
-                <ScalarProperty Name="WorkOrder" ColumnName="WorkOrder" />
-                <ScalarProperty Name="PiezasProgramadas" ColumnName="PiezasProgramadas" />
-                <ScalarProperty Name="Trolleys" ColumnName="Trolleys" />
-                <ScalarProperty Name="Status" ColumnName="Status" />
-                <ScalarProperty Name="FechaCreacion" ColumnName="FechaCreacion" />
-                <ScalarProperty Name="FechaFinalizacion" ColumnName="FechaFinalizacion" />
-                <ScalarProperty Name="Linea" ColumnName="Linea" />
-                <ScalarProperty Name="Id_Linea" ColumnName="Id_Linea" />
-                <ScalarProperty Name="Comentarios" ColumnName="Comentarios" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -1908,57 +987,32 @@ warning 6002: The table/view 'BAESystemsGuaymas.RH.EmployeeFullInfo' does not ha
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="CRDays">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.CRDay">
-              <MappingFragment StoreEntitySet="CRDays">
-                <ScalarProperty Name="CRID" ColumnName="CRID" />
-                <ScalarProperty Name="date_difference" ColumnName="date_difference" />
+          <EntitySetMapping Name="FiscalCalendars">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.FiscalCalendar">
+              <MappingFragment StoreEntitySet="FiscalCalendar">
+                <ScalarProperty Name="FiscalYear" ColumnName="FiscalYear" />
+                <ScalarProperty Name="CalendarQuarter" ColumnName="CalendarQuarter" />
+                <ScalarProperty Name="CalendarMonth" ColumnName="CalendarMonth" />
+                <ScalarProperty Name="CalendarWeekOfYear" ColumnName="CalendarWeekOfYear" />
+                <ScalarProperty Name="CalendarDayOfYear" ColumnName="CalendarDayOfYear" />
+                <ScalarProperty Name="FiscalQuarter" ColumnName="FiscalQuarter" />
+                <ScalarProperty Name="FiscalMonth" ColumnName="FiscalMonth" />
+                <ScalarProperty Name="FiscalWeek" ColumnName="FiscalWeek" />
+                <ScalarProperty Name="FiscalDay" ColumnName="FiscalDay" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="EmployeeFullInfoes">
-            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.EmployeeFullInfo">
-              <MappingFragment StoreEntitySet="EmployeeFullInfo">
-                <ScalarProperty Name="EmployeeID" ColumnName="EmployeeID" />
-                <ScalarProperty Name="EmployeeStatus" ColumnName="EmployeeStatus" />
-                <ScalarProperty Name="UserName" ColumnName="UserName" />
-                <ScalarProperty Name="Password" ColumnName="Password" />
-                <ScalarProperty Name="EmployeeNumber" ColumnName="EmployeeNumber" />
-                <ScalarProperty Name="EmployeeStampNumber" ColumnName="EmployeeStampNumber" />
-                <ScalarProperty Name="Name" ColumnName="Name" />
-                <ScalarProperty Name="FatherLastName" ColumnName="FatherLastName" />
-                <ScalarProperty Name="MotherLastName" ColumnName="MotherLastName" />
-                <ScalarProperty Name="FullName" ColumnName="FullName" />
-                <ScalarProperty Name="NameViewChar" ColumnName="NameViewChar" />
-                <ScalarProperty Name="EmployeeReportToID" ColumnName="EmployeeReportToID" />
-                <ScalarProperty Name="EmployeeReportToNumber" ColumnName="EmployeeReportToNumber" />
-                <ScalarProperty Name="ReportToName" ColumnName="ReportToName" />
-                <ScalarProperty Name="JobTitleName" ColumnName="JobTitleName" />
-                <ScalarProperty Name="DepartmentName" ColumnName="DepartmentName" />
-                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
-                <ScalarProperty Name="EndDate" ColumnName="EndDate" />
-                <ScalarProperty Name="Code" ColumnName="Code" />
-                <ScalarProperty Name="EmployeeType" ColumnName="EmployeeType" />
-                <ScalarProperty Name="Email" ColumnName="Email" />
-                <ScalarProperty Name="MobilePhone" ColumnName="MobilePhone" />
-                <ScalarProperty Name="BirthDate" ColumnName="BirthDate" />
-                <ScalarProperty Name="PersonalPhone" ColumnName="PersonalPhone" />
-                <ScalarProperty Name="Gender" ColumnName="Gender" />
-                <ScalarProperty Name="BloodType" ColumnName="BloodType" />
-                <ScalarProperty Name="Scholarship" ColumnName="Scholarship" />
-                <ScalarProperty Name="ChildrenNumber" ColumnName="ChildrenNumber" />
-                <ScalarProperty Name="EconomicDependents" ColumnName="EconomicDependents" />
-                <ScalarProperty Name="ContractTypeName" ColumnName="ContractTypeName" />
-                <ScalarProperty Name="ClassName" ColumnName="ClassName" />
-                <ScalarProperty Name="BuildingName" ColumnName="BuildingName" />
-                <ScalarProperty Name="MaritalStatus" ColumnName="MaritalStatus" />
-                <ScalarProperty Name="LineID" ColumnName="LineID" />
-                <ScalarProperty Name="Line" ColumnName="Line" />
-                <ScalarProperty Name="ShowInOrgChart" ColumnName="ShowInOrgChart" />
-                <ScalarProperty Name="StatusTraining" ColumnName="StatusTraining" />
-                <ScalarProperty Name="Extension" ColumnName="Extension" />
-                <ScalarProperty Name="ShiftBAE" ColumnName="ShiftBAE" />
-                <ScalarProperty Name="ShiftID" ColumnName="ShiftID" />
+          <EntitySetMapping Name="Trolley_Program">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Trolley_Program">
+              <MappingFragment StoreEntitySet="Trolley_Program">
+                <ScalarProperty Name="Id_Linea" ColumnName="Id_Linea" />
+                <ScalarProperty Name="No_Trolley" ColumnName="No_Trolley" />
+                <ScalarProperty Name="No_Posicion" ColumnName="No_Posicion" />
+                <ScalarProperty Name="No_Cabezal" ColumnName="No_Cabezal" />
+                <ScalarProperty Name="No_linea" ColumnName="No_linea" />
+                <ScalarProperty Name="Id_Programa" ColumnName="Id_Programa" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

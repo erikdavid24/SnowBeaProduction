@@ -1,0 +1,78 @@
+@{
+    ViewBag.Title = "Gestor de Trolley";
+    string ventana = TempData["Ventana"] != null ? TempData["Ventana"].ToString() : "maquinas";
+}
+
+@section Styles {
+    <link href="~/Content/css/trolley-gestion.css" rel="stylesheet" />
+}
+
+<div class="ts-header">
+    <h4><i class="fas fa-cogs" style="color:#5d78ff;margin-right:8px;"></i>Gestor de Trolley</h4>
+</div>
+
+<ul class="nav nav-tabs gestion-tabs" role="tablist">
+    <li class="nav-item"><a class="nav-link @(ventana == "maquinas" ? "active" : "")" href="#" data-tab="maquinas">Máquinas</a></li>
+    <li class="nav-item"><a class="nav-link @(ventana == "ensambles" ? "active" : "")" href="#" data-tab="ensambles">Ensambles</a></li>
+    <li class="nav-item"><a class="nav-link @(ventana == "programas" ? "active" : "")" href="#" data-tab="programas">Programas</a></li>
+    <li class="nav-item"><a class="nav-link @(ventana == "acomodos" ? "active" : "")" href="#" data-tab="acomodos">Acomodos</a></li>
+</ul>
+
+<div id="maquinasContainer" class="gestion-panel" style="display:@(ventana == "maquinas" ? "block" : "none")"></div>
+
+<div id="ensamblesContainer" class="gestion-panel" style="display:@(ventana == "ensambles" ? "block" : "none")">
+    <div class="gestion-toolbar">
+        <input type="text" id="txtBuscarEnsamble" class="form-control gestion-search" placeholder="Buscar ensamble por número..." />
+        <button class="k-button k-primary btn-rounded" id="btnAgregarEnsamble"><span class="k-icon k-i-plus"></span> Agregar Ensamble</button>
+    </div>
+    <div id="ensamblesTablePlace"></div>
+</div>
+
+<div id="programasContainer" class="gestion-panel" style="display:@(ventana == "programas" ? "block" : "none")">
+    <div class="gestion-toolbar">
+        <input type="text" id="txtBuscarPrograma" class="form-control gestion-search" placeholder="Buscar programa por número..." />
+        <button class="k-button k-primary btn-rounded" id="btnAgregarPrograma"><span class="k-icon k-i-plus"></span> Agregar Programa</button>
+    </div>
+    <div id="programasTablePlace"></div>
+</div>
+
+<div id="acomodosContainer" class="gestion-panel" style="display:@(ventana == "acomodos" ? "block" : "none")"></div>
+
+@(Html.Kendo().Window().Name("wndGestion").Title("").Visible(false).Modal(true).Width(500)
+    .Events(e => e.Close("onWndGestionCerrar"))
+    .Content(@<text><div id="wndGestionBody"></div></text>)
+)
+
+<script>
+var TG = {
+    urls: {
+        maquinasTable:        '@Url.Action("MaquinasTable",        "TrolleyGestion")',
+        agregarMaquinaModal:  '@Url.Action("AgregarMaquinaModal",  "TrolleyGestion")',
+        editarMaquinaModal:   '@Url.Action("EditarMaquinaModal",   "TrolleyGestion")',
+        equiposPorLinea:      '@Url.Action("EquiposPorLinea",      "TrolleyGestion")',
+        agregarMaquina:       '@Url.Action("AgregarMaquina",       "TrolleyGestion")',
+        editarMaquina:        '@Url.Action("EditarMaquina",        "TrolleyGestion")',
+        eliminarMaquina:      '@Url.Action("EliminarMaquina",      "TrolleyGestion")',
+        ensamblesTable:       '@Url.Action("EnsamblesTable",       "TrolleyGestion")',
+        agregarEnsambleModal: '@Url.Action("AgregarEnsambleModal", "TrolleyGestion")',
+        editarEnsambleModal:  '@Url.Action("EditarEnsambleModal",  "TrolleyGestion")',
+        agregarEnsamble:      '@Url.Action("AgregarEnsamble",      "TrolleyGestion")',
+        editarEnsamble:       '@Url.Action("EditarEnsamble",       "TrolleyGestion")',
+        eliminarEnsamble:     '@Url.Action("EliminarEnsamble",     "TrolleyGestion")',
+        programasTable:       '@Url.Action("ProgramasTable",       "TrolleyGestion")',
+        agregarProgramaModal: '@Url.Action("AgregarProgramaModal", "TrolleyGestion")',
+        editarProgramaModal:  '@Url.Action("EditarProgramaModal",  "TrolleyGestion")',
+        agregarPrograma:      '@Url.Action("AgregarPrograma",      "TrolleyGestion")',
+        editarPrograma:       '@Url.Action("EditarPrograma",       "TrolleyGestion")',
+        eliminarPrograma:     '@Url.Action("EliminarPrograma",     "TrolleyGestion")',
+        acomodoTable:         '@Url.Action("AcomodoTable",         "TrolleyGestion")',
+        agregarAcomodoModal:  '@Url.Action("AgregarAcomodoModal",  "TrolleyGestion")',
+        editarAcomodoModal:   '@Url.Action("EditarAcomodoModal",   "TrolleyGestion")',
+        acomodoAutocompletado:'@Url.Action("AcomodoAutocompletado","TrolleyGestion")',
+        agregarAcomodo:       '@Url.Action("AgregarAcomodo",       "TrolleyGestion")',
+        editarAcomodo:        '@Url.Action("EditarAcomodo",        "TrolleyGestion")',
+        eliminarAcomodo:      '@Url.Action("EliminarAcomodo",      "TrolleyGestion")'
+    }
+};
+</script>
+@Scripts.Render("~/Scripts/trolley-gestion.js")

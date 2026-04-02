@@ -1,0 +1,28 @@
+@model List<SnowTrolleyProduction.Models.MaquinaGestion>
+
+<div class="gestion-toolbar">
+    <button class="k-button k-primary btn-rounded" id="btnAgregarMaquina"><span class="k-icon k-i-plus"></span> Agregar Máquina</button>
+</div>
+
+<table class="table table-striped gestion-table">
+    <thead>
+        <tr>
+            <th>Máquina</th>
+            <th>Línea</th>
+            <th style="width:1%;white-space:nowrap;">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var maq in Model)
+        {
+            <tr>
+                <td>@maq.Equipo.EquipoDescripcion</td>
+                <td>@maq.Equipo.NumeroLinea</td>
+                <td style="white-space:nowrap;">
+                    <button class="k-button btn-rounded btn-edit-maquina" data-id="@maq.Id"><i class="fas fa-edit"></i> Editar</button>
+                    <button class="k-button btn-rounded btn-del-maquina" data-id="@maq.Id" style="color:#ef4444;border-color:#fecaca;"><i class="fas fa-trash-alt"></i> Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

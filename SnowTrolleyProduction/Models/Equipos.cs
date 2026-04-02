@@ -18,7 +18,6 @@ namespace SnowTrolleyProduction.Models
         public Equipos()
         {
             this.Acomodoes = new HashSet<Acomodo>();
-            this.Checklists = new HashSet<Checklist>();
             this.Maquinas = new HashSet<Maquina>();
         }
     
@@ -32,8 +31,6 @@ namespace SnowTrolleyProduction.Models
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Acomodo> Acomodoes { get; set; }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Checklist> Checklists { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Maquina> Maquinas { get; set; }
         public virtual Linea Linea { get; set; }
