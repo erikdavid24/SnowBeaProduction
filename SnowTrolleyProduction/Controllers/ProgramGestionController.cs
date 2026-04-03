@@ -76,7 +76,7 @@ namespace SnowTrolleyProduction.Controllers
                 item.FechaCreacion = DateTime.Now;
                 item.Trolleys      = "";
 
-                // Auto-insert all sibling lados of the same ensamble
+                // Inserta automáticamente todos los lados hermanos del ensamble
                 var lados = _svc.GetLadosHermanos(item.Id_Programa);
                 if (lados != null && lados.Count > 1)
                 {

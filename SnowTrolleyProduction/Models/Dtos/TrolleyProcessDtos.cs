@@ -11,9 +11,9 @@ namespace SnowTrolleyProduction.Models.Dtos
         public string       workOrder         { get; set; }
         public int          piezasProgramadas { get; set; }
         public List<string> trolleys          { get; set; }
-        /// <summary>Todos los lados del ensamble agrupados (ej: ["285a1202-6_s1","285a1202-6_s2"])</summary>
+        /// <summary>Lados del ensamble agrupados</summary>
         public List<string> lados             { get; set; }
-        /// <summary>IDs de todos los registros TrolleySetup del grupo (para iniciar Setup de todos juntos)</summary>
+        /// <summary>IDs de todos los registros TrolleySetup para iniciar Setup de todos</summary>
         public List<int>    idsProcesos       { get; set; }
     }
 
