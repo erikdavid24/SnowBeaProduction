@@ -82,7 +82,7 @@
         }
         function trolleyBadge(t, ok) { return '<span class="trolley-badge ' + (ok ? 'ok' : 'mismatch') + '">' + t + '</span>'; }
 
-        // Cargar botones de línea
+        // Carga botones de línea
         $.get('@Url.Action("GetLineas","ProgramGestion")', function (l) {
             var w = $('#lineaBtns');
             if (!l || !l.length) { w.html('<span style="color:#9aa0b8;">Sin líneas</span>'); return; }
@@ -112,7 +112,7 @@
                     return;
                 }
 
-                // Save trolleys of first active entry for semaphore
+                // Guarda trolleys del primer activo
                 if (data[0].trolleys) {
                     refTrolleys = data[0].trolleys.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
                 }
@@ -127,7 +127,7 @@
                     var st = it.status === 'Arranque'
                         ? '<span class="badge-arranque">Arranque</span>'
                         : '<span class="badge-setup">Setup</span>';
-                    // Show each individual programa (id_Programa is already the ensamble name from grouping, show as-is)
+                    // Muestra cada programa
                     tb.append('<tr><td><strong>' + (it.id_Programa || '') + '</strong></td><td>' + (it.workOrder || '') + '</td><td>' + bd + '</td><td>' + st + '</td></tr>');
                 });
 
@@ -145,7 +145,7 @@
                     return;
                 }
 
-                // Collect one id per row (one per side/programa)
+                // Recopila ids de procesos
                 var ids = $.map(proc, function (p) { return p.id_Proceso; });
 
                 $.post(TP.urls.trolleys, { idProcesos: ids }, function (data) {
