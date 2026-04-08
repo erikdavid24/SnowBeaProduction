@@ -167,6 +167,17 @@ namespace SnowTrolleyProduction.Controllers.service
                         string woLinea = lineaFinal.HasValue ? lineaFinal.Value.ToString() : "0";
                         string workOrderGenerado = $"L{woLinea}{semanaPlan}{anioActual}000";
 
+
+                        int woDuplicada = conn.QueryFirstOrDefault<int>(@"
+                            SELECT COUNT(*)
+                            FROM [Proccess].[TrolleySetup]
+                            WHERE Id_Programa = @prog
+                              AND WorkOrder    = @wo
+                              AND Status NOT IN ('Completado')",
+                            new { prog = programaReal, wo = workOrderGenerado });
+
+                        if (woDuplicada > 0) continue;
+
                         registros.Add(new
                         {
                             IdProceso         = 1,
