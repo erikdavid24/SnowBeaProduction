@@ -95,6 +95,138 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
+        public List<ExcelPreviewItemDto> ParseExcelForPreview(Stream streamArchivo)
+        {
+            var lista = new List<ExcelPreviewItemDto>();
+            string anioActual = DateTime.Now.Year.ToString().Substring(2);
+
+            using (var workBook = new XLWorkbook(streamArchivo))
+            using (var conn = new SqlConnection(GetConnectionString()))
+            {
+                conn.Open();
+                var sheet = workBook.Worksheets.FirstOrDefault(w => w.Name.IndexOf("SMT Run Plan", StringComparison.OrdinalIgnoreCase) >= 0);
+                if (sheet == null) sheet = workBook.Worksheet(3);
+
+                string nombreHoja = sheet.Name ?? "";
+                string digitosHoja = new string(nombreHoja.Where(char.IsDigit).ToArray());
+                string semanaPlan = digitosHoja.Length >= 2 ? digitosHoja.Substring(0, 2)
+                                  : digitosHoja.Length == 1 ? digitosHoja.PadLeft(2, '0')
+                                  : "01";
+
+                var rows = sheet.RangeUsed().RowsUsed().Skip(1).ToList();
+
+                foreach (var row in rows)
+                {
+                    var filaReal = row.WorksheetRow();
+
+                    DateTime? fechaPlanOpt = ObtenerFechaDeExcel(filaReal.Cell("A"));
+                    if (!fechaPlanOpt.HasValue) continue;
+                    DateTime fechaPlan = fechaPlanOpt.Value;
+
+                    string programaBaseExcel = filaReal.Cell("B").GetString()?.Trim();
+                    if (string.IsNullOrWhiteSpace(programaBaseExcel)) continue;
+
+                    string lineaExcelStr = filaReal.Cell("H").GetString()?.Trim() ?? "";
+                    int? lineaFinal = null;
+                    if (int.TryParse(lineaExcelStr, out int parsedLine)) lineaFinal = parsedLine;
+
+                    int piezas = ObtenerEntero(filaReal.Cell("Y"));
+
+                    var infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
+                        "SELECT TOP 1 Id, Linea1 FROM [Proccess].[Ensambles] WHERE EnsambleBase = @eb AND Linea1 = @ln",
+                        new { eb = programaBaseExcel, ln = lineaFinal });
+
+                    if (infoEnsamble == null)
+                        infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
+                            "SELECT TOP 1 Id, Linea1 FROM [Proccess].[Ensambles] WHERE EnsambleBase = @eb",
+                            new { eb = programaBaseExcel });
+
+                    if (infoEnsamble != null && infoEnsamble.Linea1.HasValue)
+                        lineaFinal = infoEnsamble.Linea1;
+
+                    List<string> programasReales = new List<string>();
+                    if (infoEnsamble != null)
+                    {
+                        programasReales = conn.Query<string>(
+                            "SELECT Numero FROM [Proccess].[Programas] WHERE Ensamble = @eid AND Numero IS NOT NULL AND Numero <> '' ORDER BY Numero ASC",
+                            new { eid = infoEnsamble.Id }).ToList();
+                    }
+
+                    if (!programasReales.Any()) programasReales.Add(programaBaseExcel);
+
+                    foreach (var programaReal in programasReales)
+                    {
+                        string woLinea = lineaFinal.HasValue ? lineaFinal.Value.ToString() : "0";
+                        string workOrderGenerado = $"L{woLinea}{semanaPlan}{anioActual}000";
+
+                        int woDuplicada = conn.QueryFirstOrDefault<int>(@"
+                            SELECT COUNT(*)
+                            FROM [Proccess].[TrolleySetup]
+                            WHERE Id_Programa = @prog
+                              AND WorkOrder    = @wo
+                              AND Status NOT IN ('Completado')",
+                            new { prog = programaReal, wo = workOrderGenerado });
+
+                        lista.Add(new ExcelPreviewItemDto
+                        {
+                            Id_Programa = programaReal,
+                            WorkOrder = workOrderGenerado,
+                            PiezasProgramadas = piezas,
+                            Status = "Creado",
+                            FechaCreacion = fechaPlan,
+                            Id_Linea = lineaFinal,
+                            Comentarios = "Carga Excel",
+                            Ensamble = programaBaseExcel,
+                            EsDuplicado = woDuplicada > 0,
+                            RazonRechazo = woDuplicada > 0 ? $"WorkOrder '{workOrderGenerado}' ya existe" : ""
+                        });
+                    }
+                }
+            }
+            return lista;
+        }
+
+        public int GuardarDesdeLista(List<ExcelPreviewItemDto> items)
+        {
+            int conteo = 0;
+            string sqlInsert = @"INSERT INTO [Proccess].[TrolleySetup] 
+                   (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea) 
+                   VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
+
+            using (var conn = new SqlConnection(GetConnectionString()))
+            {
+                conn.Open();
+                using (var transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (var item in items)
+                        {
+                            if (item.EsDuplicado) continue;
+                            
+                            conn.Execute(sqlInsert, new
+                            {
+                                IdProceso         = 1,
+                                IdPrograma        = (object)item.Id_Programa,
+                                WorkOrder         = (object)item.WorkOrder,
+                                PiezasProgramadas = item.PiezasProgramadas,
+                                Trolleys          = "",
+                                Status            = item.Status ?? "Creado",
+                                FechaCreacion     = item.FechaCreacion,
+                                IdLinea           = (object)item.Id_Linea ?? DBNull.Value,
+                                Comentarios       = (object)item.Comentarios ?? DBNull.Value,
+                                Linea             = item.Id_Linea ?? 0
+                            }, transaction);
+                            conteo++;
+                        }
+                        transaction.Commit();
+                    }
+                    catch { transaction.Rollback(); throw; }
+                }
+            }
+            return conteo;
+        }
+
         public int CargarDesdeExcel(Stream streamArchivo, string nombreArchivo)
         {
             int conteoInsertados = 0;

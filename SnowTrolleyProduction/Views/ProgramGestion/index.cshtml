@@ -43,16 +43,52 @@
     </div>
 </div>
 
-@(Html.Kendo().Window().Name("wndExcel").Title("Cargar Plan de Producción").Visible(false).Modal(true).Width(450)
+@(Html.Kendo().Window().Name("wndExcel").Title("Cargar Plan de Producción").Visible(false).Modal(true).Width(500)
     .Content(@<text>
-        <form method="post" action="@Url.Action("CargaMasiva","ProgramGestion")" enctype="multipart/form-data">
-            <div class="wnd-excel-body">
-                <i class="fas fa-file-excel wnd-excel-icon"></i>
-                <p class="wnd-excel-text">Selecciona tu archivo <b>.xlsx</b> para cargar el plan.</p>
-                <input type="file" name="archivoExcel" accept=".xlsx,.xls" class="wnd-excel-file" required />
-                <button type="submit" class="k-button k-primary wnd-excel-submit"><i class="fas fa-upload"></i> Subir y Procesar</button>
+        <div class="wnd-excel-body" style="padding:20px;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <i class="fas fa-file-excel" style="font-size:64px;color:#1d6f42;"></i>
             </div>
-        </form>
+            <p style="text-align:center;color:#6b7280;margin-bottom:20px;">Selecciona tu archivo <b>.xlsx</b> para previsualizar antes de cargar.</p>
+            <input type="file" id="archivoExcelInput" accept=".xlsx,.xls" class="wnd-excel-file" style="width:100%;margin-bottom:12px;" />
+            <div id="excelUploadProgress" style="display:none;margin-top:8px;color:#3b82f6;text-align:center;">
+                <i class="fas fa-spinner fa-spin"></i> Procesando archivo...
+            </div>
+            <div style="margin-top:16px;text-align:right;">
+                <button type="button" class="k-button" onclick="$('#wndExcel').data('kendoWindow').close();">Cancelar</button>
+                <button type="button" class="k-button k-primary" id="btnPreviewExcel" style="margin-left:8px;">
+                    <i class="fas fa-search"></i> Vista Previa
+                </button>
+            </div>
+        </div>
+    </text>)
+)
+
+@(Html.Kendo().Window().Name("wndPreview").Title("Vista Previa - Plan de Producción").Visible(false).Modal(true).Width(1200).Height(700)
+    .Content(@<text>
+        <div style="padding:16px;display:flex;flex-direction:column;height:100%;">
+            <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div style="flex:1;min-width:300px;">
+                    <span id="previewCountLabel" style="font-size:14px;color:#374151;font-weight:600;"></span>
+                    <br/>
+                    <span id="previewDuplicateLabel" style="font-size:13px;color:#ef4444;"></span>
+                </div>
+                <div>
+                    <button type="button" class="k-button k-button-sm" id="btnEliminarDuplicados" style="margin-right:8px;">
+                        <i class="fas fa-broom"></i> Limpiar Duplicados
+                    </button>
+                </div>
+            </div>
+            <div id="gridPreviewContainer" style="flex:1;min-height:0;"></div>
+            <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
+                <button type="button" class="k-button" id="btnDescartarPreview">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="k-button k-primary" id="btnConfirmarCarga">
+                    <i class="fas fa-check"></i> Confirmar y Guardar
+                </button>
+            </div>
+        </div>
     </text>)
 )
 
@@ -204,7 +240,9 @@ var PG = {
         semanaFiscal:        '@Url.Action("GetSemanaFiscal",     "ProgramGestion")',
         getLadosPorEnsamble: '@Url.Action("GetLadosPorEnsamble", "ProgramGestion")',
         getTrolleysPorLinea: '@Url.Action("GetTrolleysPorLinea", "ProgramGestion")',
-        guardarSetupTrolleys:'@Url.Action("GuardarSetupTrolleys","ProgramGestion")'
+        guardarSetupTrolleys:'@Url.Action("GuardarSetupTrolleys","ProgramGestion")',
+        cargaMasiva:         '@Url.Action("CargaMasiva",         "ProgramGestion")',
+        guardarPreview:      '@Url.Action("GuardarPreview",      "ProgramGestion")'
     },
     msj: {
         exito: '@Html.Raw(TempData["Success"] != null ? TempData["Success"].ToString() : "")',

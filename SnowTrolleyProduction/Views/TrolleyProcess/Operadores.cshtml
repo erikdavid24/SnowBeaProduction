@@ -1,0 +1,161 @@
+﻿@{ Layout = null; }<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Tablero Operadores</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+<style>
+*{box-sizing:border-box}
+body{background:#f0f2f8;font-family:"Segoe UI",sans-serif;margin:0}
+/* ── top bar ── */
+.bar{background:#3d4465;color:#fff;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.bar h5{margin:0;font-size:1rem;font-weight:700}
+.meta{display:flex;align-items:center;gap:12px;font-size:.78rem;color:#b8bcd8}
+.bk{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:5px;padding:3px 11px;font-size:.76rem;font-weight:600;text-decoration:none}
+.bk:hover{background:rgba(255,255,255,.22);color:#fff;text-decoration:none}
+/* ── live dot ── */
+@@keyframes bl{0%,100%{opacity:1}50%{opacity:.2}}
+.dot{width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:4px;animation:bl 2s infinite}
+/* ── grid: one col per line ── */
+.mn{padding:14px}
+.grid{display:flex;gap:10px;align-items:flex-start;overflow-x:auto}
+.col{flex:1;min-width:200px}
+.ch{background:#5d6a8e;color:#fff;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:6px 11px;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:space-between}
+.cb{background:#e9ecf4;border:1px solid #dde1ef;border-top:none;border-radius:0 0 6px 6px;min-height:60px;padding:7px}
+/* ── work card ── */
+.wc{border:2px solid #e2e6f0;border-radius:7px;background:#fff;margin-bottom:7px;padding:9px 11px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.wc.a{border-left:4px solid #22c55e}
+.wc.s{border-left:4px solid #f59e0b}
+.wt{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
+.we{font-size:.85rem;font-weight:700;color:#3d4465}
+.wp{font-size:.68rem;color:#9aa0b8;margin-top:1px}
+/* ── badges ── */
+.bst{background:#fff8ec;color:#b45309;border:1px solid #fde68a;border-radius:3px;padding:1px 6px;font-size:.63rem;font-weight:700;white-space:nowrap}
+.bar2{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;border-radius:3px;padding:1px 6px;font-size:.63rem;font-weight:700;white-space:nowrap}
+/* ── detail row ── */
+.wd{font-size:.7rem;color:#646c9a;display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px}
+.wd strong{color:#3d4465}
+/* ── trolley chips ── */
+.chips{display:flex;flex-wrap:wrap;gap:3px;padding-top:5px;border-top:1px solid #f0f2f8}
+.chip{background:#22c55e;color:#fff;font-size:.62rem;font-weight:700;border-radius:3px;padding:1px 6px;white-space:nowrap}
+.cn{color:#b0b7d0;font-size:.68rem}
+/* ── col status dot ── */
+.cd{width:8px;height:8px;border-radius:50%;display:inline-block;margin-left:4px}
+.cd.a{background:#22c55e;animation:bl 2s infinite}
+.cd.s{background:#fbbf24}
+/* ── empty / error ── */
+.nd{text-align:center;color:#b0b7d0;padding:50px 20px}
+.nd i{font-size:2.6rem;display:block;margin-bottom:12px;color:#d1d5db}
+.nd strong{display:block;font-size:1rem;color:#3d4465;margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h5><i class="fas fa-hard-hat" style="color:#7c87d8;margin-right:7px"></i>Tablero Operadores &ndash; En Proceso</h5>
+  <div class="meta">
+    <span><span class="dot"></span>En vivo &middot; <span id="lh">--:--:--</span></span>
+    <a href="@Url.Action("Index","TrolleyProcess")" class="bk">&#8592; Plan de Produccion</a>
+  </div>
+</div>
+
+<div class="mn" id="mn">
+  <div class="nd"><i class="fas fa-spinner fa-spin"></i><strong>Cargando...</strong></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+<script>
+var U = '@Url.Action("ObtenerResumenSetup","TrolleyProcess")';
+
+function hd(s) {
+    if (!s) return '--';
+    var m = parseInt(s.replace(/\/Date\((-?\d+)[^)]*\)\//, '$1'));
+    if (isNaN(m)) return '--';
+    var d = new Date(m);
+    return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function badge(s) {
+    return s === 'Arranque'
+        ? '<span class="bar2"><i class="fas fa-play-circle"></i> Arranque</span>'
+        : '<span class="bst"><i class="fas fa-cog"></i> Setup</span>';
+}
+
+function chips(t) {
+    if (!t) return '<span class="cn">Sin trolleys</span>';
+    var o = '';
+    $.each(t.split(','), function (_, x) { x = x.trim(); if (x) o += '<span class="chip">' + x + '</span>'; });
+    return o || '<span class="cn">Sin trolleys</span>';
+}
+
+function render(data) {
+    var w = $('#mn').empty();
+    if (!data || !data.length) {
+        w.html('<div class="nd"><i class="fas fa-pause-circle"></i><strong>Sin actividad</strong>Ninguna linea en Setup o Arranque.</div>');
+        return;
+    }
+
+    /* group + sort lines */
+    var ls = [], pl = {};
+    $.each(data, function (_, t) {
+        if (!pl[t.linea]) { pl[t.linea] = []; ls.push(t.linea); }
+        pl[t.linea].push(t);
+    });
+    ls.sort(function (a, b) { return a - b; });
+
+    var g = $('<div class="grid"></div>');
+    $.each(ls, function (_, l) {
+        var rs = pl[l];
+        var ha = $.grep(rs, function (t) { return t.status === 'Arranque'; }).length > 0;
+        var cards = '';
+        $.each(rs, function (_, t) {
+            var cl = t.status === 'Arranque' ? 'a' : 's';
+            cards +=
+                '<div class="wc ' + cl + '">' +
+                  '<div class="wt">' +
+                    '<div><div class="we">' + (t.ensamble || t.id_Programa || '--') + '</div>' +
+                    '<div class="wp">' + (t.id_Programa || '') + '</div></div>' +
+                    badge(t.status) +
+                  '</div>' +
+                  '<div class="wd">' +
+                    '<span><strong>WO:</strong> ' + (t.workOrder || '--') + '</span>' +
+                    '<span><strong>Pzas:</strong> ' + (t.piezasProgramadas > 0 ? t.piezasProgramadas : '--') + '</span>' +
+                    '<span><i class="fas fa-clock" style="color:#9aa0b8;margin-right:2px"></i>' + hd(t.fechaCreacion) + '</span>' +
+                  '</div>' +
+                  '<div class="chips">' + chips(t.trolleys) + '</div>' +
+                '</div>';
+        });
+        g.append(
+            '<div class="col">' +
+              '<div class="ch">' +
+                '<span><i class="fas fa-industry" style="margin-right:4px"></i>Linea ' + l + '</span>' +
+                '<span class="cd ' + (ha ? 'a' : 's') + '"></span>' +
+              '</div>' +
+              '<div class="cb">' + cards + '</div>' +
+            '</div>'
+        );
+    });
+    w.append(g);
+}
+
+function tick() {
+    var n = new Date();
+    $('#lh').text(n.getHours().toString().padStart(2,'0') + ':' +
+                  n.getMinutes().toString().padStart(2,'0') + ':' +
+                  n.getSeconds().toString().padStart(2,'0'));
+}
+
+function go() {
+    $.get(U, render).fail(function () {
+        $('#mn').html('<div class="nd"><i class="fas fa-exclamation-triangle" style="color:#ef4444"></i><strong>Error de conexion</strong>Reintentando en 30s...</div>');
+    });
+}
+
+go();
+setInterval(go, 30000);
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
