@@ -202,23 +202,68 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpPost]
-        public ActionResult CargaMasiva(HttpPostedFileBase archivoExcel)
+        public ActionResult CargaMasiva(HttpPostedFileBase archivoExcel, bool? preview)
         {
+            // Preview mode
+            if (preview == true)
+            {
+                if (archivoExcel == null || archivoExcel.ContentLength == 0)
+                    return Json(new { success = false, message = "Selecciona un archivo Excel válido." });
+                
+                try
+                {
+                    var items = _svc.ParseExcelForPreview(archivoExcel.InputStream);
+                    return Json(new { success = true, data = items, totalOriginal = items.Count });
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = ex.Message });
+                }
+            }
+            
+            // Direct save mode (legacy)
             if (archivoExcel == null || archivoExcel.ContentLength == 0)
             {
                 TempData["Error"] = "Por favor selecciona un archivo de Excel válido.";
                 return RedirectToAction("Index");
             }
+            
             try
             {
-                int n = _svc.CargarDesdeExcel(archivoExcel.InputStream,
-                            System.IO.Path.GetFileNameWithoutExtension(archivoExcel.FileName));
-                TempData[n == 0 ? "Error" : "Success"] = n == 0
+                var items = _svc.ParseExcelForPreview(archivoExcel.InputStream);
+                int count = _svc.GuardarDesdeLista(items);
+                TempData[count == 0 ? "Error" : "Success"] = count == 0
                     ? "No se encontraron datos válidos en el Excel."
-                    : string.Format("¡Éxito! Se cargaron {0} programas.", n);
+                    : string.Format("¡Éxito! Se cargaron {0} programas.", count);
             }
-            catch (Exception ex) { TempData["Error"] = "Error al procesar el Excel: " + ex.Message; }
+            catch (Exception ex) 
+            { 
+                TempData["Error"] = "Error al procesar el Excel: " + ex.Message; 
+            }
             return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public JsonResult GuardarPreview()
+        {
+            try
+            {
+                Request.InputStream.Seek(0, System.IO.SeekOrigin.Begin);
+                string body = new System.IO.StreamReader(Request.InputStream).ReadToEnd();
+                if (string.IsNullOrWhiteSpace(body))
+                    return Json(new { success = false, message = "No hay datos para guardar." });
+
+                var items = Newtonsoft.Json.JsonConvert.DeserializeObject<List<ExcelPreviewItemDto>>(body);
+                if (items == null || !items.Any())
+                    return Json(new { success = false, message = "No hay datos para guardar." });
+
+                int count = _svc.GuardarDesdeLista(items);
+                return Json(new { success = true, count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpGet]
