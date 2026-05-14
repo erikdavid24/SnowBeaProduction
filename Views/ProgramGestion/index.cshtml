@@ -1,6 +1,6 @@
 @model SnowTrolleyProduction.Models.ProgramGestionViewModel
 @{
-    ViewBag.Title = "Gestión de Programa";
+    ViewBag.Title = "Gestion de Programa";
 }
 
 @section Styles {
@@ -8,7 +8,7 @@
 }
 
 <div class="ts-header">
-    <h4><i class="fas fa-cogs" style="color:#5d78ff;margin-right:8px;"></i>Plan de Producción</h4>
+    <h4><i class="fas fa-cogs" style="color:#5d78ff;margin-right:8px;"></i>Plan de Produccion</h4>
     <div class="ts-toolbar">
         <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded" id="btnIrProceso"><span class="k-icon k-i-play"></span> Ir al Proceso</a>
         <a href="#" class="k-button k-primary btn-rounded" id="btnNuevoPrograma"><span class="k-icon k-i-plus"></span> Nuevo Programa</a>
@@ -43,7 +43,7 @@
     </div>
 </div>
 
-@(Html.Kendo().Window().Name("wndExcel").Title("Cargar Plan de Producción").Visible(false).Modal(true).Width(500)
+@(Html.Kendo().Window().Name("wndExcel").Title("Cargar Plan de Produccion").Visible(false).Modal(true).Width(500)
     .Content(@<text>
         <div class="wnd-excel-body" style="padding:20px;">
             <div style="text-align:center;margin-bottom:20px;">
@@ -64,7 +64,7 @@
     </text>)
 )
 
-@(Html.Kendo().Window().Name("wndPreview").Title("Vista Previa - Plan de Producción").Visible(false).Modal(true).Width(1200).Height(700)
+@(Html.Kendo().Window().Name("wndPreview").Title("Vista Previa - Plan de Produccion").Visible(false).Modal(true).Width(1200).Height(700)
     .Content(@<text>
         <div style="padding:16px;display:flex;flex-direction:column;height:100%;">
             <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
@@ -98,9 +98,9 @@
         <div class="wnd-nuevo-body">
             <div class="form-group form-row">
                 <div class="form-col">
-                    <label class="form-label">Línea *</label>
+                    <label class="form-label">Linea *</label>
                     @(Html.Kendo().DropDownList().Name("Id_Linea").DataTextField("Text").DataValueField("Value")
-                        .OptionLabel("-- Selecciona Línea --").HtmlAttributes(new { style = "width:100%;", id = "cbLinea" })
+                        .OptionLabel("-- Selecciona Linea --").HtmlAttributes(new { style = "width:100%;", id = "cbLinea" })
                         .DataSource(s => s.Read(r => r.Action("GetLineas","ProgramGestion").Type(HttpVerbs.Get)))
                         .Events(e => e.Change("onLineaChange")))
                 </div>
@@ -127,7 +127,7 @@
                     <input type="text" id="txtWorkOrderSufijo" class="form-control wo-suffix" value="000" maxlength="3" />
                     <input type="hidden" id="hdnWorkOrderFinal" />
                 </div>
-                <small class="wo-hint">La base se genera automáticamente, puedes editar los últimos 3 dígitos.</small>
+                <small class="wo-hint">La base se genera automÃ¡ticamente, puedes editar los Ãºltimos 3 dÃ­gitos.</small>
             </div>
             <div class="form-group form-row">
                 <div class="form-col">
@@ -179,7 +179,7 @@
             </div>
             <div class="form-group form-row">
                 <div class="form-col">
-                    <label class="form-label">Línea</label>
+                    <label class="form-label">Linea</label>
                     <input type="number" id="editLinea" class="form-control" />
                 </div>
                 <div class="form-col">
@@ -211,11 +211,11 @@
                 <input type="text" id="setupPrograma" class="form-control" readonly style="background:#f3f6f9;font-weight:600;" />
             </div>
             <div class="form-group">
-                <label class="form-label">Máquina</label>
+                <label class="form-label">Maquina</label>
                 <select id="setupMaquina" class="form-control"></select>
             </div>
             <div class="form-group">
-                <label class="form-label">Asignación de Trolleys por Zona</label>
+                <label class="form-label">AsignaciÃ³n de Trolleys por Zona</label>
                 <div id="setupZonasContainer" style="margin-top:6px;"></div>
                 <p id="setupAlertaDuplicados" style="display:none;color:#ef4444;font-size:.82rem;margin-top:6px;">
                     <i class="fas fa-exclamation-triangle"></i> No puedes poner un mismo trolley en dos locaciones diferentes.
@@ -237,6 +237,7 @@ var PG = {
         createManual:        '@Url.Action("CreateManual",        "ProgramGestion")',
         editarDirecto:       '@Url.Action("EditarDirecto",       "ProgramGestion")',
         eliminarDirecto:     '@Url.Action("EliminarDirecto",     "ProgramGestion")',
+        eliminarCarta:       '@Url.Action("EliminarCarta",       "ProgramGestion")',
         semanaFiscal:        '@Url.Action("GetSemanaFiscal",     "ProgramGestion")',
         getLadosPorEnsamble: '@Url.Action("GetLadosPorEnsamble", "ProgramGestion")',
         getTrolleysPorLinea: '@Url.Action("GetTrolleysPorLinea", "ProgramGestion")',
@@ -250,4 +251,4 @@ var PG = {
     }
 };
 </script>
-@Scripts.Render("~/Scripts/programa-gestion.min.js")
+@Scripts.Render("~/Scripts/programa-gestion.js")

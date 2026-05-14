@@ -1,98 +1,63 @@
 @model List<SnowTrolleyProduction.Models.LineaGestion>
-@{
-    var acomodo = ViewBag.Acomodo as SnowTrolleyProduction.Models.AcomodoGestion;
-    string titulo = acomodo != null ? "Editar Acomodo" : "Agregar Acomodo";
-    bool esEdicion = acomodo != null;
-}
 
-<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">@titulo</h4>
-
-@if (esEdicion)
-{
-    <input type="hidden" id="modalAcomodoId" value="@acomodo.Id" />
-}
+<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">Agregar Acomodo</h4>
 
 <div class="form-group">
-    <label class="form-label">Línea</label>
-    <select id="modalAcomodoLineaSelect" class="form-control">
+    <label class="form-label">LÃ­nea</label>
+    <select id="acoLineaSelect" class="form-control">
+        <option value="">-- Selecciona una lÃ­nea --</option>
         @foreach (var linea in Model)
         {
-            if (esEdicion && acomodo.Maquina != null && acomodo.Maquina.Linea != null && acomodo.Maquina.Linea.Id_Linea == linea.Id_Linea)
-            {
-                <option value="@linea.Id_Linea" selected>@linea.Numero_Linea</option>
-            }
-            else
-            {
-                <option value="@linea.Id_Linea">@linea.Numero_Linea</option>
-            }
+            <option value="@linea.Id_Linea">@linea.Numero_Linea</option>
         }
     </select>
 </div>
 
-<div id="acomodoAutoTarget" style="margin-top:12px;">
-    <p style="color:#9aa0b8;font-size:.82rem;"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>
-</div>
+<div id="acoAutocompletadoContainer"></div>
 
 <div class="form-actions" style="margin-top:16px;">
     <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
-    <button type="button" class="k-button k-primary" id="btnSubmitAcomodo"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
+    <button type="button" class="k-button k-primary" id="btnSubmitAcomodo" style="display:none;"><i class="fas fa-save"></i> Guardar</button>
 </div>
 
 <script>
 (function () {
-    var esEdicion = @(esEdicion ? "true" : "false");
-
-    function cargarAutocompletado() {
-        var lineaId = $('#modalAcomodoLineaSelect').val();
-        $.get(TG.urls.acomodoAutocompletado, { linea: lineaId }, function (html) {
-            $('#acomodoAutoTarget').html(html);
-        });
-    }
-
-    cargarAutocompletado();
-    $('#modalAcomodoLineaSelect').on('change', cargarAutocompletado);
-
-    $(document).off('click.submitAco').on('click.submitAco', '#btnSubmitAcomodo', function () {
-        var programaId = parseInt($('#acoPrograma').val());
-        if (!programaId || isNaN(programaId) || programaId <= 0) {
-            Swal.fire('Aviso', 'Selecciona un programa.', 'warning');
+    $('#acoLineaSelect').on('change', function () {
+        var lineaId = $(this).val();
+        if (!lineaId) {
+            $('#acoAutocompletadoContainer').empty();
+            $('#btnSubmitAcomodo').hide();
             return;
         }
+        $.get(TG.urls.acomodoAutocompletado, { linea: lineaId }, function (html) {
+            $('#acoAutocompletadoContainer').html(html);
+            $('#btnSubmitAcomodo').show();
+        });
+    });
 
-        // Collect machine ids
-        var maquinaId = 0, maquinaId2 = 0;
+    $(document).on('click', '#btnSubmitAcomodo', function () {
+        var programaId = parseInt($('#acoPrograma').val());
+        if (!programaId) { tgAlert('Error', 'Selecciona un programa.'); return; }
+
+        var data = { ProgramaId: programaId, MaquinaId: 0, MaquinaId2: 0 };
+
         $('.aco-maquina-id').each(function () {
             var idx = parseInt($(this).data('idx'));
-            if (idx === 1) maquinaId = parseInt($(this).val()) || 0;
-            if (idx === 2) maquinaId2 = parseInt($(this).val()) || 0;
+            if (idx === 1) data.MaquinaId = parseInt($(this).val()) || 0;
+            else data.MaquinaId2 = parseInt($(this).val()) || 0;
         });
 
-        if (maquinaId <= 0 && maquinaId2 <= 0) {
-            Swal.fire('Aviso', 'No hay máquinas configuradas para esta línea.', 'warning');
-            return;
-        }
-
-        // Collect drop zones
-        var payload = { ProgramaId: programaId, MaquinaId: maquinaId, MaquinaId2: maquinaId2 };
         $('.aco-drop-zone').each(function () {
             var name = $(this).data('name');
-            var val = $(this).data('val');
-            if (name) payload[name] = parseInt(val) || -1;
+            var val = parseInt($(this).data('val'));
+            if (val > 0) data[name] = val;
         });
 
-        var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
-        $.post(TG.urls.agregarAcomodo, payload, function (r) {
-            if (r.success) {
-                $('#wndGestion').data('kendoWindow').close();
-                cargarAcomodos();
-            } else {
-                Swal.fire('Error', r.message, 'error');
-            }
-        }).fail(function () {
-            Swal.fire('Error', 'Error de conexión', 'error');
-        }).always(function () {
-            $btn.prop('disabled', false).html('<i class="fas fa-save"></i> ' + (esEdicion ? 'Editar' : 'Agregar'));
-        });
+        var $btn = $(this).prop('disabled', true);
+        $.post(TG.urls.agregarAcomodo, data, function (r) {
+            if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarAcomodos(); }
+            else tgAlert('Error', r.message);
+        }).always(function () { $btn.prop('disabled', false); });
     });
 })();
 </script>

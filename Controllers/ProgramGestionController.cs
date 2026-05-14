@@ -62,44 +62,41 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpPost]
-        public ActionResult CreateManual(ProgramGestionViewModel item)
+        public ActionResult CreateManual(ProgramGestionViewModel item, string[] LadosSeleccionados)
         {
             try
             {
-                if (item == null)                            return Json(new { success = false, message = "Datos inválidos" });
-                if (string.IsNullOrEmpty(item.Id_Programa)) return Json(new { success = false, message = "El programa es requerido" });
-                if (string.IsNullOrEmpty(item.WorkOrder))   return Json(new { success = false, message = "La orden de trabajo es requerida" });
-                if (item.PiezasProgramadas <= 0)             return Json(new { success = false, message = "Las piezas deben ser mayor a 0" });
+                if (item == null)                          return Json(new { success = false, message = "Datos invï¿½lidos" });
+                if (string.IsNullOrEmpty(item.WorkOrder))  return Json(new { success = false, message = "La orden de trabajo es requerida" });
+                if (item.PiezasProgramadas <= 0)            return Json(new { success = false, message = "Las piezas deben ser mayor a 0" });
 
                 item.Id_Proceso    = 1;
                 item.Status        = "Creado";
                 item.FechaCreacion = DateTime.Now;
                 item.Trolleys      = "";
 
-                // Inserta automáticamente todos los lados hermanos del ensamble
-                var lados = _svc.GetLadosHermanos(item.Id_Programa);
-                if (lados != null && lados.Count > 1)
+                var lados = (LadosSeleccionados != null && LadosSeleccionados.Length > 0)
+                    ? LadosSeleccionados.ToList()
+                    : (!string.IsNullOrEmpty(item.Id_Programa) ? _svc.GetLadosHermanos(item.Id_Programa) : null);
+
+                if (lados == null || lados.Count == 0)
+                    return Json(new { success = false, message = "Selecciona al menos un lado." });
+
+                foreach (var lado in lados)
                 {
-                    foreach (var lado in lados)
+                    var copia = new ProgramGestionViewModel
                     {
-                        var copia = new ProgramGestionViewModel
-                        {
-                            Id_Proceso = item.Id_Proceso,
-                            Id_Programa = lado,
-                            WorkOrder = item.WorkOrder,
-                            PiezasProgramadas = item.PiezasProgramadas,
-                            Trolleys = "",
-                            Status = item.Status,
-                            FechaCreacion = item.FechaCreacion,
-                            Id_Linea = item.Id_Linea,
-                            Comentarios = item.Comentarios
-                        };
-                        _svc.Create(copia);
-                    }
-                }
-                else
-                {
-                    _svc.Create(item);
+                        Id_Proceso        = item.Id_Proceso,
+                        Id_Programa       = lado,
+                        WorkOrder         = item.WorkOrder,
+                        PiezasProgramadas = item.PiezasProgramadas,
+                        Trolleys          = "",
+                        Status            = item.Status,
+                        FechaCreacion     = item.FechaCreacion,
+                        Id_Linea          = item.Id_Linea,
+                        Comentarios       = item.Comentarios
+                    };
+                    _svc.Create(copia);
                 }
                 return Json(new { success = true });
             }
@@ -111,7 +108,7 @@ namespace SnowTrolleyProduction.Controllers
         {
             try
             {
-                if (item == null || item.Id <= 0) return Json(new { success = false, message = "Datos inválidos" });
+                if (item == null || item.Id <= 0) return Json(new { success = false, message = "Datos invï¿½lidos" });
                 _svc.Update(item);
                 return Json(new { success = true });
             }
@@ -150,8 +147,20 @@ namespace SnowTrolleyProduction.Controllers
         {
             try
             {
-                if (id == null || id <= 0) return Json(new { success = false, message = "ID inválido: " + id });
+                if (id == null || id <= 0) return Json(new { success = false, message = "ID invï¿½lido: " + id });
                 _svc.Delete(new ProgramGestionViewModel { Id = id.Value });
+                return Json(new { success = true });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
+
+        [HttpPost]
+        public JsonResult EliminarCarta(string workOrder, string ensamble)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(workOrder)) return Json(new { success = false, message = "WorkOrder invï¿½lido" });
+                _svc.DeleteCarta(workOrder, ensamble);
                 return Json(new { success = true });
             }
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
@@ -208,7 +217,7 @@ namespace SnowTrolleyProduction.Controllers
             if (preview == true)
             {
                 if (archivoExcel == null || archivoExcel.ContentLength == 0)
-                    return Json(new { success = false, message = "Selecciona un archivo Excel válido." });
+                    return Json(new { success = false, message = "Selecciona un archivo Excel vï¿½lido." });
                 
                 try
                 {
@@ -224,7 +233,7 @@ namespace SnowTrolleyProduction.Controllers
             // Direct save mode (legacy)
             if (archivoExcel == null || archivoExcel.ContentLength == 0)
             {
-                TempData["Error"] = "Por favor selecciona un archivo de Excel válido.";
+                TempData["Error"] = "Por favor selecciona un archivo de Excel vï¿½lido.";
                 return RedirectToAction("Index");
             }
             
@@ -233,8 +242,8 @@ namespace SnowTrolleyProduction.Controllers
                 var items = _svc.ParseExcelForPreview(archivoExcel.InputStream);
                 int count = _svc.GuardarDesdeLista(items);
                 TempData[count == 0 ? "Error" : "Success"] = count == 0
-                    ? "No se encontraron datos válidos en el Excel."
-                    : string.Format("¡Éxito! Se cargaron {0} programas.", count);
+                    ? "No se encontraron datos vï¿½lidos en el Excel."
+                    : string.Format("ï¿½ï¿½xito! Se cargaron {0} programas.", count);
             }
             catch (Exception ex) 
             { 

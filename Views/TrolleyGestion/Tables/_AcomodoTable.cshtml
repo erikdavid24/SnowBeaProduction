@@ -1,73 +1,28 @@
-@model List<SnowTrolleyProduction.Models.AcomodosGroupViewModel>
-
 <div class="gestion-toolbar">
     <button class="k-button k-primary btn-rounded" id="btnAgregarAcomodo"><span class="k-icon k-i-plus"></span> Agregar Acomodo</button>
 </div>
 
-<table class="table gestion-table">
-    <thead>
-        <tr>
-            <th></th>
-            <th>Ensamble</th>
-            <th>Línea</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var group in Model)
-        {
-            <tr class="acomodo-toggle" data-target="ens-@group.Ensamble.Id" style="cursor:pointer;">
-                <td><i class="fas fa-chevron-right acomodo-arrow"></i></td>
-                <td>@group.Ensamble.Numero</td>
-                <td>@group.Ensamble.Linea.Numero_Linea</td>
-            </tr>
-            <tr class="acomodo-detail" id="ens-@group.Ensamble.Id" style="display:none;">
-                <td colspan="3" style="padding-left:30px;">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>#</th>
-                                <th>Programa</th>
-                                <th>Línea</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var prog in group.Programas)
-                            {
-                                <tr class="acomodo-toggle" data-target="prog-@prog.Id" style="cursor:pointer;">
-                                    <td><i class="fas fa-chevron-right acomodo-arrow"></i></td>
-                                    <td>@prog.Id</td>
-                                    <td>@prog.Numero</td>
-                                    <td>@group.Ensamble.Linea.Numero_Linea</td>
-                                </tr>
-                                <tr class="acomodo-detail" id="prog-@prog.Id" style="display:none;">
-                                    <td colspan="4" style="padding-left:30px;">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>Trolley</th>
-                                                    <th>Locación</th>
-                                                    <th>Máquina</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach (var aco in prog.Acomodos)
-                                                {
-                                                    <tr>
-                                                        <td>@aco.Trolley.EquipoDescripcion</td>
-                                                        <td>@aco.Locacion</td>
-                                                        <td>@aco.Maquina.Equipo.EquipoDescripcion</td>
-                                                    </tr>
-                                                }
-                                            </tbody>
-                                        </table>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+@(Html.Kendo().Grid<SnowTrolleyProduction.Models.AcomodoGridRow>()
+    .Name("gridAcomodos")
+    .HtmlAttributes(new { style = "height: 600px;" })
+    .ToolBar(t => t.Search())
+    .Columns(cols => {
+        cols.Bound(g => g.Ensamble).Title("Ensamble");
+        cols.Bound(g => g.Linea).Title("Linea").Width(150);
+        cols.Bound(g => g.EnsambleId).Title("Acciones").Width(120)
+            .Sortable(false).Filterable(false)
+            .HtmlAttributes(new { style = "white-space:nowrap;" })
+            .ClientTemplate(
+                "<button class='k-button btn-rounded btn-edit-acomodo' data-id='#=EnsambleId#'>" +
+                "<i class='fas fa-edit'></i> Editar</button>");
+    })
+    .Sortable()
+    .Filterable()
+    .Resizable(r => r.Columns(true))
+    .Reorderable(r => r.Columns(true))
+    .ColumnMenu()
+    .Scrollable(s => s.Height(550))
+    .DataSource(ds => ds.Ajax()
+        .Read(r => r.Action("AcomodoJson", "TrolleyGestion"))
+        .ServerOperation(false))
+)

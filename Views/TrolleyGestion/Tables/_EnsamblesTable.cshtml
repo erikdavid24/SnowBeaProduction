@@ -1,24 +1,30 @@
-@model List<SnowTrolleyProduction.Models.EnsambleGestion>
+<div class="gestion-toolbar">
+    <button class="k-button k-primary btn-rounded" id="btnAgregarEnsamble"><span class="k-icon k-i-plus"></span> Agregar Ensamble</button>
+</div>
 
-<table class="table table-striped gestion-table">
-    <thead>
-        <tr>
-            <th>Ensamble</th>
-            <th>Línea</th>
-            <th style="width:1%;white-space:nowrap;">Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var ens in Model)
-        {
-            <tr>
-                <td>@ens.Numero</td>
-                <td>@(ens.Linea != null ? ens.Linea.Numero_Linea.ToString() : "--")</td>
-                <td style="white-space:nowrap;">
-                    <button class="k-button btn-rounded btn-edit-ensamble" data-id="@ens.Id"><i class="fas fa-edit"></i> Editar</button>
-                    <button class="k-button btn-rounded btn-del-ensamble" data-id="@ens.Id" style="color:#ef4444;border-color:#fecaca;"><i class="fas fa-trash-alt"></i> Eliminar</button>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+@(Html.Kendo().Grid<SnowTrolleyProduction.Models.EnsambleGridRow>()
+    .Name("gridEnsambles")
+    .HtmlAttributes(new { style = "height: 600px;" })
+    .ToolBar(t => t.Search())
+    .Columns(cols => {
+        cols.Bound(e => e.Numero).Title("Ensamble");
+        cols.Bound(e => e.Linea).Title("Linea");
+        cols.Bound(e => e.Id).Title("Acciones").Width(200)
+            .Sortable(false).Filterable(false)
+            .HtmlAttributes(new { style = "white-space:nowrap;" })
+            .ClientTemplate(
+                "<button class='k-button btn-rounded btn-edit-ensamble' data-id='#=Id#'>" +
+                "<i class='fas fa-edit'></i> Editar</button> " +
+                "<button class='k-button btn-rounded btn-del-ensamble' data-id='#=Id#' style='color:\\#ef4444;border-color:\\#fecaca;'>" +
+                "<i class='fas fa-trash-alt'></i> Eliminar</button>");
+    })
+    .Sortable()
+    .Filterable()
+    .Resizable(r => r.Columns(true))
+    .Reorderable(r => r.Columns(true))
+    .ColumnMenu()
+    .Scrollable(s => s.Height(550))
+    .DataSource(ds => ds.Ajax()
+        .Read(r => r.Action("EnsamblesJson", "TrolleyGestion"))
+        .ServerOperation(false))
+)

@@ -1,4 +1,4 @@
-﻿File: SnowTrolleyProduction\Views\Shared\_Layout.cshtml
+﻿
 ""@{
     ViewBag.Kendo = "2021.3.1109";
     var culture = System.Globalization.CultureInfo.CurrentCulture.ToString();
@@ -27,7 +27,6 @@
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/baeScripts.js"></script>
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/Shared.js"></script>
 
-    <link href="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Content/rocketchat-style.css" rAAel="stylesheet" type="text/css" />
     <!--end:: Global Mandatory Styles -->
     <!--begin:: Kendo Mandatory Scripts -->
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/kendo/@ViewBag.Kendo/kendo.all.min.js" type="text/javascript"></script>
@@ -309,32 +308,6 @@
             </div>
         </div>
     </div>
-    <div class="floating-chat">
-        <i class="fa fa-comments" aria-hidden="true"></i>
-        <div class="chat">
-            <div class="header">
-                <span class="title bae-font">
-                    @*BAE Messenger*@
-                </span>
-                <button class="close-rocketchat-iframe">
-                    <i class="k-icon k-i-close" aria-hidden="true"></i>
-                </button>
-            </div>
-            <button id="buttonMax" style="top: 6px; right: 20px; position:absolute; z-index:999;" onclick="window.open('https://chat.bae.gym/home');">
-                <i class="k-icon k-i-hyperlink-open-sm" aria-hidden="true"></i>
-            </button>
-            <div class="iframe">
-                <iframe src="https://chat.bae.gym/home" height="800" frameborder="0">
-                    <p>Your browser does not support iframes.</p>
-                </iframe>
-
-            </div>
-
-            <div class="footer" hidden>
-                <div class="text-box" contenteditable="true" disabled="true" hidden></div>
-            </div>
-        </div>
-    </div>
     <div class="push"></div>
     @(Html.Kendo().Window()
         .Name("window")
@@ -357,7 +330,6 @@
     <script type="text/javascript" src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/jquery.signalR-2.4.1.js"></script>
     <script type="text/javascript" src="https://apps.bae.gym:84/BAEAPI2/signalr/hubs"></script>
     <script type="text/javascript" src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/NotificationsMetronic.js"></script>
-    <script type="text/javascript" src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/rocketchat-script.js"></script>
 
     <!--end::Global Notification -->
     @RenderSection("Scripts", required: false)

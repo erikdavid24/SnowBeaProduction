@@ -1,68 +1,45 @@
 // ============================================================
-//  trolley-gestion.js  �  CRUD M�quinas, Ensambles, Programas, Acomodos
+//  trolley-gestion.js  -  CRUD Maquinas, Ensambles, Programas, Acomodos
 // ============================================================
 
-// Pesta�as
-$(function () {
-    $('.gestion-tabs .nav-link').on('click', function (e) {
-        e.preventDefault();
-        var tab = $(this).data('tab');
-        $('.gestion-tabs .nav-link').removeClass('active');
-        $(this).addClass('active');
-        $('.gestion-panel').hide();
-        $('#' + tab + 'Container').show();
+function tgConfirm(titulo, texto, onConfirm) {
+    $('<div/>').appendTo('body').kendoDialog({
+        width: 420, title: titulo, closable: true, modal: true,
+        content: '<p style="margin:0;color:#3d4465;">' + texto + '</p>',
+        actions: [
+            { text: 'Cancelar' },
+            { text: 'Confirmar', primary: true, action: function () { onConfirm(); } }
+        ],
+        close: function () { this.destroy(); }
+    }).data('kendoDialog').open();
+}
 
-        if (tab === 'maquinas')  cargarMaquinas();
-        if (tab === 'ensambles') cargarEnsambles();
-        if (tab === 'programas') cargarProgramas();
-        if (tab === 'acomodos')  cargarAcomodos();
-    });
-
-    // Initial load
-    var activeTab = $('.gestion-tabs .nav-link.active').data('tab') || 'maquinas';
-    if (activeTab === 'maquinas')  cargarMaquinas();
-    if (activeTab === 'ensambles') cargarEnsambles();
-    if (activeTab === 'programas') cargarProgramas();
-    if (activeTab === 'acomodos')  cargarAcomodos();
-
-    // Search with debounce
-    var ensambleTimer, programaTimer;
-    $('#txtBuscarEnsamble').on('input', function () {
-        clearTimeout(ensambleTimer);
-        var val = $(this).val();
-        ensambleTimer = setTimeout(function () { cargarEnsambles(val); }, 500);
-    });
-    $('#txtBuscarPrograma').on('input', function () {
-        clearTimeout(programaTimer);
-        var val = $(this).val();
-        programaTimer = setTimeout(function () { cargarProgramas(val); }, 500);
-    });
-
-    // Agregar buttons
-    $('#btnAgregarEnsamble').on('click', function () { abrirModal(TG.urls.agregarEnsambleModal); });
-    $('#btnAgregarPrograma').on('click', function () { abrirModal(TG.urls.agregarProgramaModal); });
-});
+function tgAlert(titulo, texto) {
+    $('<div/>').appendTo('body').kendoDialog({
+        width: 380, title: titulo, closable: true, modal: true,
+        content: '<p style="margin:0;color:#3d4465;">' + texto + '</p>',
+        actions: [{ text: 'OK', primary: true }],
+        close: function () { this.destroy(); }
+    }).data('kendoDialog').open();
+}
 
 function onWndGestionCerrar() {
     $('#wndGestionBody').empty();
 }
 
-// Helper Modal
 function abrirModal(url, params) {
     $.get(url, params || {}, function (html) {
         $('#wndGestionBody').html(html);
-        var wnd = $('#wndGestion').data('kendoWindow');
-        wnd.center().open();
+        $('#wndGestion').data('kendoWindow').center().open();
     });
 }
 
-// M�quinas
-function cargarMaquinas() {
-    $.get(TG.urls.maquinasTable, function (html) {
-        $('#maquinasContainer').html(html);
-    });
-}
+function cargarMaquinas()  { location.reload(); }
+function cargarEnsambles() { location.reload(); }
+function cargarProgramas() { location.reload(); }
+function cargarAcomodos()  { location.reload(); }
 
+// ── Maquinas ──────────────────────────────────────────────────────────────────
 $(document).on('click', '#btnAgregarMaquina', function () { abrirModal(TG.urls.agregarMaquinaModal); });
 
 $(document).on('click', '.btn-edit-maquina', function () {
@@ -71,19 +48,16 @@ $(document).on('click', '.btn-edit-maquina', function () {
 
 $(document).on('click', '.btn-del-maquina', function () {
     var id = $(this).data('id');
-    if (!confirm('�Est�s seguro de eliminar esta m�quina?')) return;
-    $.post(TG.urls.eliminarMaquina, { maquinaId: id }, function (r) {
-        if (r.success) cargarMaquinas();
-        else alert(r.message);
+    tgConfirm('Eliminar maquina', 'Esta accion no se puede deshacer.', function () {
+        $.post(TG.urls.eliminarMaquina, { maquinaId: id }, function (r) {
+            if (r.success) location.reload();
+            else tgAlert('Error', r.message);
+        });
     });
 });
 
-// Ensambles
-function cargarEnsambles(numero) {
-    $.get(TG.urls.ensamblesTable, { numero: numero || '' }, function (html) {
-        $('#ensamblesTablePlace').html(html);
-    });
-}
+// ── Ensambles ─────────────────────────────────────────────────────────────────
+$(document).on('click', '#btnAgregarEnsamble', function () { abrirModal(TG.urls.agregarEnsambleModal); });
 
 $(document).on('click', '.btn-edit-ensamble', function () {
     abrirModal(TG.urls.editarEnsambleModal, { ensambleId: $(this).data('id') });
@@ -91,19 +65,16 @@ $(document).on('click', '.btn-edit-ensamble', function () {
 
 $(document).on('click', '.btn-del-ensamble', function () {
     var id = $(this).data('id');
-    if (!confirm('�Est�s seguro de eliminar este ensamble?')) return;
-    $.post(TG.urls.eliminarEnsamble, { ensambleId: id }, function (r) {
-        if (r.success) cargarEnsambles();
-        else alert(r.message);
+    tgConfirm('Eliminar ensamble', 'Esta accion no se puede deshacer.', function () {
+        $.post(TG.urls.eliminarEnsamble, { ensambleId: id }, function (r) {
+            if (r.success) location.reload();
+            else tgAlert('Error', r.message);
+        });
     });
 });
 
-// Programas
-function cargarProgramas(numero) {
-    $.get(TG.urls.programasTable, { numero: numero || '' }, function (html) {
-        $('#programasTablePlace').html(html);
-    });
-}
+// ── Programas ─────────────────────────────────────────────────────────────────
+$(document).on('click', '#btnAgregarPrograma', function () { abrirModal(TG.urls.agregarProgramaModal); });
 
 $(document).on('click', '.btn-edit-programa', function () {
     abrirModal(TG.urls.editarProgramaModal, { programaId: $(this).data('id') });
@@ -111,28 +82,21 @@ $(document).on('click', '.btn-edit-programa', function () {
 
 $(document).on('click', '.btn-del-programa', function () {
     var id = $(this).data('id');
-    if (!confirm('�Est�s seguro de eliminar este programa?')) return;
-    $.post(TG.urls.eliminarPrograma, { programaId: id }, function (r) {
-        if (r.success) cargarProgramas();
-        else alert(r.message);
+    tgConfirm('Eliminar programa', 'Esta accion no se puede deshacer.', function () {
+        $.post(TG.urls.eliminarPrograma, { programaId: id }, function (r) {
+            if (r.success) location.reload();
+            else tgAlert('Error', r.message);
+        });
     });
 });
 
-// Acomodos
-function cargarAcomodos() {
-    $.get(TG.urls.acomodoTable, function (html) {
-        $('#acomodosContainer').html(html);
-    });
-}
-
+// ── Acomodos ──────────────────────────────────────────────────────────────────
 $(document).on('click', '#btnAgregarAcomodo', function () {
     abrirModal(TG.urls.agregarAcomodoModal);
 });
 
 $(document).on('click', '.acomodo-toggle', function () {
     var targetId = $(this).data('target');
-    var $detail = $('#' + targetId);
-    var $arrow = $(this).find('.acomodo-arrow');
-    $detail.toggle();
-    $arrow.toggleClass('fa-chevron-right fa-chevron-down');
+    $('#' + targetId).toggle();
+    $(this).find('.acomodo-arrow').toggleClass('fa-chevron-right fa-chevron-down');
 });

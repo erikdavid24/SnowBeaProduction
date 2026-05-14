@@ -1,40 +1,56 @@
 /* ========================================================================= */
 /* TROLLEY GESTION STYLES                                                    */
 /* ========================================================================= */
-.gestion-tabs {
-    margin-bottom: 0;
+
+/* ── Kendo TabStrip overrides ─────────────────────────────────────────────── */
+#tabsGestion.k-tabstrip { border: none; background: transparent; }
+
+#tabsGestion > .k-tabstrip-items {
     border-bottom: 2px solid #e2e6f0;
+    background: transparent;
+    padding: 0;
 }
 
-.gestion-tabs .nav-link {
-    cursor: pointer;
-    font-weight: 600;
-    color: #646c9a;
+#tabsGestion > .k-tabstrip-items .k-item {
     border: none;
     border-bottom: 3px solid transparent;
-    padding: 10px 20px;
-    transition: all .15s;
+    background: transparent;
+    margin-bottom: -2px;
 }
 
-.gestion-tabs .nav-link.active {
+#tabsGestion > .k-tabstrip-items .k-item .k-link {
+    font-weight: 600;
+    color: #646c9a;
+    padding: 10px 20px;
+    font-size: .9rem;
+    transition: color .15s;
+}
+
+#tabsGestion > .k-tabstrip-items .k-item:hover .k-link,
+#tabsGestion > .k-tabstrip-items .k-state-active .k-link {
     color: #5d78ff;
+}
+
+#tabsGestion > .k-tabstrip-items .k-state-active {
     border-bottom-color: #5d78ff;
     background: transparent;
 }
 
-.gestion-tabs .nav-link:hover {
-    color: #5d78ff;
+#tabsGestion > .k-tabstrip-items .k-item:focus,
+#tabsGestion > .k-tabstrip-items .k-item.k-state-focused {
+    box-shadow: none;
 }
 
-.gestion-panel {
+#tabsGestion > .k-content {
     background: #fff;
     border: 1px solid #e2e6f0;
     border-top: none;
     border-radius: 0 0 8px 8px;
     padding: 16px;
-    min-height: 200px;
+    min-height: 220px;
 }
 
+/* ── Toolbar ──────────────────────────────────────────────────────────────── */
 .gestion-toolbar {
     display: flex;
     align-items: center;
@@ -49,32 +65,16 @@
     max-width: 400px;
 }
 
-.gestion-table {
-    width: 100%;
-    border-collapse: collapse;
+.tg-tab-body { min-height: 80px; }
+
+/* ── Kendo Grid ───────────────────────────────────────────────────────────── */
+.k-grid {
+    font-family: "Segoe UI", Arial, sans-serif;
 }
 
-.gestion-table thead tr {
-    background: #3d4465;
-    color: #fff;
-}
-
-.gestion-table thead th {
-    padding: 10px 14px;
-    font-size: .82rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .03em;
-}
-
-.gestion-table tbody td {
-    padding: 9px 14px;
-    font-size: .88rem;
-    border-bottom: 1px solid #f0f2f8;
-}
-
-.gestion-table tbody tr:hover {
-    background: #f7f8fc;
+.k-grid .k-grid-search {
+    margin-left: auto;
+    margin-right: 0;
 }
 
 /* ========================================================================= */
@@ -95,9 +95,7 @@
     align-items: center;
 }
 
-.acomodo-slot-spacer {
-    width: 30px;
-}
+.acomodo-slot-spacer { width: 30px; }
 
 .acomodo-slot-cell {
     display: flex;
@@ -160,4 +158,89 @@
     transition: transform .15s;
     color: #646c9a;
     font-size: .8rem;
+}
+
+/* ========================================================================= */
+/* ACOMODO ACCORDION TABLES  (matches tg-grid dark-header theme)             */
+/* ========================================================================= */
+.acomodo-outer-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #e2e6f0;
+    border-radius: 0 0 6px 6px;
+    margin-bottom: 0;
+}
+
+.acomodo-outer-table thead th {
+    background: #1e2235;
+    color: #e8ecf8;
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 9px 14px;
+    border-color: #2d3454;
+}
+
+.acomodo-outer-table tbody td {
+    font-size: .88rem;
+    padding: 9px 14px;
+    border-bottom: 1px solid #f0f2f8;
+    vertical-align: middle;
+}
+
+.acomodo-outer-table tbody tr:nth-child(4n+1) td,
+.acomodo-outer-table tbody tr:nth-child(4n+2) td { background: #fafbfe; }
+
+.acomodo-outer-table tbody tr.acomodo-toggle:hover td { background: #f0f3fc; cursor: pointer; }
+
+.acomodo-mid-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #e2e6f0;
+    margin: 6px 0;
+}
+
+.acomodo-mid-table thead th {
+    background: #252b42;
+    color: #c8cee8;
+    font-size: .78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 7px 12px;
+    border-color: #3d4465;
+}
+
+.acomodo-mid-table tbody td {
+    font-size: .84rem;
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f2f8;
+    vertical-align: middle;
+}
+
+.acomodo-mid-table tbody tr.acomodo-toggle:hover td { background: #f0f3fc; cursor: pointer; }
+
+.acomodo-inner-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #e2e6f0;
+    margin: 6px 0;
+}
+
+.acomodo-inner-table thead th {
+    background: #2d3454;
+    color: #b8c0e0;
+    font-size: .76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 6px 12px;
+    border-color: #3d4465;
+}
+
+.acomodo-inner-table tbody td {
+    font-size: .83rem;
+    padding: 6px 12px;
+    border-bottom: 1px solid #f0f2f8;
 }

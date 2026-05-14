@@ -1,28 +1,30 @@
-@model List<SnowTrolleyProduction.Models.MaquinaGestion>
-
 <div class="gestion-toolbar">
-    <button class="k-button k-primary btn-rounded" id="btnAgregarMaquina"><span class="k-icon k-i-plus"></span> Agregar Máquina</button>
+    <button class="k-button k-primary btn-rounded" id="btnAgregarMaquina"><span class="k-icon k-i-plus"></span> Agregar Maquina</button>
 </div>
 
-<table class="table table-striped gestion-table">
-    <thead>
-        <tr>
-            <th>Máquina</th>
-            <th>Línea</th>
-            <th style="width:1%;white-space:nowrap;">Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var maq in Model)
-        {
-            <tr>
-                <td>@maq.Equipo.EquipoDescripcion</td>
-                <td>@maq.Equipo.NumeroLinea</td>
-                <td style="white-space:nowrap;">
-                    <button class="k-button btn-rounded btn-edit-maquina" data-id="@maq.Id"><i class="fas fa-edit"></i> Editar</button>
-                    <button class="k-button btn-rounded btn-del-maquina" data-id="@maq.Id" style="color:#ef4444;border-color:#fecaca;"><i class="fas fa-trash-alt"></i> Eliminar</button>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+@(Html.Kendo().Grid<SnowTrolleyProduction.Models.MaquinaGridRow>()
+    .Name("gridMaquinas")
+    .HtmlAttributes(new { style = "height: 600px;" })
+    .ToolBar(t => t.Search())
+    .Columns(cols => {
+        cols.Bound(m => m.Maquina).Title("Maquina");
+        cols.Bound(m => m.Linea).Title("Linea").Width(100);
+        cols.Bound(m => m.Id).Title("Acciones").Width(205)
+            .Sortable(false).Filterable(false)
+            .HtmlAttributes(new { style = "white-space:nowrap;" })
+            .ClientTemplate(
+                "<button class='k-button btn-rounded btn-edit-maquina' data-id='#=Id#'>" +
+                "<i class='fas fa-edit'></i> Editar</button> " +
+                "<button class='k-button btn-rounded btn-del-maquina' data-id='#=Id#' style='color:\\#ef4444;border-color:\\#fecaca;'>" +
+                "<i class='fas fa-trash-alt'></i> Eliminar</button>");
+    })
+    .Sortable()
+    .Filterable()
+    .Resizable(r => r.Columns(true))
+    .Reorderable(r => r.Columns(true))
+    .ColumnMenu()
+    .Scrollable(s => s.Height(550))
+    .DataSource(ds => ds.Ajax()
+        .Read(r => r.Action("MaquinasJson", "TrolleyGestion"))
+        .ServerOperation(false))
+)

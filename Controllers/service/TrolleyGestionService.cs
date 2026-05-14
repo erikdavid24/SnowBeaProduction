@@ -109,8 +109,8 @@ namespace SnowTrolleyProduction.Controllers.service
             catch (SqlException ex)
             {
                 return ex.Number == 547
-                    ? "No se puede eliminar esta m�quina porque tiene acomodos vinculados."
-                    : "Ocurri� un error al intentar eliminar esta m�quina.";
+                    ? "No se puede eliminar esta maquina porque tiene acomodos vinculados."
+                    : "Ocurrio un error al intentar eliminar esta maquina.";
             }
         }
 
@@ -154,7 +154,7 @@ namespace SnowTrolleyProduction.Controllers.service
             const string sql = @"
                 SELECT e.Id, e.EnsambleBase AS Numero, l.Id_Linea, l.Numero_Linea
                 FROM [Proccess].[Ensambles] e
-                JOIN [Proccess].[Lineas] l ON e.Linea1 = l.Id_Linea
+                LEFT JOIN [Proccess].[Lineas] l ON e.Linea1 = l.Id_Linea
                 WHERE e.EnsambleBase IS NOT NULL AND e.EnsambleBase <> ''
                   AND e.EnsambleBase LIKE @filtro";
             using (var conn = new SqlConnection(_connStr))
@@ -162,9 +162,9 @@ namespace SnowTrolleyProduction.Controllers.service
                 conn.Open();
                 return conn.Query<dynamic>(sql, new { filtro = "%" + (numero ?? "") + "%" }).Select(r => new EnsambleGestion
                 {
-                    Id = r.Id,
+                    Id     = r.Id,
                     Numero = r.Numero,
-                    Linea = new LineaGestion { Id_Linea = r.Id_Linea, Numero_Linea = r.Numero_Linea }
+                    Linea  = r.Id_Linea != null ? new LineaGestion { Id_Linea = (int)r.Id_Linea, Numero_Linea = (int)r.Numero_Linea } : null
                 }).ToList();
             }
         }
@@ -245,13 +245,13 @@ namespace SnowTrolleyProduction.Controllers.service
                 conn.Open();
                 return conn.Query<dynamic>(sql, new { filtro = "%" + (numero ?? "") + "%" }).Select(r => new ProgramaGestion
                 {
-                    Id = r.Id,
+                    Id     = r.Id,
                     Numero = r.Numero,
                     Ensamble = new EnsambleGestion
                     {
-                        Id = r.EnsambleId,
+                        Id     = r.EnsambleId,
                         Numero = r.EnsambleNumero,
-                        Linea = new LineaGestion { Id_Linea = r.Id_Linea, Numero_Linea = r.Numero_Linea }
+                        Linea  = r.Id_Linea != null ? new LineaGestion { Id_Linea = (int)r.Id_Linea, Numero_Linea = (int)r.Numero_Linea } : null
                     }
                 }).ToList();
             }
@@ -490,16 +490,17 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Programas por l�nea (para acomodo modal) 
-        public List<ProgramaGestion> GetProgramasPorLinea(int lineaId)
+        // ?? Programas por l�nea (para acomodo modal)
+        public List<ProgramaGestion> GetProgramasPorLinea(int lineaId, string orden = "numero")
         {
-            const string sql = @"
+            string orderBy = orden == "recientes" ? "p.Id DESC" : "p.Numero ASC";
+            string sql = $@"
                 SELECT p.Id, p.Numero
                 FROM [Proccess].[Programas] p
                 JOIN [Proccess].[Ensambles] e ON p.Ensamble = e.Id
                 WHERE e.Linea1 = @lineaId
                   AND p.Numero IS NOT NULL AND p.Numero <> ''
-                ORDER BY p.Numero";
+                ORDER BY {orderBy}";
             using (var conn = new SqlConnection(_connStr))
             {
                 conn.Open();
