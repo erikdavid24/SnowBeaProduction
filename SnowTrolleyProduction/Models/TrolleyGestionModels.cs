@@ -55,6 +55,14 @@ namespace SnowTrolleyProduction.Models
         public List<ProgramaGestion> Programas { get; set; }
     }
 
+    public class TrolleyGestionIndexViewModel
+    {
+        public List<MaquinaGestion>         Maquinas  { get; set; }
+        public List<EnsambleGestion>        Ensambles { get; set; }
+        public List<ProgramaGestion>        Programas { get; set; }
+        public List<AcomodosGroupViewModel> Acomodos  { get; set; }
+    }
+
     public class AcomodoFormViewModel
     {
         public int ProgramaId { get; set; }
@@ -80,5 +88,30 @@ namespace SnowTrolleyProduction.Models
         public int? Z70_2 { get; set; }
         public int? Z80_2 { get; set; }
         public int? Z90_2 { get; set; }
+    }
+
+    public class MaquinaGridRow {
+        public int Id { get; set; }
+        public string Maquina { get; set; }
+        public int? Linea { get; set; }
+    }
+
+    public class EnsambleGridRow {
+        public int Id { get; set; }
+        public string Numero { get; set; }
+        public int? Linea { get; set; }
+    }
+
+    public class ProgramaGridRow {
+        public int Id { get; set; }
+        public string Numero { get; set; }
+        public string Ensamble { get; set; }
+        public int? Linea { get; set; }
+    }
+
+    public class AcomodoGridRow {
+        public int EnsambleId { get; set; }
+        public string Ensamble { get; set; }
+        public int? Linea { get; set; }
     }
 }

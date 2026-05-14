@@ -116,7 +116,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Trolleys disponibles + acomodo actual ?????????????????????????????
 
         /// <summary>
         /// Devuelve los trolleys disponibles en la línea y
@@ -213,7 +212,6 @@ namespace SnowTrolleyProduction.Controllers.service
             return result;
         }
 
-        // ?? Guardar acomodo de trolleys ???????????????????????????????????????
 
         /// <summary>
         /// Reemplaza los registros de dbo.Acomodo para el programa indicado
@@ -280,7 +278,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Guardar acomodo cabezal 2 (appends, does not delete) ??????????????
 
         /// <summary>
         /// Appends acomodo records for the second machine (cabezal 2) for the same programa.
@@ -318,7 +315,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Finalizar proceso ?????????????????????????????????????????????????
 
         /// <summary>
         /// Finaliza el proceso:
@@ -356,7 +352,6 @@ namespace SnowTrolleyProduction.Controllers.service
                     (1, @prog, @wo, @pzas,
                      '', 'Creado', GETDATE(), @idLinea, @linea, 'Generado por cierre parcial')";
 
-            // Find sibling sides that are also active
             const string sqlSiblings = @"
                 SELECT ts2.Id
                 FROM   [Proccess].[TrolleySetup] ts1
@@ -408,7 +403,7 @@ namespace SnowTrolleyProduction.Controllers.service
                         }, tx);
                     }
 
-                    // Also finalize sibling sides
+
                     var siblingIds = conn.Query<int>(sqlSiblings, new { id = idProceso }, tx).ToList();
                     foreach (var sibId in siblingIds)
                     {
@@ -451,7 +446,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Arranque ???????????????????????????????????????????????????????????
 
         /// <summary>
         /// Cambia el status de 'En Proceso' a 'Arranque', marcando la fecha.
@@ -464,7 +458,7 @@ namespace SnowTrolleyProduction.Controllers.service
                 SET    Status = 'Arranque'
                 WHERE  Id = @id AND Status = 'Setup'";
 
-            // Find sibling sides in Setup on the same line
+           
             const string sqlSiblings = @"
                 SELECT ts2.Id
                 FROM   [Proccess].[TrolleySetup] ts1
@@ -492,8 +486,6 @@ namespace SnowTrolleyProduction.Controllers.service
                     : (false, "No se pudo iniciar el arranque.");
             }
         }
-
-        // ?? Verificaciones ????????????????????????????????????????????????????
 
         /// <summary>Comprueba si existe algún proceso activo ('En Proceso'),
         /// opcionalmente filtrado por línea.</summary>
@@ -543,8 +535,6 @@ namespace SnowTrolleyProduction.Controllers.service
             // Temporal: permitir todos los usuarios para testing
             return !string.IsNullOrEmpty(userNumber) && !string.IsNullOrEmpty(password);
         }
-
-        // ?? Helpers privados ??????????????????????????????????????????????????
 
         private static string GenerarNuevaWorkOrder(string woActual)
         {

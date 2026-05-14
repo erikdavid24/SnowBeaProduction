@@ -28,10 +28,13 @@ namespace SnowTrolleyProduction.Controllers.service
                     ts.Trolleys, ts.Status, ts.FechaCreacion, ts.FechaFinalizacion, ts.Id_Linea, ts.Comentarios,
                     ISNULL(e.EnsambleBase, ts.Id_Programa) AS Ensamble,
                     STUFF((
-                        SELECT ', ' + p2.Numero
-                        FROM [Proccess].[Programas] p2
-                        WHERE p2.Ensamble = e.Id AND p2.Numero IS NOT NULL AND p2.Numero <> ''
-                        ORDER BY p2.Numero
+                        SELECT DISTINCT ', ' + ts2.Id_Programa
+                        FROM [Proccess].[TrolleySetup] ts2
+                        INNER JOIN [Proccess].[Programas] p2 ON p2.Numero = ts2.Id_Programa
+                        WHERE p2.Ensamble = e.Id
+                          AND ts2.Status    = ts.Status
+                          AND ts2.WorkOrder = ts.WorkOrder
+                          AND ts2.Linea     = ts.Linea
                         FOR XML PATH(''), TYPE
                     ).value('.','NVARCHAR(MAX)'), 1, 2, '') AS Lados
                 FROM [Proccess].[TrolleySetup] ts
@@ -53,8 +56,6 @@ namespace SnowTrolleyProduction.Controllers.service
                     DateTime fechaFin    = DateTime.ParseExact(endDate,   "yyyy/MM/dd", null);
                     rows = conn.Query<ProgramGestionViewModel>(sql, new { start = fechaInicio.Date, end = fechaFin.Date }).ToList();
                 }
-
-                // Group by Ensamble+WorkOrder+Status so sibling lados appear as one card
                 var grouped = new List<ProgramGestionViewModel>();
                 var seen = new Dictionary<string, ProgramGestionViewModel>();
                 foreach (var r in rows)
@@ -152,7 +153,7 @@ namespace SnowTrolleyProduction.Controllers.service
                             new { eid = infoEnsamble.Id }).ToList();
                     }
 
-                    if (!programasReales.Any()) programasReales.Add(programaBaseExcel);
+                    if (!programasReales.Any()) continue;
 
                     foreach (var programaReal in programasReales)
                     {
@@ -292,7 +293,7 @@ namespace SnowTrolleyProduction.Controllers.service
                             new { eid = infoEnsamble.Id }).ToList();
                     }
 
-                    if (!programasReales.Any()) programasReales.Add(programaBaseExcel);
+                    if (!programasReales.Any()) continue;
 
                     foreach (var programaReal in programasReales)
                     {
@@ -380,6 +381,24 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
+        public void DeleteCarta(string workOrder, string ensamble)
+        {
+            string sql = string.IsNullOrEmpty(ensamble)
+                ? "DELETE FROM [Proccess].[TrolleySetup] WHERE WorkOrder = @wo"
+                : @"DELETE FROM [Proccess].[TrolleySetup]
+                    WHERE WorkOrder = @wo
+                      AND Id_Programa IN (
+                          SELECT p.Numero FROM [Proccess].[Programas] p
+                          INNER JOIN [Proccess].[Ensambles] e ON e.Id = p.Ensamble
+                          WHERE e.EnsambleBase = @ensamble
+                      )";
+            using (var conn = new SqlConnection(GetConnectionString()))
+            {
+                conn.Open();
+                conn.Execute(sql, new { wo = workOrder, ensamble });
+            }
+        }
+
         public List<SelectItemDto> GetLineas()
         {
             try
@@ -395,7 +414,7 @@ namespace SnowTrolleyProduction.Controllers.service
                 {
                     conn.Open();
                     var result = conn.Query<int>(query).ToList();
-                    return result.Select(x => new SelectItemDto { Text = "Línea " + x, Value = x.ToString() }).ToList();
+                    return result.Select(x => new SelectItemDto { Text = "Linea " + x, Value = x.ToString() }).ToList();
                 }
             }
             catch (Exception ex)
@@ -567,21 +586,21 @@ namespace SnowTrolleyProduction.Controllers.service
             }
 
             // Fallback: calcular semana fiscal manualmente
-            // El año fiscal BAE empieza el último sábado de diciembre del año anterior
+            // El aï¿½o fiscal BAE empieza el ï¿½ltimo sï¿½bado de diciembre del aï¿½o anterior
             return CalcularSemanaFiscal(fecha);
         }
 
         private string CalcularSemanaFiscal(DateTime fecha)
         {
-            // Encontrar el último sábado de diciembre del año anterior al año fiscal
-            // El año fiscal empieza en el último sábado de diciembre del año calendario anterior
-            // Determinar a qué año fiscal pertenece la fecha
+            // Encontrar el ï¿½ltimo sï¿½bado de diciembre del aï¿½o anterior al aï¿½o fiscal
+            // El aï¿½o fiscal empieza en el ï¿½ltimo sï¿½bado de diciembre del aï¿½o calendario anterior
+            // Determinar a quï¿½ aï¿½o fiscal pertenece la fecha
             int anioFiscal = fecha.Year;
 
-            // El inicio del año fiscal es el último sábado de diciembre del año anterior
+            // El inicio del aï¿½o fiscal es el ï¿½ltimo sï¿½bado de diciembre del aï¿½o anterior
             DateTime inicioFiscal = UltimoSabadoDiciembre(anioFiscal - 1);
 
-            // Si la fecha es anterior al inicio del año fiscal actual, pertenece al año fiscal anterior
+            // Si la fecha es anterior al inicio del aï¿½o fiscal actual, pertenece al aï¿½o fiscal anterior
             if (fecha.Date < inicioFiscal.Date)
             {
                 anioFiscal--;

@@ -1,4 +1,6 @@
 using BAEClassLibrary;
+using Kendo.Mvc.Extensions;
+using Kendo.Mvc.UI;
 using SnowTrolleyProduction.Controllers.service;
 using SnowTrolleyProduction.Models;
 using System;
@@ -15,10 +17,17 @@ namespace SnowTrolleyProduction.Controllers
         [HttpGet]
         public ActionResult Index()
         {
-            return View();
+            var vm = new TrolleyGestionIndexViewModel
+            {
+                Maquinas  = _svc.GetMaquinas(),
+                Ensambles = _svc.GetEnsambles(null),
+                Programas = _svc.GetProgramasTable(null),
+                Acomodos  = _svc.GetAcomodos()
+            };
+            return View(vm);
         }
 
-        // Máquinas
+        // Mï¿½quinas
 
         [HttpGet]
         public ActionResult MaquinasTable()
@@ -199,7 +208,6 @@ namespace SnowTrolleyProduction.Controllers
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
 
-        // ?? Acomodos ??????????????????????????????????????????????????????????
 
         [HttpGet]
         public ActionResult AcomodoTable()
@@ -226,18 +234,19 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpGet]
-        public ActionResult AcomodoAutocompletado(int linea)
+        public ActionResult AcomodoAutocompletado(int linea, string orden = "numero")
         {
             var lineaObj = _svc.GetLineasSMT().FirstOrDefault(l => l.Id_Linea == linea);
             int lineaId = lineaObj != null ? lineaObj.Id_Linea : linea;
 
             var trolleys = _svc.GetTrolleysPorLinea(lineaId);
-            var programas = _svc.GetProgramasPorLinea(lineaId);
+            var programas = _svc.GetProgramasPorLinea(lineaId, orden);
             var maquinas = _svc.GetMaquinasPorLinea(lineaId);
 
             ViewBag.Trollies = trolleys;
             ViewBag.Programas = programas;
             ViewBag.Maquinas = maquinas;
+            ViewData["orden"] = orden;
 
             return PartialView("Modals/_AcomodoModalAutocompletado", linea);
         }
@@ -248,9 +257,9 @@ namespace SnowTrolleyProduction.Controllers
             try
             {
                 if (vm.ProgramaId <= 0)
-                    return Json(new { success = false, message = "Selecciona un programa válido." });
+                    return Json(new { success = false, message = "Selecciona un programa vï¿½lido." });
                 if (vm.MaquinaId <= 0 && vm.MaquinaId2 <= 0)
-                    return Json(new { success = false, message = "No hay máquinas configuradas para esta línea." });
+                    return Json(new { success = false, message = "No hay mï¿½quinas configuradas para esta lï¿½nea." });
 
                 _svc.GuardarAcomodo(vm);
                 return Json(new { success = true });
@@ -278,6 +287,56 @@ namespace SnowTrolleyProduction.Controllers
                 return Json(new { success = true });
             }
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
+
+        [HttpPost]
+        public JsonResult MaquinasJson([DataSourceRequest] DataSourceRequest request)
+        {
+            var data = _svc.GetMaquinas().Select(m => new MaquinaGridRow
+            {
+                Id      = m.Id,
+                Maquina = m.Equipo != null ? m.Equipo.EquipoDescripcion : null,
+                Linea   = m.Equipo != null ? m.Equipo.NumeroLinea : (int?)null
+            }).ToList();
+            return Json(data.ToDataSourceResult(request));
+        }
+
+        [HttpPost]
+        public JsonResult EnsamblesJson([DataSourceRequest] DataSourceRequest request)
+        {
+            var data = _svc.GetEnsambles(null).Select(e => new EnsambleGridRow
+            {
+                Id    = e.Id,
+                Numero = e.Numero,
+                Linea = e.Linea != null ? (int?)e.Linea.Numero_Linea : null
+            }).ToList();
+            return Json(data.ToDataSourceResult(request));
+        }
+
+        [HttpPost]
+        public JsonResult ProgramasJson([DataSourceRequest] DataSourceRequest request)
+        {
+            var data = _svc.GetProgramasTable(null).Select(p => new ProgramaGridRow
+            {
+                Id       = p.Id,
+                Numero   = p.Numero,
+                Ensamble = p.Ensamble != null ? p.Ensamble.Numero : null,
+                Linea    = p.Ensamble != null && p.Ensamble.Linea != null
+                             ? (int?)p.Ensamble.Linea.Numero_Linea : null
+            }).ToList();
+            return Json(data.ToDataSourceResult(request));
+        }
+
+        [HttpPost]
+        public JsonResult AcomodoJson([DataSourceRequest] DataSourceRequest request)
+        {
+            var data = _svc.GetAcomodos().Select(g => new AcomodoGridRow
+            {
+                EnsambleId = g.Ensamble.Id,
+                Ensamble   = g.Ensamble.Numero,
+                Linea      = g.Ensamble.Linea != null ? (int?)g.Ensamble.Linea.Numero_Linea : null
+            }).ToList();
+            return Json(data.ToDataSourceResult(request));
         }
     }
 }

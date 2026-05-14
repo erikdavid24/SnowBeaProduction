@@ -2,20 +2,20 @@
     var programas = ViewBag.Programas as List<SnowTrolleyProduction.Models.ProgramaGestion>;
     var equipos   = ViewBag.Trollies  as List<SnowTrolleyProduction.Models.EquipoGestion>;
     var maquinas  = ViewBag.Maquinas  as List<SnowTrolleyProduction.Models.MaquinaGestion>;
+    string ordenActual = ViewData["orden"] != null ? ViewData["orden"].ToString() : "numero";
 }
 
 <div class="my-3">
-    <label class="form-label">Programa:</label>
-    <select required id="acoPrograma" class="form-control">
-        <option value="">-- Selecciona Programa --</option>
-        @if (programas != null)
-        {
-            foreach (var p in programas)
-            {
-                <option value="@p.Id">@p.Numero</option>
-            }
-        }
-    </select>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <label class="form-label" style="margin:0;">Programa:</label>
+        <button type="button" id="btnOrdenToggle"
+                class="k-button k-button-sm @(ordenActual == "recientes" ? "k-primary" : "")"
+                style="font-size:.75rem;padding:2px 8px;"
+                data-orden="@ordenActual">
+            <i class="fas fa-clock"></i> @(ordenActual == "recientes" ? "Mas recientes" : "Alfabetico")
+        </button>
+    </div>
+    <input id="acoPrograma" style="width:100%;" />
 </div>
 
 @if (equipos != null && equipos.Count > 0)
@@ -95,16 +95,45 @@
 
 <script>
 (function () {
+    // ── Kendo ComboBox con filtro contains ────────────────────────────────────
+    var programData = [
+        @if (programas != null) {
+            for (int i = 0; i < programas.Count; i++) {
+                @:{ value: @programas[i].Id, text: '@Html.Raw(programas[i].Numero.Replace("'", "\\'"))' }@(i < programas.Count - 1 ? "," : "")
+            }
+        }
+    ];
+
+    $('#acoPrograma').kendoComboBox({
+        dataTextField:  'text',
+        dataValueField: 'value',
+        dataSource:     programData,
+        filter:         'contains',
+        suggest:        true,
+        clearButton:    true,
+        placeholder:    '-- Selecciona Programa --',
+        noDataTemplate: 'No se encontraron programas'
+    });
+
+    // ── Toggle orden recientes / alfabetico ───────────────────────────────────
+    $('#btnOrdenToggle').on('click', function () {
+        var lineaId  = $('#acoLineaSelect').val();
+        var actual   = $(this).data('orden');
+        var nuevo    = actual === 'recientes' ? 'numero' : 'recientes';
+        if (!lineaId) return;
+        $.get(TG.urls.acomodoAutocompletado, { linea: lineaId, orden: nuevo }, function (html) {
+            $('#acoAutocompletadoContainer').html(html);
+        });
+    });
+
+    // ── Drag & Drop ───────────────────────────────────────────────────────────
     var dragId = null, dragDesc = null;
 
-    // Drag from badges
     $(document).off('dragstart.aco').on('dragstart.aco', '.aco-badge:not(.aco-used)', function (e) {
-        dragId = $(this).data('id').toString();
+        dragId   = $(this).data('id').toString();
         dragDesc = $(this).data('desc');
         e.originalEvent.dataTransfer.setData('text/plain', dragId);
     });
-
-    // Drop zones
     $(document).off('dragover.aco').on('dragover.aco', '.aco-drop-zone', function (e) {
         e.preventDefault();
         $(this).addClass('aco-drag-over');
@@ -116,17 +145,13 @@
         e.preventDefault();
         $(this).removeClass('aco-drag-over');
         if (!dragId) return;
-        // Remove from previous zone if already placed
         $('.aco-drop-zone').each(function () {
-            if ($(this).data('val') == dragId) {
+            if ($(this).data('val') == dragId)
                 $(this).data('val', '-1').removeClass('aco-filled').find('.aco-drop-text').text('-');
-            }
         });
         $(this).data('val', dragId).addClass('aco-filled').find('.aco-drop-text').text(dragDesc);
         refreshBadges();
     });
-
-    // Click to remove from zone
     $(document).off('click.acorm').on('click.acorm', '.aco-drop-zone.aco-filled', function () {
         $(this).data('val', '-1').removeClass('aco-filled').find('.aco-drop-text').text('-');
         refreshBadges();

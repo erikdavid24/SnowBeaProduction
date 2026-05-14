@@ -1,3 +1,4 @@
+@model SnowTrolleyProduction.Models.TrolleyGestionIndexViewModel
 @{
     ViewBag.Title = "Gestor de Trolley";
     string ventana = TempData["Ventana"] != null ? TempData["Ventana"].ToString() : "maquinas";
@@ -11,38 +12,44 @@
     <h4><i class="fas fa-cogs" style="color:#5d78ff;margin-right:8px;"></i>Gestor de Trolley</h4>
 </div>
 
-<ul class="nav nav-tabs gestion-tabs" role="tablist">
-    <li class="nav-item"><a class="nav-link @(ventana == "maquinas" ? "active" : "")" href="#" data-tab="maquinas">Máquinas</a></li>
-    <li class="nav-item"><a class="nav-link @(ventana == "ensambles" ? "active" : "")" href="#" data-tab="ensambles">Ensambles</a></li>
-    <li class="nav-item"><a class="nav-link @(ventana == "programas" ? "active" : "")" href="#" data-tab="programas">Programas</a></li>
-    <li class="nav-item"><a class="nav-link @(ventana == "acomodos" ? "active" : "")" href="#" data-tab="acomodos">Acomodos</a></li>
-</ul>
+<script>
+function onTabSelect(e) {
+    if (e.contentElement) {
+        setTimeout(function () { kendo.resize($(e.contentElement)); }, 1);
+    }
+}
+</script>
 
-<div id="maquinasContainer" class="gestion-panel" style="display:@(ventana == "maquinas" ? "block" : "none")"></div>
+@{
+    var maquinasContent  = Html.Partial("Tables/_MaquinasTable" ).ToHtmlString();
+    var ensamblesContent = Html.Partial("Tables/_EnsamblesTable").ToHtmlString();
+    var programasContent = Html.Partial("Tables/_ProgramasTable").ToHtmlString();
+    var acomodoContent   = Html.Partial("Tables/_AcomodoTable"  ).ToHtmlString();
+}
 
-<div id="ensamblesContainer" class="gestion-panel" style="display:@(ventana == "ensambles" ? "block" : "none")">
-    <div class="gestion-toolbar">
-        <input type="text" id="txtBuscarEnsamble" class="form-control gestion-search" placeholder="Buscar ensamble por número..." />
-        <button class="k-button k-primary btn-rounded" id="btnAgregarEnsamble"><span class="k-icon k-i-plus"></span> Agregar Ensamble</button>
-    </div>
-    <div id="ensamblesTablePlace"></div>
-</div>
+@(Html.Kendo().TabStrip().Name("tabsGestion")
+    .Animation(false)
+    .Events(e => e.Select("onTabSelect"))
+    .Items(items => {
+        items.Add().Text("Maquinas").Selected(ventana == "maquinas")
+            .Content(maquinasContent);
 
-<div id="programasContainer" class="gestion-panel" style="display:@(ventana == "programas" ? "block" : "none")">
-    <div class="gestion-toolbar">
-        <input type="text" id="txtBuscarPrograma" class="form-control gestion-search" placeholder="Buscar programa por número..." />
-        <button class="k-button k-primary btn-rounded" id="btnAgregarPrograma"><span class="k-icon k-i-plus"></span> Agregar Programa</button>
-    </div>
-    <div id="programasTablePlace"></div>
-</div>
+        items.Add().Text("Ensambles").Selected(ventana == "ensambles")
+            .Content(ensamblesContent);
+        items.Add().Text("Programas").Selected(ventana == "programas")
+            .Content(programasContent);
 
-<div id="acomodosContainer" class="gestion-panel" style="display:@(ventana == "acomodos" ? "block" : "none")"></div>
+        items.Add().Text("Acomodos").Selected(ventana == "acomodos")
+            .Content(acomodoContent);
+    })
+)
 
 @(Html.Kendo().Window().Name("wndGestion").Title("").Visible(false).Modal(true).Width(820)
     .Events(e => e.Close("onWndGestionCerrar"))
     .Content(@<text><div id="wndGestionBody"></div></text>)
 )
 
+@section Scripts {
 <script>
 var TG = {
     urls: {
@@ -76,4 +83,4 @@ var TG = {
 };
 </script>
 @Scripts.Render("~/Scripts/trolley-gestion.min.js")
- 
+}

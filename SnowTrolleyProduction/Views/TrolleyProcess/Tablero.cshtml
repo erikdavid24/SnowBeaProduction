@@ -1,18 +1,18 @@
 @{
-    ViewBag.Title = "Tablero – En Setup / Proceso";
+    ViewBag.Title = "Tablero En Setup / Proceso";
 }
 
 @section Styles {
     <link href="~/Content/css/programa-gestion.css" rel="stylesheet" />
     <style>
-        /* ?? Grid de tarjetas ????????????????????????????????????????? */
+      
         .tb-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 16px;
         }
 
-        /* ?? Tarjeta ?????????????????????????????????????????????????? */
+  
         .tb-card {
             background: #fff;
             border: 1px solid #e8ecf1;
@@ -44,7 +44,7 @@
             padding: 12px 14px;
         }
 
-        /* ?? Línea pill ??????????????????????????????????????????????? */
+    
         .tb-linea-pill {
             background: #5d78ff;
             color: #fff;
@@ -56,7 +56,7 @@
             flex-shrink: 0;
         }
 
-        /* ?? Badges de estado ????????????????????????????????????????? */
+
         .tb-badge-setup {
             background: #fff8ec;
             color: #f59e0b;
@@ -79,7 +79,7 @@
             white-space: nowrap;
         }
 
-        /* ?? Filas de detalle ????????????????????????????????????????? */
+  
         .tb-detail-row {
             display: flex;
             gap: 16px;
@@ -110,7 +110,7 @@
             color: #646c9a;
         }
 
-        /* ?? Trolleys ????????????????????????????????????????????????? */
+    
         .tb-trolleys {
             display: flex;
             flex-wrap: wrap;
@@ -173,18 +173,18 @@
 <div class="ts-header">
     <h4>
         <i class="fas fa-tv" style="color:#5d78ff;margin-right:8px;"></i>
-        Tablero – En Setup / Proceso
+        Tablero  En Setup / Proceso
     </h4>
     <div style="display:flex;gap:8px;align-items:center;">
         <span style="font-size:.75rem;color:#9aa0b8;">
-            <span class="tb-live-dot"></span>En vivo &nbsp;·&nbsp;
+            <span class="tb-live-dot"></span>En vivo &nbsp;&nbsp;
             <span id="lblHora"></span>
         </span>
         <a href="@Url.Action("Operadores","TrolleyProcess")" class="k-button btn-rounded">
             <i class="fas fa-hard-hat"></i> Tablero Operadores
         </a>
         <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded">
-            <span class="k-icon k-i-arrow-chevron-left"></span> Plan de Producción
+            <span class="k-icon k-i-arrow-chevron-left"></span> Plan de Produccion
         </a>
     </div>
 </div>
@@ -195,7 +195,7 @@
     <script>
         var URL_RESUMEN = '@Url.Action("ObtenerResumenSetup","TrolleyProcess")';
 
-        /* ?? Helpers ????????????????????????????????????????????????? */
+
         function badgeStatus(s) {
             return s === 'Arranque'
                 ? '<span class="tb-badge-arranque"><i class="fas fa-play-circle"></i> Arranque</span>'
@@ -203,15 +203,15 @@
         }
 
         function horaDesde(dateStr) {
-            if (!dateStr) return '—';
+            if (!dateStr) return '';
             var ms = parseInt(dateStr.replace(/\/Date\((-?\d+)[^)]*\)\//, '$1'));
-            if (isNaN(ms)) return '—';
+            if (isNaN(ms)) return '';
             var d = new Date(ms);
             return d.getHours().toString().padStart(2,'0') + ':' +
                    d.getMinutes().toString().padStart(2,'0');
         }
 
-        /* ?? Renderizado ?????????????????????????????????????????????? */
+  
         function renderTablero(data) {
             var grid = $('#tableroGrid').empty();
 
@@ -220,7 +220,7 @@
                     '<div class="tb-empty">' +
                     '<i class="fas fa-pause-circle"></i>' +
                     '<strong>Sin trabajos activos</strong>' +
-                    'Ninguna línea tiene trabajo en Setup o Arranque en este momento.' +
+                    'Ninguna linea tiene trabajo en Setup o Arranque en este momento.' +
                     '</div>'
                 );
                 return;
@@ -262,18 +262,18 @@
 
                     '<div class="tb-detail-item">' +
                     '<div class="tb-detail-label">Programa</div>' +
-                    '<div class="tb-detail-value">' + (t.id_Programa || '—') + '</div>' +
+                    '<div class="tb-detail-value">' + (t.id_Programa || '') + '</div>' +
                     '</div>' +
 
                     '<div class="tb-detail-item">' +
                     '<div class="tb-detail-label">Work Order</div>' +
-                    '<div class="tb-detail-value muted">' + (t.workOrder || '—') + '</div>' +
+                    '<div class="tb-detail-value muted">' + (t.workOrder || '') + '</div>' +
                     '</div>' +
 
                     '<div class="tb-detail-item">' +
                     '<div class="tb-detail-label">Pzas. Prog.</div>' +
                     '<div class="tb-detail-value muted">' +
-                    (t.piezasProgramadas > 0 ? t.piezasProgramadas : '—') +
+                    (t.piezasProgramadas > 0 ? t.piezasProgramadas : '') +
                     '</div>' +
                     '</div>' +
 
@@ -296,7 +296,6 @@
             });
         }
 
-        /* ?? Carga y auto-refresh ????????????????????????????????????? */
         function actualizar() {
             $.get(URL_RESUMEN, function (data) {
                 renderTablero(data);
@@ -304,7 +303,7 @@
                 $('#tableroGrid').html(
                     '<div class="tb-empty">' +
                     '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i>' +
-                    '<strong>Error de conexión</strong>Reintentando en 30 segundos...' +
+                    '<strong>Error de conexion</strong>Reintentando en 30 segundos...' +
                     '</div>'
                 );
             });
