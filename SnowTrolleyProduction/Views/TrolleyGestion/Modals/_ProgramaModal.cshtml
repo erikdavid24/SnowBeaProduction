@@ -17,14 +17,21 @@
     <select id="modalProgramaEnsambleSelect" class="form-control">
         @foreach (var ens in Model)
         {
-            <option value="@ens.Id">@ens.Numero</option>
+            <option value="@ens.Id" @(esEdicion && programa.Ensamble != null && programa.Ensamble.Id == ens.Id ? "selected" : "")>@ens.Numero</option>
         }
     </select>
 </div>
 
 <div class="form-group">
-    <label class="form-label">Programa</label>
+    <label class="form-label">Numero de Programa *</label>
     <input type="text" id="modalProgramaNumero" class="form-control" value="@(esEdicion ? programa.Numero : "")" required />
+</div>
+
+<div class="form-group">
+    <label class="form-label">Cantidad de Componentes</label>
+    <input type="number" id="modalProgramaMateriales" class="form-control" min="0" placeholder="0"
+           style="width:140px;" value="@(esEdicion ? programa.CantidadMateriales : 0)" />
+    <small style="color:#9aa0b8;font-size:.75rem;">Numero de componentes diferentes que requiere el ensamble.</small>
 </div>
 
 <div class="form-actions">
@@ -35,21 +42,32 @@
 <script>
 (function () {
     var esEdicion = @(esEdicion ? "true" : "false");
+
+    if (esEdicion) {
+        var programaId = parseInt($('#modalProgramaId').val());
+        $.get(TG.urls.getDetallesPrograma, { programaId: programaId }, function (r) {
+            if (r.cantidadTotalMateriales !== undefined) {
+                $('#modalProgramaMateriales').val(r.cantidadTotalMateriales);
+            }
+        });
+    }
+
     $('#btnSubmitPrograma').on('click', function () {
-        var numero = $('#modalProgramaNumero').val().trim();
+        var numero     = $('#modalProgramaNumero').val().trim();
         var ensambleId = parseInt($('#modalProgramaEnsambleSelect').val());
-        if (!numero) { alert('El número de programa es requerido.'); return; }
+        var materiales = parseInt($('#modalProgramaMateriales').val()) || 0;
+        if (!numero) { tgAlert('Campo requerido', 'El numero de programa es requerido.'); return; }
         var $btn = $(this).prop('disabled', true);
         if (esEdicion) {
             var programaId = parseInt($('#modalProgramaId').val());
-            $.post(TG.urls.editarPrograma, { programaId: programaId, ensambleId: ensambleId, numero: numero }, function (r) {
+            $.post(TG.urls.editarPrograma, { programaId: programaId, ensambleId: ensambleId, numero: numero, cantidadMateriales: materiales }, function (r) {
                 if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarProgramas(); }
-                else { alert(r.message); }
+                else { tgAlert('Error', r.message); }
             }).always(function () { $btn.prop('disabled', false); });
         } else {
-            $.post(TG.urls.agregarPrograma, { numero: numero, ensambleId: ensambleId }, function (r) {
+            $.post(TG.urls.agregarPrograma, { numero: numero, ensambleId: ensambleId, cantidadMateriales: materiales }, function (r) {
                 if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarProgramas(); }
-                else { alert(r.message); }
+                else { tgAlert('Error', r.message); }
             }).always(function () { $btn.prop('disabled', false); });
         }
     });

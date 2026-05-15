@@ -36,10 +36,11 @@ namespace SnowTrolleyProduction.Controllers.service
                           AND ts2.WorkOrder = ts.WorkOrder
                           AND ts2.Linea     = ts.Linea
                         FOR XML PATH(''), TYPE
-                    ).value('.','NVARCHAR(MAX)'), 1, 2, '') AS Lados
+                    ).value('.','NVARCHAR(MAX)'), 1, 2, '') AS Lados,
+                    ISNULL(p.CantidadTotalMateriales, 0) AS CantidadMateriales
                 FROM [Proccess].[TrolleySetup] ts
-                LEFT JOIN [Proccess].[Programas] p  ON p.Numero  = ts.Id_Programa
-                LEFT JOIN [Proccess].[Ensambles] e  ON e.Id      = p.Ensamble";
+                LEFT JOIN [Proccess].[Programas] p  ON p.Numero    = ts.Id_Programa
+                LEFT JOIN [Proccess].[Ensambles] e  ON e.Id        = p.Ensamble";
 
             using (var conn = new SqlConnection(GetConnectionString()))
             {

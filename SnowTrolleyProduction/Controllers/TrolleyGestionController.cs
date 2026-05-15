@@ -176,22 +176,22 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpPost]
-        public JsonResult AgregarPrograma(string numero, int ensambleId)
+        public JsonResult AgregarPrograma(string numero, int ensambleId, int cantidadMateriales = 0)
         {
             try
             {
-                _svc.AgregarPrograma(numero, ensambleId);
+                _svc.AgregarPrograma(numero, ensambleId, cantidadMateriales);
                 return Json(new { success = true });
             }
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
 
         [HttpPost]
-        public JsonResult EditarPrograma(int programaId, int ensambleId, string numero)
+        public JsonResult EditarPrograma(int programaId, int ensambleId, string numero, int cantidadMateriales = 0)
         {
             try
             {
-                _svc.EditarPrograma(programaId, ensambleId, numero);
+                _svc.EditarPrograma(programaId, ensambleId, numero, cantidadMateriales);
                 return Json(new { success = true });
             }
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
@@ -318,13 +318,51 @@ namespace SnowTrolleyProduction.Controllers
         {
             var data = _svc.GetProgramasTable(null).Select(p => new ProgramaGridRow
             {
-                Id       = p.Id,
-                Numero   = p.Numero,
-                Ensamble = p.Ensamble != null ? p.Ensamble.Numero : null,
-                Linea    = p.Ensamble != null && p.Ensamble.Linea != null
-                             ? (int?)p.Ensamble.Linea.Numero_Linea : null
+                Id                  = p.Id,
+                Numero              = p.Numero,
+                Ensamble            = p.Ensamble != null ? p.Ensamble.Numero : null,
+                Linea               = p.Ensamble != null && p.Ensamble.Linea != null
+                                        ? (int?)p.Ensamble.Linea.Numero_Linea : null,
+                CantidadMateriales = p.CantidadMateriales
             }).ToList();
             return Json(data.ToDataSourceResult(request));
+        }
+
+        [HttpGet]
+        public JsonResult GetDetallesPrograma(int programaId)
+        {
+            try
+            {
+                var cantidad = _svc.GetCantidadTotalMateriales(programaId);
+                return Json(new { cantidadTotalMateriales = cantidad }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex) { return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet); }
+        }
+
+        [HttpGet]
+        public JsonResult GetProgramasParaModal()
+        {
+            var data = _svc.GetProgramasTable(null)
+                .Select(p => new { Value = p.Id, Text = p.Numero })
+                .OrderBy(p => p.Text)
+                .ToList();
+            return Json(data, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        public JsonResult GetMaterialesPorPrograma([DataSourceRequest] DataSourceRequest request, int programaId)
+        {
+            try
+            {
+                using (var ctx = new SnowTrolleyProduction.Models.MaterialesDbContext())
+                {
+                    var data = ctx.Materiales
+                        .Where(m => m.ProgramaId == programaId)
+                        .Select(m => new { m.Id, m.NumeroMaterial, m.ProgramaId });
+                    return Json(data.ToDataSourceResult(request));
+                }
+            }
+            catch (Exception ex) { return Json(new { error = ex.Message }); }
         }
 
         [HttpPost]

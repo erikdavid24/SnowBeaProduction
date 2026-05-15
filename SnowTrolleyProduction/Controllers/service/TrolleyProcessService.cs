@@ -9,7 +9,7 @@ using System.Linq;
 namespace SnowTrolleyProduction.Controllers.service
 {
     /// <summary>
-    /// Encapsula toda la lógica de consulta y transición de estado
+    /// Encapsula toda la lï¿½gica de consulta y transiciï¿½n de estado
     /// para la cola de procesos (TrolleyProcess).
     /// </summary>
     public class TrolleyProcessService
@@ -23,7 +23,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
         // ?? Consultas ?????????????????????????????????????????????????????????
 
-        /// <summary>Devuelve los registros con Status = 'Creado' o 'Pendiente' para una línea,
+        /// <summary>Devuelve los registros con Status = 'Creado' o 'Pendiente' para una lï¿½nea,
         /// una fila por lado/programa (sin agrupar por ensamble).</summary>
         public List<ProcesoItem> GetProcesosDisponibles(int linea)
         {
@@ -39,7 +39,7 @@ namespace SnowTrolleyProduction.Controllers.service
                 LEFT JOIN [Proccess].[Ensambles]  e  ON e.Id      = p.Ensamble
                 WHERE  ts.Linea   = @linea
                   AND  ts.Status IN ('Creado', 'Pendiente')
-                ORDER  BY e.EnsambleBase ASC, ts.FechaCreacion ASC";
+                ORDER  BY ISNULL(ts.Orden, 999999) ASC, ts.FechaCreacion ASC";
 
             using (var conn = new SqlConnection(_connStr))
             {
@@ -61,7 +61,7 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        /// <summary>Devuelve los registros con Status = 'Setup' o 'Arranque' para una línea,
+        /// <summary>Devuelve los registros con Status = 'Setup' o 'Arranque' para una lï¿½nea,
         /// una fila por programa (lado), incluyendo los trolleys de cada uno.</summary>
         public List<ProcesoArranque> GetTrabajosEnProceso(int linea)
         {
@@ -141,7 +141,7 @@ namespace SnowTrolleyProduction.Controllers.service
             return procesos;
         }
 
-        // ?? Transición de estado ??????????????????????????????????????????????
+        // ?? Transiciï¿½n de estado ??????????????????????????????????????????????
 
         /// <summary>
         /// Carga procesos por IDs y los enriquece con sus trolleys de Acomodo.
@@ -160,7 +160,7 @@ namespace SnowTrolleyProduction.Controllers.service
                 LEFT JOIN [Proccess].[Programas] p  ON p.Numero = ts.Id_Programa
                 LEFT JOIN [Proccess].[Ensambles] e  ON e.Id     = p.Ensamble
                 WHERE  ts.Id IN @ids
-                ORDER  BY e.EnsambleBase ASC, ts.FechaCreacion ASC";
+                ORDER  BY ISNULL(ts.Orden, 999999) ASC, ts.FechaCreacion ASC";
 
             const string sqlTrolleys = @"
                 SELECT e.Equipo_descripcion
@@ -198,9 +198,23 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
+        public void GuardarOrden(List<int> idProcesos)
+        {
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                for (int i = 0; i < idProcesos.Count; i++)
+                {
+                    conn.Execute(
+                        "UPDATE [Proccess].[TrolleySetup] SET Orden = @orden WHERE Id = @id",
+                        new { orden = i + 1, id = idProcesos[i] });
+                }
+            }
+        }
+
         /// <summary>
-        /// Cambia el registro a 'Setup' si no hay otro activo en la misma línea.
-        /// Cada lado/programa es independiente; no se promueven hermanos automáticamente.
+        /// Cambia el registro a 'Setup' si no hay otro activo en la misma lï¿½nea.
+        /// Cada lado/programa es independiente; no se promueven hermanos automï¿½ticamente.
         /// Devuelve (success, mensaje).
         /// </summary>
         public (bool Success, string Message) IniciarSetup(int idProceso, int linea)
@@ -222,7 +236,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
                 int activos = conn.QueryFirstOrDefault<int>(sqlCheck, new { linea });
                 if (activos > 0)
-                    return (false, "Ya existe un trabajo en Setup o Arranque en esta línea. Finalícelo primero.");
+                    return (false, "Ya existe un trabajo en Setup o Arranque en esta lï¿½nea. Finalï¿½celo primero.");
 
                 conn.Execute(sqlUpdate, new { id = idProceso });
 

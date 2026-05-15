@@ -40,15 +40,22 @@ function renderCol(bodyId, countId, items) {
             item.Lados.split(', ').forEach(function (l) { ladosHtml += '<span class="ts-lado ts-lado-active">' + l + '</span>'; });
             ladosHtml += '</div>';
         }
+        var cnt = item.CantidadMateriales || 0;
+        var materialBadge = cnt > 0
+            ? '<span class="ts-material-badge mat-ok"><i class="fas fa-microchip"></i>&nbsp;' + cnt + ' mat.</span>'
+            : '<span class="ts-material-badge mat-sin"><i class="fas fa-exclamation-triangle"></i>&nbsp;Sin materiales</span>';
         $('<div class="ts-card"></div>').attr({
             'data-id': item.Id, 'data-wo': item.WorkOrder || '', 'data-prog': item.Id_Programa || '',
             'data-ensamble': item.Ensamble || '', 'data-piezas': item.PiezasProgramadas || 0,
-            'data-linea': item.Id_Linea || '', 'data-trolleys': item.Trolleys || '', 'data-coment': item.Comentarios || '', 'data-lados': item.Lados || ''
+            'data-linea': item.Id_Linea || '', 'data-trolleys': item.Trolleys || '',
+            'data-coment': item.Comentarios || '', 'data-lados': item.Lados || '',
+            'data-materiales': cnt
         }).html(
             '<span class="ts-card-num">#' + item.Id + '</span>' +
             '<div style="margin-top:6px;"><span class="ts-badge ' + badgeCls + '"><i class="fas ' + badgeIco + '"></i>&nbsp;' + (item.Status || '') + '</span></div>' +
             '<div class="ts-card-title">' + (item.Ensamble || item.Id_Programa || '&mdash;') + '</div>' +
             '<div class="ts-card-sub">WO: ' + (item.WorkOrder || '') + '</div>' + ladosHtml +
+            materialBadge +
             (item.Trolleys ? '<div class="ts-card-trolleys"><i class="fas fa-grip-lines"></i>&nbsp;' + item.Trolleys + '</div>' : '') +
             '<div class="ts-card-meta"><span><i class="fas fa-calendar-alt"></i>&nbsp;' + formatFecha(item.FechaCreacion) + '</span>' +
             '<span><i class="fas fa-boxes"></i>&nbsp;' + (item.PiezasProgramadas || 0) + ' pzas</span>' +
@@ -87,6 +94,7 @@ function prepararWorkOrderFinal() {
 // Helpers de dropdowns
 function getLineaData()    { var d = $('#cbLinea').data('kendoDropDownList');    return { lineaId: d && d.value() ? parseInt(d.value()) : 0 }; }
 function getEnsambleData() { var d = $('#cbEnsamble').data('kendoDropDownList'); return { ensamble: d ? d.value() : '' }; }
+
 
 function onWndNuevoCerrar() {
     ['#cbLinea', '#cbEnsamble'].forEach(function (s) { var d = $(s).data('kendoDropDownList'); if (d) { d.value(''); if (s !== '#cbLinea') d.enable(false); } });

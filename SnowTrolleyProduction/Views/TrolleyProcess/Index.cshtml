@@ -1,45 +1,46 @@
 @{
-    ViewBag.Title = "Plan de Produccion  Proceso";
+    ViewBag.Title = "Plan de Produccion o Proceso";
 }
 
 @section Styles {
     <link href="~/Content/css/programa-gestion.css" rel="stylesheet" />
+    <link href="~/Content/css/trolley-gestion.css" rel="stylesheet" />
     <style>
-        .tp-header { margin-bottom: 18px; }
-        .tp-linea-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-        .tp-card { background: #fff; border: 1px solid #e8ecf1; border-radius: 10px; box-shadow: 0 1px 5px rgba(0,0,0,.06); margin-bottom: 18px; }
-        .tp-card-header { padding: 10px 16px; background: #eef0f8; border-radius: 10px 10px 0 0; border-bottom: 1px solid #e2e6f0; font-weight: 700; color: #3d4465; font-size: .88rem; }
-        .tp-card-body { padding: 14px; }
+        .tp-linea-btns  { display: flex; gap: 8px; flex-wrap: wrap; }
         .badge-setup    { background: #fff8ec; color: #f59e0b; border: 1px solid #fde68a; border-radius: 4px; padding: 2px 10px; font-size: .75rem; font-weight: 700; }
         .badge-arranque { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; border-radius: 4px; padding: 2px 10px; font-size: .75rem; font-weight: 700; }
         .trolley-badge  { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: .72rem; font-weight: 700; margin: 1px; color: #fff; }
         .trolley-badge.ok       { background: #22c55e; }
         .trolley-badge.mismatch { background: #ef4444; }
-        .tp-handle { display: inline-block; color: #c5cbe8; cursor: grab; user-select: none; }
+        .tp-handle      { display: inline-block; color: #c5cbe8; cursor: grab; user-select: none; }
         .tp-handle:hover { color: #5d78ff; }
-        .tp-sort-hint { display: table; background: #fff; border-radius: 8px; box-shadow: 0 8px 28px rgba(61,68,101,.22); opacity: .97; border: 1.5px solid #5d78ff; }
+        .tp-sort-hint   { display: table; background: #fff; border-radius: 8px; box-shadow: 0 8px 28px rgba(61,68,101,.22); opacity: .97; border: 1.5px solid #5d78ff; }
         .tp-sort-hint td { padding: 8px 10px; vertical-align: middle; white-space: nowrap; }
         .tp-sort-placeholder td { background: #eef2ff !important; border-top: 2px solid #5d78ff !important; }
-        /* Kendo Grid overrides */
-        .tp-grid .k-grid-header th { background: #3d4465; color: #fff; font-size: .8rem; border-color: #4a5278; }
-        .tp-grid tr:hover td { background: #f7f8fc !important; }
-        .tp-grid { border-radius: 0 0 8px 8px; border-color: #e8ecf1; }
-        .tp-grid .k-grid-content { overflow: visible; }
-        .tp-no-data { text-align: center; padding: 24px 0; color: #b0b7d0; }
-        .tp-no-data i { font-size: 1.4rem; display: block; margin-bottom: 6px; }
+        .tp-no-data     { text-align: center; padding: 28px 0; color: #b0b7d0; }
+        .tp-no-data i   { font-size: 1.4rem; display: block; margin-bottom: 6px; }
+        .tp-section     { background: #fff; border: 1px solid #e2e6f0; border-radius: 8px; margin-bottom: 14px; }
+        .tp-section-hdr { padding: 10px 16px; background: #eef0f8; border-radius: 8px 8px 0 0; border-bottom: 1px solid #e2e6f0; font-weight: 700; color: #3d4465; font-size: .88rem; }
+        .tp-section-bdy { padding: 16px; }
+        #gridArranque .k-grid-header th,
+        #gridProcesos .k-grid-header th { background: #3d4465; color: #fff; font-size: .8rem; border-color: #4a5278; }
+        #gridArranque tr:hover td,
+        #gridProcesos tr:hover td { background: #f7f8fc !important; }
+        #gridArranque,
+        #gridProcesos { border-radius: 0 0 6px 6px; border-color: #e8ecf1; }
     </style>
 }
 
-<div class="ts-header tp-header">
+<div class="ts-header">
     <h4><i class="fas fa-industry" style="color:#5d78ff;margin-right:8px;"></i>Plan de Produccion o Proceso</h4>
     <a href="@Url.Action("Index","ProgramGestion")" class="k-button btn-rounded">
         <span class="k-icon k-i-arrow-chevron-left"></span> Volver al Kanban
     </a>
 </div>
 
-<div class="tp-card">
-    <div class="tp-card-header">Seleccionar Linea</div>
-    <div class="tp-card-body">
+<div class="tp-section">
+    <div class="tp-section-hdr">Seleccionar Linea</div>
+    <div class="tp-section-bdy">
         <div style="display:flex;justify-content:space-between;align-items:center;">
             <div class="tp-linea-btns" id="lineaBtns"></div>
             <div id="btnIrSetupWrap" style="display:none;">
@@ -51,17 +52,17 @@
     </div>
 </div>
 
-<div class="tp-card">
-    <div class="tp-card-header"><i class="fas fa-cog" style="color:#3b82f6;margin-right:6px;"></i>En Setup / Proceso</div>
-    <div class="tp-card-body">
+<div class="tp-section">
+    <div class="tp-section-hdr"><i class="fas fa-cog" style="color:#3b82f6;margin-right:6px;"></i>En Setup / Proceso</div>
+    <div class="tp-section-bdy">
         <div id="gridArranque" style="display:none;"></div>
         <div id="arranqueVacio" class="tp-no-data"><i class="fas fa-inbox"></i>No hay trabajos en proceso (Setup/Arranque).</div>
     </div>
 </div>
 
-<div class="tp-card">
-    <div class="tp-card-header"><i class="fas fa-clock" style="color:#f59e0b;margin-right:6px;"></i>Disponibles para Setup</div>
-    <div class="tp-card-body">
+<div class="tp-section">
+    <div class="tp-section-hdr"><i class="fas fa-clock" style="color:#f59e0b;margin-right:6px;"></i>Disponibles para Setup</div>
+    <div class="tp-section-bdy">
         <div id="gridProcesos" style="display:none;"></div>
         <div id="procesosVacio" class="tp-no-data"><i class="fas fa-inbox"></i>Selecciona una linea para ver los procesos disponibles.</div>
     </div>
@@ -71,11 +72,12 @@
 <script>
 var TP = {
     urls: {
-        procesos: '@Url.Action("ObtenerProcesos",          "TrolleyProcess")',
-        activos:  '@Url.Action("ObtenerTrabajosEnArranque","TrolleyProcess")',
-        trolleys: '@Url.Action("ObtenerTrolleys",          "TrolleyProcess")',
-        setup:    '@Url.Action("GuardarSetup",             "TrolleyProcess")',
-        irSetup:  '@Url.Action("Index",                    "TrolleySetup")'
+        procesos:     '@Url.Action("ObtenerProcesos",           "TrolleyProcess")',
+        activos:      '@Url.Action("ObtenerTrabajosEnArranque", "TrolleyProcess")',
+        trolleys:     '@Url.Action("ObtenerTrolleys",           "TrolleyProcess")',
+        setup:        '@Url.Action("GuardarSetup",              "TrolleyProcess")',
+        guardarOrden: '@Url.Action("GuardarOrdenProcesos",      "TrolleyProcess")',
+        irSetup:      '@Url.Action("Index",                     "TrolleySetup")'
     }
 };
 
@@ -93,7 +95,6 @@ function trolleyBadge(t, ok) {
     return '<span class="trolley-badge ' + (ok ? 'ok' : 'mismatch') + '">' + t + '</span>';
 }
 
-// ── Kendo Grid: En Setup / Proceso ──────────────────────────────────────────
 var gridArranque = $('#gridArranque').kendoGrid({
     dataSource: {
         data: [],
@@ -105,17 +106,15 @@ var gridArranque = $('#gridArranque').kendoGrid({
         }}}
     },
     columns: [
-        { field: 'id_Programa', title: 'Programa',   template: '<strong>#=id_Programa#</strong>', width: 160 },
-        { field: 'workOrder',   title: 'Work Order',  width: 170 },
+        { field: 'id_Programa', title: 'Programa',   template: '<strong>#=id_Programa#</strong>', width: 200 },
+        { field: 'workOrder',   title: 'Work Order',  width: 200 },
         { title: 'Trolleys',    template: '#=badgesHtml#' },
-        { title: 'Status',      template: '#=statusHtml#', width: 120, attributes: { style: 'text-align:center;' }, headerAttributes: { style: 'text-align:center;' } }
+        { title: 'Status',      template: '#=statusHtml#', width: 120,
+          attributes: { style: 'text-align:center;' }, headerAttributes: { style: 'text-align:center;' } }
     ],
-    sortable: false,
-    pageable: false,
-    scrollable: false
+    sortable: false, pageable: false, scrollable: false
 }).data('kendoGrid');
 
-// ── Kendo Grid: Disponibles para Setup ──────────────────────────────────────
 var gridProcesos = $('#gridProcesos').kendoGrid({
     dataSource: {
         data: [],
@@ -127,22 +126,23 @@ var gridProcesos = $('#gridProcesos').kendoGrid({
         }}}
     },
     columns: [
-        { title: '', width: 36,  template: '<span class="tp-handle"><span class="k-icon k-i-reorder"></span></span>', attributes: { style: 'text-align:center;padding:6px 4px;' } },
-        { field: 'id_Programa', title: 'Programa',  template: '<strong>#=id_Programa#</strong>', width: 160 },
-        { field: 'workOrder',   title: 'Work Order', width: 170 },
+        { title: '', width: 36,
+          template: '<span class="tp-handle"><span class="k-icon k-i-reorder"></span></span>',
+          attributes: { style: 'text-align:center;padding:6px 4px;' } },
+        { field: 'id_Programa', title: 'Programa',  template: '<strong>#=id_Programa#</strong>', width: 200 },
+        { field: 'workOrder',   title: 'Work Order', width: 200 },
         { title: 'Trolleys',    template: '#=badgesHtml#' },
-        { title: 'Accion',      template: '#=accionHtml#', width: 150, attributes: { style: 'text-align:center;' }, headerAttributes: { style: 'text-align:center;' } }
+        { title: 'Accion',      template: '#=accionHtml#', width: 160,
+          attributes: { style: 'text-align:center;' }, headerAttributes: { style: 'text-align:center;' } }
     ],
-    sortable: false,
-    pageable: false,
-    scrollable: false,
+    sortable: false, pageable: false, scrollable: false,
     dataBound: function () { _aplicarSortable(this); }
 }).data('kendoGrid');
 
-$('#gridArranque, #gridProcesos').addClass('tp-grid');
-
 function _aplicarSortable(grid) {
     if (!grid.dataSource.data().length) return;
+    var existing = grid.table.data('kendoSortable');
+    if (existing) existing.destroy();
     grid.table.kendoSortable({
         filter: '>tbody >tr:not(.k-no-data)',
         handle: '.tp-handle',
@@ -160,11 +160,21 @@ function _aplicarSortable(grid) {
         end: function () {
             $(document).off('mousemove.tpsort');
             if (_sortRAF) { cancelAnimationFrame(_sortRAF); _sortRAF = null; }
+        },
+        change: function (e) {
+            var data = grid.dataSource.data();
+            var ids  = $.map(data, function (item) { return item.id_Proceso; });
+            var moved = ids.splice(e.oldIndex, 1)[0];
+            ids.splice(e.newIndex, 0, moved);
+            $.ajax({
+                url: TP.urls.guardarOrden, type: 'POST',
+                data: { idProcesos: ids }, traditional: true,
+                error: function () { tgAlert('Error', 'No se pudo guardar el orden.'); }
+            });
         }
     });
 }
 
-// ── Botones de linea ─────────────────────────────────────────────────────────
 $.get('@Url.Action("GetLineas","ProgramGestion")', function (l) {
     var w = $('#lineaBtns');
     if (!l || !l.length) { w.html('<span style="color:#9aa0b8;">Sin lineas</span>'); return; }
@@ -172,7 +182,7 @@ $.get('@Url.Action("GetLineas","ProgramGestion")', function (l) {
         w.append('<button class="k-button btn-rounded tp-btn-linea" data-val="' + x.Value + '">Linea ' + x.Value + '</button>');
     });
     var match = /[?&]linea=(\d+)/.exec(window.location.search);
-    var btn = match ? w.find('.tp-btn-linea[data-val="' + match[1] + '"]') : null;
+    var btn   = match ? w.find('.tp-btn-linea[data-val="' + match[1] + '"]') : null;
     if (!btn || !btn.length) btn = w.find('.tp-btn-linea:first');
     btn.trigger('click');
 });
@@ -183,28 +193,19 @@ $(document).on('click', '.tp-btn-linea', function () {
     cargar(parseInt($(this).data('val')));
 });
 
-function cargar(linea) {
-    lineaSel = linea;
-    cargarActivos(linea);
-}
+function cargar(linea) { lineaSel = linea; cargarActivos(linea); }
 
-// ── cargarActivos ─────────────────────────────────────────────────────────────
 function cargarActivos(linea) {
     $.post(TP.urls.activos, { linea: linea }, function (data) {
-        refTrolleys = [];
-        hayProcesoActivo = false;
+        refTrolleys = []; hayProcesoActivo = false;
 
         if (!data || !data.length) {
-            gridArranque.wrapper.hide();
-            $('#arranqueVacio').show();
+            gridArranque.wrapper.hide(); $('#arranqueVacio').show();
             $('#btnIrSetupWrap').hide();
-            cargarDisponibles(linea);
-            return;
+            cargarDisponibles(linea); return;
         }
 
         hayProcesoActivo = true;
-
-        // Acumula todos los trolleys ocupados en esta linea
         $.each(data, function (_, it) {
             if (it.trolleys) {
                 $.each(it.trolleys.split(','), function (_, t) {
@@ -230,49 +231,36 @@ function cargarActivos(linea) {
         });
 
         gridArranque.dataSource.data(rows);
-        gridArranque.wrapper.show();
-        $('#arranqueVacio').hide();
+        gridArranque.wrapper.show(); $('#arranqueVacio').hide();
         $('#btnIrASetup').attr('href', TP.urls.irSetup + '?linea=' + linea);
         $('#btnIrSetupWrap').show();
         cargarDisponibles(linea);
     }).fail(function () {
-        gridArranque.wrapper.hide();
-        $('#arranqueVacio').show();
+        gridArranque.wrapper.hide(); $('#arranqueVacio').show();
         cargarDisponibles(linea);
     });
 }
 
-// ── cargarDisponibles ─────────────────────────────────────────────────────────
 function cargarDisponibles(linea) {
     $.post(TP.urls.procesos, { linea: linea }, function (proc) {
         if (!proc || !proc.length) {
-            gridProcesos.wrapper.hide();
-            $('#procesosVacio').show();
-            return;
+            gridProcesos.wrapper.hide(); $('#procesosVacio').show(); return;
         }
         var ids = $.map(proc, function (p) { return p.id_Proceso; });
         $.post(TP.urls.trolleys, { idProcesos: ids }, function (data) {
             pintarDisponibles(data);
-        }).fail(function () {
-            gridProcesos.wrapper.hide();
-            $('#procesosVacio').show();
-        });
-    }).fail(function () {
-        gridProcesos.wrapper.hide();
-        $('#procesosVacio').show();
-    });
+        }).fail(function () { gridProcesos.wrapper.hide(); $('#procesosVacio').show(); });
+    }).fail(function () { gridProcesos.wrapper.hide(); $('#procesosVacio').show(); });
 }
 
 function pintarDisponibles(procesos) {
     var hayActivo = hayProcesoActivo;
     var rows = $.map(procesos, function (p) {
-        var arr = $.isArray(p.trolleys) ? p.trolleys : [];
+        var arr          = $.isArray(p.trolleys) ? p.trolleys : [];
         var tieneTrolleys = arr.length > 0;
-
-        var badgesHtml = $.map(arr, function (t) {
+        var badgesHtml   = $.map(arr, function (t) {
             return trolleyBadge(t, refTrolleys.indexOf(t) < 0);
         }).join(' ');
-
         var accionHtml;
         if (!hayActivo && tieneTrolleys) {
             accionHtml = '<button class="k-button k-primary btn-rounded" onclick="iniciarSetup(' +
@@ -283,21 +271,17 @@ function pintarDisponibles(procesos) {
         } else {
             accionHtml = '<span style="color:#9aa0b8;font-size:.8rem;">Sin trolleys</span>';
         }
-
         return $.extend({}, p, { badgesHtml: badgesHtml, accionHtml: accionHtml });
     });
 
     if (!rows.length) {
-        gridProcesos.wrapper.hide();
-        $('#procesosVacio').show();
+        gridProcesos.wrapper.hide(); $('#procesosVacio').show();
     } else {
         gridProcesos.dataSource.data(rows);
-        gridProcesos.wrapper.show();
-        $('#procesosVacio').hide();
+        gridProcesos.wrapper.show(); $('#procesosVacio').hide();
     }
 }
 
-// ── iniciarSetup ──────────────────────────────────────────────────────────────
 function tgConfirm(t, x, fn) {
     $('<div/>').appendTo('body').kendoDialog({
         width: 420, title: t, closable: true, modal: true,
@@ -322,11 +306,8 @@ function tgAlert(t, x) {
 function iniciarSetup(id, prog) {
     tgConfirm('Mandar a Setup', 'Se cambiara el estado de ' + prog + ' a Setup.', function () {
         $.post(TP.urls.setup, { idProceso: id, linea: lineaSel }, function (r) {
-            if (r.success) {
-                window.location.href = r.redirectUrl;
-            } else {
-                tgAlert('Atencion', r.message);
-            }
+            if (r.success) { window.location.href = r.redirectUrl; }
+            else           { tgAlert('Atencion', r.message); }
         }).fail(function () { tgAlert('Error', 'Error de conexion.'); });
     });
 }
