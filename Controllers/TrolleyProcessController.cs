@@ -39,6 +39,14 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpPost]
+        public JsonResult GuardarOrdenProcesos(List<int> idProcesos)
+        {
+            if (idProcesos != null && idProcesos.Count > 0)
+                _svc.GuardarOrden(idProcesos);
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
         public JsonResult GuardarSetup(int idProceso, int linea)
         {
             var (success, message) = _svc.IniciarSetup(idProceso, linea);

@@ -26,6 +26,7 @@ namespace SnowTrolleyProduction.Models
         public int Linea { get; set; }
         public Nullable<int> Id_Linea { get; set; }
         public string Comentarios { get; set; }
+        public Nullable<int> Orden { get; set; }
     
         public virtual Linea Linea1 { get; set; }
     }

@@ -5,6 +5,11 @@
 
 @section Styles {
     <link href="~/Content/css/programa-gestion.css" rel="stylesheet" />
+    <style>
+        .ts-material-badge { display:inline-flex;align-items:center;gap:3px;border-radius:4px;padding:1px 7px;font-size:.72rem;font-weight:600;margin-top:3px; }
+        .ts-material-badge.mat-ok  { background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe; }
+        .ts-material-badge.mat-sin { background:#fef2f2;color:#ef4444;border:1px solid #fecaca; }
+    </style>
 }
 
 <div class="ts-header">
@@ -18,6 +23,7 @@
         <a href="#" class="k-button btn-rounded" id="btnBuscar"><span class="k-icon k-i-zoom"></span> Buscar</a>
     </div>
 </div>
+
 
 <div class="ts-kanban" id="kanbanBoard">
     <div class="ts-kanban-col">

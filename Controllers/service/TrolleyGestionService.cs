@@ -233,10 +233,12 @@ namespace SnowTrolleyProduction.Controllers.service
         public List<ProgramaGestion> GetProgramasTable(string numero = "")
         {
             const string sql = @"
-                SELECT p.Id, p.Numero, e.Id AS EnsambleId, e.EnsambleBase AS EnsambleNumero, l.Id_Linea, l.Numero_Linea
+                SELECT p.Id, p.Numero, e.Id AS EnsambleId, e.EnsambleBase AS EnsambleNumero,
+                       l.Id_Linea, l.Numero_Linea,
+                       ISNULL(p.CantidadTotalMateriales, 0) AS CantidadMateriales
                 FROM [Proccess].[Programas] p
-                JOIN [Proccess].[Ensambles] e ON p.Ensamble = e.Id
-                LEFT JOIN [Proccess].[Lineas] l ON e.Linea1 = l.Id_Linea
+                JOIN  [Proccess].[Ensambles] e ON p.Ensamble = e.Id
+                LEFT JOIN [Proccess].[Lineas] l ON e.Linea1  = l.Id_Linea
                 WHERE p.Numero IS NOT NULL AND p.Numero <> ''
                   AND p.Numero LIKE @filtro
                 ORDER BY l.Numero_Linea ASC";
@@ -247,6 +249,7 @@ namespace SnowTrolleyProduction.Controllers.service
                 {
                     Id     = r.Id,
                     Numero = r.Numero,
+                    CantidadMateriales = r.CantidadMateriales != null ? (int)r.CantidadMateriales : 0,
                     Ensamble = new EnsambleGestion
                     {
                         Id     = r.EnsambleId,
@@ -267,23 +270,33 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        public void AgregarPrograma(string numero, int ensambleId)
+        public int GetCantidadTotalMateriales(int programaId)
         {
-            const string sql = "INSERT INTO [Proccess].[Programas] (Numero, Ensamble) VALUES (@numero, @ensambleId)";
+            const string sql = "SELECT ISNULL(CantidadTotalMateriales, 0) FROM [Proccess].[Programas] WHERE Id = @programaId";
             using (var conn = new SqlConnection(_connStr))
             {
                 conn.Open();
-                conn.Execute(sql, new { numero, ensambleId });
+                return conn.QueryFirstOrDefault<int>(sql, new { programaId });
             }
         }
 
-        public void EditarPrograma(int programaId, int ensambleId, string numero)
+        public void AgregarPrograma(string numero, int ensambleId, int cantidadMateriales = 0)
         {
-            const string sql = "UPDATE [Proccess].[Programas] SET Ensamble = @ensambleId, Numero = @numero WHERE Id = @programaId";
+            const string sql = "INSERT INTO [Proccess].[Programas] (Numero, Ensamble, CantidadTotalMateriales) VALUES (@numero, @ensambleId, @cantidadMateriales)";
             using (var conn = new SqlConnection(_connStr))
             {
                 conn.Open();
-                conn.Execute(sql, new { programaId, ensambleId, numero });
+                conn.Execute(sql, new { numero, ensambleId, cantidadMateriales });
+            }
+        }
+
+        public void EditarPrograma(int programaId, int ensambleId, string numero, int cantidadMateriales = 0)
+        {
+            const string sql = "UPDATE [Proccess].[Programas] SET Ensamble = @ensambleId, Numero = @numero, CantidadTotalMateriales = @cantidadMateriales WHERE Id = @programaId";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                conn.Execute(sql, new { programaId, ensambleId, numero, cantidadMateriales });
             }
         }
 

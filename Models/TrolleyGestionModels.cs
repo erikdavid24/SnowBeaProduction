@@ -36,6 +36,7 @@ namespace SnowTrolleyProduction.Models
         public int? EnsambleId { get; set; }
         public EnsambleGestion Ensamble { get; set; }
         public List<AcomodoGestion> Acomodos { get; set; }
+        public int CantidadMateriales { get; set; }
     }
 
     public class AcomodoGestion
@@ -107,6 +108,7 @@ namespace SnowTrolleyProduction.Models
         public string Numero { get; set; }
         public string Ensamble { get; set; }
         public int? Linea { get; set; }
+        public int CantidadMateriales { get; set; }
     }
 
     public class AcomodoGridRow {

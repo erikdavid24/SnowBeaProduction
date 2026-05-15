@@ -46,5 +46,8 @@ namespace SnowTrolleyProduction.Models
 
         [DisplayName("Lados")]
         public string Lados { get; set; }
+
+        [DisplayName("Materiales")]
+        public int CantidadMateriales { get; set; }
     }
 }

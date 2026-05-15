@@ -4,7 +4,7 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="b928598e845940b6b605ae6a82132f72" Name="Diagram1" ZoomLevel="54">
+      <Diagram DiagramId="b928598e845940b6b605ae6a82132f72" Name="Diagram1" ZoomLevel="71">
         <EntityTypeShape EntityType="BAESystemsGuaymasModel.Acomodo" Width="1.5" PointX="7.5" PointY="7.5" IsExpanded="true" />
         <EntityTypeShape EntityType="BAESystemsGuaymasModel.Area" Width="1.5" PointX="0.75" PointY="11" IsExpanded="true" />
         <EntityTypeShape EntityType="BAESystemsGuaymasModel.Ensamble" Width="1.5" PointX="5.25" PointY="4" IsExpanded="true" />
@@ -26,7 +26,7 @@
         <AssociationConnector Association="BAESystemsGuaymasModel.FK__Maquinas__LineaI__73DE24C7" ManuallyRouted="false" />
         <AssociationConnector Association="BAESystemsGuaymasModel.FK_TrolleySetup_Lineas" ManuallyRouted="false" />
         <AssociationConnector Association="BAESystemsGuaymasModel.FK_Works_Lineas" ManuallyRouted="false" />
-        <EntityTypeShape EntityType="BAESystemsGuaymasModel.FiscalCalendar" Width="1.5" PointX="7.375" PointY="0.75" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.FiscalCalendar" Width="1.5" PointX="11.125" PointY="7" />
         <EntityTypeShape EntityType="BAESystemsGuaymasModel.Trolley_Program" Width="1.5" PointX="5.25" PointY="20.5" />
         <AssociationConnector Association="BAESystemsGuaymasModel.FK_TrolleyProgram_Lineas" />
       </Diagram>
