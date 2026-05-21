@@ -8,32 +8,52 @@ function tgAlert(t,x){$('<div/>').appendTo('body').kendoDialog({width:380,title:
 
 // Kanban
 function cargarKanban() {
-    var s = $('#startDate').data('kendoDatePicker'), e = $('#endDate').data('kendoDatePicker');
-    $.post(PG.urls.readKanban, {
-        startDate: s ? kendo.toString(s.value(), 'yyyy/MM/dd') : '',
-        endDate:   e ? kendo.toString(e.value(), 'yyyy/MM/dd') : ''
-    }, function (resp) {
+    cargarPrecargas();
+    var semana = parseInt($('#numSemana').data('kendoNumericTextBox').value()) || 0;
+    var anio   = parseInt($('#numAnio').data('kendoNumericTextBox').value())   || 0;
+    $.post(PG.urls.readKanban, { semana: semana, anio: anio }, function (resp) {
         var data = resp.Data || [];
-        var enProceso = ['Setup', 'Arranque', 'En Proceso'];
-        var completados = ['Completado', 'Finalizado', 'Finalizado Parcial'];
-        renderCol('bodyPendiente',  'cntPendiente',  data.filter(function (x) { return enProceso.indexOf(x.Status) < 0 && completados.indexOf(x.Status) < 0; }));
-        renderCol('bodyEnProceso',  'cntEnProceso',  data.filter(function (x) { return enProceso.indexOf(x.Status) >= 0; }));
-        renderCol('bodyCompletado', 'cntCompletado', data.filter(function (x) { return completados.indexOf(x.Status) >= 0; }));
+        var enProceso        = ['Setup', 'Arranque', 'En Proceso'];
+        var piezasPendientes = ['Finalizado Parcial'];
+        var completados      = ['Completado', 'Finalizado'];
+        var todasEspeciales  = enProceso.concat(piezasPendientes, completados);
+        var reSaldo          = /-\d+$/;
+
+        var saldoMap = {};
+        data.forEach(function (x) {
+            var m = /^(.+?)-(\d+)$/.exec(x.WorkOrder || '');
+            if (m && todasEspeciales.indexOf(x.Status) < 0) {
+                saldoMap[m[1]] = (saldoMap[m[1]] || 0) + (x.PiezasProgramadas || 0);
+            }
+        });
+        data.forEach(function (x) {
+            x._isSaldo = todasEspeciales.indexOf(x.Status) < 0 && reSaldo.test(x.WorkOrder || '');
+        });
+
+        function esSaldo(x) { return x._isSaldo || piezasPendientes.indexOf(x.Status) >= 0; }
+
+        renderCol('bodyPendiente',       'cntPendiente',       data.filter(function (x) { return todasEspeciales.indexOf(x.Status) < 0 && !x._isSaldo; }), saldoMap);
+        renderCol('bodyEnProceso',       'cntEnProceso',       data.filter(function (x) { return enProceso.indexOf(x.Status) >= 0; }), saldoMap);
+        renderCol('bodyPiezasPendientes','cntPiezasPendientes',data.filter(function (x) { return esSaldo(x); }), saldoMap);
+        renderCol('bodyCompletado',      'cntCompletado',      data.filter(function (x) { return completados.indexOf(x.Status) >= 0; }), saldoMap);
     });
 }
 
-function renderCol(bodyId, countId, items) {
+function renderCol(bodyId, countId, items, saldoMap) {
     var $body = $('#' + bodyId).empty();
     $('#' + countId).text(items.length);
-    if (!items.length) { $body.append('<div class="ts-kanban-empty"><i class="fas fa-inbox"></i><br/>Sin registros</div>'); return; }
+    if (!items.length) { $body.append('<div class="ts-kanban-empty"><div class="k-grid" style="border:none;background:transparent;overflow:visible;height:auto;box-shadow:none;"><img class="show-empty" /></div></div>'); return; }
 
-    var procStatuses = ['Setup', 'Arranque', 'En Proceso'];
-    var doneStatuses = ['Completado', 'Finalizado', 'Finalizado Parcial'];
+    var procStatuses    = ['Setup', 'Arranque', 'En Proceso'];
+    var doneStatuses    = ['Completado', 'Finalizado'];
+    var partialStatuses = ['Finalizado Parcial'];
     items.forEach(function (item) {
-        var isDone = doneStatuses.indexOf(item.Status) >= 0;
-        var isProc = procStatuses.indexOf(item.Status) >= 0;
-        var badgeCls = isDone ? 'done' : (isProc ? 'proc' : 'open');
-        var badgeIco = isDone ? 'fa-check-circle' : (isProc ? 'fa-cog' : 'fa-clock');
+        var isDone    = doneStatuses.indexOf(item.Status) >= 0;
+        var isProc    = procStatuses.indexOf(item.Status) >= 0;
+        var isPartial     = item._isSaldo || partialStatuses.indexOf(item.Status) >= 0;
+        var displayStatus = item._isSaldo ? 'Por Terminar' : (item.Status || '');
+        var badgeCls = isDone ? 'done' : (isProc ? 'proc' : (isPartial ? 'partial' : 'open'));
+        var badgeIco = isDone ? 'fa-check-circle' : (isProc ? 'fa-cog' : (isPartial ? 'fa-hourglass-half' : 'fa-clock'));
         var ladosHtml = '';
         if (item.Lados) {
             ladosHtml = '<div class="ts-card-lados">';
@@ -44,6 +64,14 @@ function renderCol(bodyId, countId, items) {
         var materialBadge = cnt > 0
             ? '<span class="ts-material-badge mat-ok"><i class="fas fa-microchip"></i>&nbsp;' + cnt + ' mat.</span>'
             : '<span class="ts-material-badge mat-sin"><i class="fas fa-exclamation-triangle"></i>&nbsp;Sin materiales</span>';
+
+        var fechaDisplay = (isDone && item.FechaFinalizacion) ? item.FechaFinalizacion : item.FechaCreacion;
+        var piezasDisplay = item.PiezasProgramadas || 0;
+        if (isDone && saldoMap && saldoMap[item.WorkOrder] !== undefined) {
+            var real = piezasDisplay - saldoMap[item.WorkOrder];
+            if (real >= 0) piezasDisplay = real;
+        }
+
         $('<div class="ts-card"></div>').attr({
             'data-id': item.Id, 'data-wo': item.WorkOrder || '', 'data-prog': item.Id_Programa || '',
             'data-ensamble': item.Ensamble || '', 'data-piezas': item.PiezasProgramadas || 0,
@@ -51,14 +79,16 @@ function renderCol(bodyId, countId, items) {
             'data-coment': item.Comentarios || '', 'data-lados': item.Lados || '',
             'data-materiales': cnt
         }).html(
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">' +
+            '<span class="ts-badge ' + badgeCls + '"><i class="fas ' + badgeIco + '"></i>&nbsp;' + displayStatus + '</span>' +
             '<span class="ts-card-num">#' + item.Id + '</span>' +
-            '<div style="margin-top:6px;"><span class="ts-badge ' + badgeCls + '"><i class="fas ' + badgeIco + '"></i>&nbsp;' + (item.Status || '') + '</span></div>' +
+            '</div>' +
             '<div class="ts-card-title">' + (item.Ensamble || item.Id_Programa || '&mdash;') + '</div>' +
             '<div class="ts-card-sub">WO: ' + (item.WorkOrder || '') + '</div>' + ladosHtml +
             materialBadge +
             (item.Trolleys ? '<div class="ts-card-trolleys"><i class="fas fa-grip-lines"></i>&nbsp;' + item.Trolleys + '</div>' : '') +
-            '<div class="ts-card-meta"><span><i class="fas fa-calendar-alt"></i>&nbsp;' + formatFecha(item.FechaCreacion) + '</span>' +
-            '<span><i class="fas fa-boxes"></i>&nbsp;' + (item.PiezasProgramadas || 0) + ' pzas</span>' +
+            '<div class="ts-card-meta"><span><i class="fas fa-calendar-alt"></i>&nbsp;' + formatFecha(fechaDisplay) + '</span>' +
+            '<span><i class="fas fa-boxes"></i>&nbsp;' + piezasDisplay + ' pzas</span>' +
             '<span><i class="fas fa-industry"></i>&nbsp;L' + (item.Id_Linea || '?') + '</span></div>' +
             '<div class="ts-card-actions">' +
                 '<a role="button" class="btn-card-edit" href="#"><i class="fas fa-edit"></i> Editar</a>' +
@@ -182,7 +212,7 @@ $(document).on('change', '.setup-trolley-slot', function () {
 });
 
 // Preview Excel
-function abrirPreview(data) {
+function abrirPreview(data, soloVer) {
     var existing = $('#gridPreviewContainer').data('kendoGrid');
     if (existing) { existing.destroy(); }
     $('#gridPreviewContainer').empty();
@@ -207,6 +237,7 @@ function abrirPreview(data) {
         height: 500, scrollable: true,
         pageable: { refresh: true, pageSizes: [50, 100, 200, 'all'], buttonCount: 5 },
         sortable: true, filterable: { mode: 'row' }, editable: 'incell',
+        noRecords: { template: "<img class='show-empty' />" },
         columns: [
             { field: 'EsDuplicado', title: '', width: 50, sortable: false, filterable: false, locked: true,
               template: function(d){ return d.EsDuplicado ? '<i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:16px;" title="'+(d.RazonRechazo||'')+'"></i>' : '<i class="fas fa-check-circle" style="color:#22c55e;font-size:16px;"></i>'; } },
@@ -228,7 +259,26 @@ function abrirPreview(data) {
         var item = grid.dataItem($(this).closest('tr'));
         if (item) { grid.dataSource.remove(item); actualizarConteoPreview(); }
     });
+    if (soloVer) {
+        $('#btnConfirmarCarga').hide();
+        $('#btnEliminarDuplicados').hide();
+    } else {
+        $('#btnConfirmarCarga').show();
+    }
     $('#wndPreview').data('kendoWindow').center().open();
+}
+
+function verPrecargas() {
+    $.get(PG.urls.getPrecargas, function (data) {
+        if (!data || !data.length) {
+            tgAlert('Sin pendientes', 'No hay registros pendientes de autorizacion.');
+            return;
+        }
+        var items = $.map(data, function (d) {
+            return $.extend({}, d, { EsDuplicado: false, RazonRechazo: '' });
+        });
+        abrirPreview(items, true);
+    }).fail(function () { tgAlert('Error', 'No se pudieron cargar los registros pendientes.'); });
 }
 
 function actualizarConteoPreview() {
@@ -247,13 +297,19 @@ function actualizarConteoPreview() {
     }
 }
 
+function cargarPrecargas() {
+    $.get(PG.urls.getPrecargas, function (data) {
+        var count = (data && data.length) ? data.length : 0;
+        $('#badgePrecargas').text(count);
+        if (count > 0) { $('#secPrecargas').slideDown(200); }
+        else           { $('#secPrecargas').slideUp(200);   }
+    });
+}
+
 // Inicio
 $(function () {
-    var now = new Date();
-    $('#startDate').kendoDatePicker({ value: new Date(now.getFullYear(), 0, 1), format: 'yyyy/MM/dd' });
-    $('#endDate').kendoDatePicker({   value: new Date(now.getFullYear(), 11, 31), format: 'yyyy/MM/dd' });
 
-    if (PG.msj.exito)      { swalOk('�Listo!', PG.msj.exito); cargarKanban(); }
+    if (PG.msj.exito)      { swalOk('Listo!', PG.msj.exito); cargarKanban(); }
     else if (PG.msj.error) { swalErr('Error', PG.msj.error);   cargarKanban(); }
     else                   { cargarKanban(); }
 
@@ -281,13 +337,16 @@ $(function () {
                 if (!r.success) { swalErr('Error al leer Excel', r.message); return; }
                 if (!r.data || !r.data.length) { swalWarn('Sin datos', 'No se encontraron registros en el archivo.'); return; }
                 $('#wndExcel').data('kendoWindow').close();
-                abrirPreview(r.data);
+                abrirPreview(r.data, false);
             },
             error: function() { $('#excelUploadProgress').hide(); $btn.prop('disabled', false).html('<i class="fas fa-search"></i> Vista Previa'); swalErr('Error', 'No se pudo procesar el archivo.'); }
         });
     });
 
-    $('#btnDescartarPreview').on('click', function () { $('#wndPreview').data('kendoWindow').close(); });
+    $('#btnDescartarPreview').on('click', function () {
+        $('#btnConfirmarCarga').show();
+        $('#wndPreview').data('kendoWindow').close();
+    });
 
     $('#btnEliminarDuplicados').on('click', function () {
         var grid = $('#gridPreview').data('kendoGrid');
@@ -308,20 +367,22 @@ $(function () {
         if (!items.length) { swalWarn('Sin datos validos', 'No quedan registros validos para guardar.'); return; }
         var msj = 'Se guardaran <b>'+items.length+'</b> registros nuevos.';
         if (dups > 0) msj += '<br/><small style="color:#ef4444;">Se omitiran '+dups+' duplicados.</small>';
-        Swal.fire({ title: 'Confirmar carga?', html: msj, type: 'question', showCancelButton: true,
+        Swal.fire({ title: 'Pre-Guardar Excel?', html: msj, type: 'question', showCancelButton: true,
             confirmButtonColor: '#1bc5bd', cancelButtonColor: '#9aa0b8',
-            confirmButtonText: '<i class="fas fa-check"></i> Guardar', cancelButtonText: 'Cancelar' })
+            confirmButtonText: '<i class="fas fa-check"></i> Pre-Guardar', cancelButtonText: 'Cancelar' })
         .then(function(result) {
             if (!result.value) return;
-            var $btn = $('#btnConfirmarCarga').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
+            var $btnK = $('#btnConfirmarCarga').data('kendoButton'); $btnK.enable(false);
+            $('#btnConfirmarCarga').find('.k-button-text').html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
+            var $btn = $('#btnConfirmarCarga');
             $.ajax({
-                url: PG.urls.guardarPreview, type: 'POST', contentType: 'application/json', data: JSON.stringify(items),
+                url: PG.urls.preGuardar, type: 'POST', contentType: 'application/json', data: JSON.stringify(items),
                 success: function(r) {
-                    if (r && r.success) { swalOk('Exito!', 'Se guardaron '+r.count+' programas.', { timer: 2500, showConfirmButton: false }); $('#wndPreview').data('kendoWindow').close(); cargarKanban(); }
+                    if (r && r.success) { swalOk('Pre-Guardado!', '<b>'+r.count+'</b> registros en espera de autorizacion.', { timer: 2500, showConfirmButton: false }); $('#wndPreview').data('kendoWindow').close(); cargarPrecargas(); }
                     else { swalErr('Error', r && r.message ? r.message : 'Error desconocido'); }
                 },
                 error: function() { swalErr('Error', 'Error de conexion.'); }
-            }).always(function() { $btn.prop('disabled', false).html('<i class="fas fa-check"></i> Confirmar y Guardar'); });
+            }).always(function() { $('#btnConfirmarCarga').data('kendoButton').enable(true); $('#btnConfirmarCarga').find('.k-button-text').html('<i class="fas fa-check"></i> Pre-Guardar'); });
         });
     });
 
@@ -355,7 +416,7 @@ $(function () {
           .always(function () { $btn.prop('disabled', false).html('<i class="fas fa-save"></i> Guardar'); });
     });
 
-    // Guardar edici�n
+   
     $('#btnGuardarEditar').on('click', function () {
         var piezas = parseInt($('#editPiezas').val());
         if (!piezas || piezas <= 0) { swalWarn('Campo requerido', 'Ingresa las piezas.'); return; }
@@ -366,9 +427,9 @@ $(function () {
             Trolleys: $('#editTrolleys').val(), Id_Linea: $('#editLinea').val() || null,
             Comentarios: $('#editComentarios').val()
         }, function (r) {
-            if (r.success) { swalOk('�Listo!', '', { timer: 1200, showConfirmButton: false }); $('#wndEditar').data('kendoWindow').close(); cargarKanban(); }
+            if (r.success) { swalOk('Listo!', '', { timer: 1200, showConfirmButton: false }); $('#wndEditar').data('kendoWindow').close(); cargarKanban(); }
             else { swalErr('Error', r.message); }
-        }).fail(function () { swalErr('Error', 'Error de conexi�n.'); })
+        }).fail(function () { swalErr('Error', 'Error de conexion.'); })
           .always(function () { $btn.prop('disabled', false).html('<i class="fas fa-save"></i> Guardar'); });
     });
 
@@ -399,9 +460,9 @@ $(function () {
         var payload = $.extend({ programaId: programaId, linea: linea, maquinaId: maquinaId, maquinaId2: maquinaId2 }, zonas);
         var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
         $.post(PG.urls.guardarSetupTrolleys, payload, function (r) {
-            if (r.success) { swalOk('�Listo!', 'Setup guardado.', { timer: 1500, showConfirmButton: false }); $('#wndSetup').data('kendoWindow').close(); cargarKanban(); }
+            if (r.success) { swalOk('Listo!', 'Setup guardado.', { timer: 1500, showConfirmButton: false }); $('#wndSetup').data('kendoWindow').close(); cargarKanban(); }
             else { swalErr('Error', r.message); }
-        }).fail(function () { swalErr('Error', 'Error de conexi�n.'); })
+        }).fail(function () { swalErr('Error', 'Error de conexion.'); })
           .always(function () { $btn.prop('disabled', false).html('<i class="fas fa-tools"></i> Guardar Setup'); });
     });
 
@@ -425,7 +486,7 @@ $(function () {
         $('#wndEditar').data('kendoWindow').center().open();
     });
 
-    // Card events � Delete
+
     $(document).on('click', '.btn-card-del', function (e) {
         e.preventDefault();
         var $c = $(this).closest('.ts-card');
@@ -437,6 +498,41 @@ $(function () {
                 if (r && r.success) { cargarKanban(); }
                 else { tgAlert('Error', (r && r.message) || 'No se pudo eliminar.'); }
             }).fail(function (xhr) { tgAlert('Error', 'Error de conexi\xf3n: ' + xhr.status); });
+        });
+    });
+
+    $('#btnVerPrecargas').on('click', function () { verPrecargas(); });
+
+    $('#btnAutorizarTodo').on('click', function () {
+        Swal.fire({ title: 'Autorizar carga?', html: 'Los registros se moveran al kanban como <b>Creado</b>.',
+            type: 'question', showCancelButton: true,
+            confirmButtonColor: '#22c55e', cancelButtonColor: '#9aa0b8',
+            confirmButtonText: '<i class="fas fa-check"></i> Autorizar', cancelButtonText: 'Cancelar' })
+        .then(function (r) {
+            if (!r.value) return;
+            $.post(PG.urls.autorizarPrecargas, function (res) {
+                if (res && res.success) {
+                    swalOk('Autorizado!', res.count + ' programas agregados al plan.', { timer: 2500, showConfirmButton: false });
+                    cargarPrecargas();
+                    cargarKanban();
+                } else { swalErr('Error', res && res.message ? res.message : 'Error desconocido'); }
+            }).fail(function () { swalErr('Error', 'Error de conexion.'); });
+        });
+    });
+
+    $('#btnRechazarTodo').on('click', function () {
+        Swal.fire({ title: 'Rechazar carga?', html: 'Se eliminaran todos los registros pendientes.',
+            type: 'warning', showCancelButton: true,
+            confirmButtonColor: '#ef4444', cancelButtonColor: '#9aa0b8',
+            confirmButtonText: '<i class="fas fa-times"></i> Rechazar', cancelButtonText: 'Cancelar' })
+        .then(function (r) {
+            if (!r.value) return;
+            $.post(PG.urls.rechazarPrecargas, function (res) {
+                if (res && res.success) {
+                    swalOk('Rechazado', 'Los registros pendientes fueron eliminados.', { timer: 2000, showConfirmButton: false });
+                    cargarPrecargas();
+                } else { swalErr('Error', res && res.message ? res.message : 'Error desconocido'); }
+            }).fail(function () { swalErr('Error', 'Error de conexion.'); });
         });
     });
 });

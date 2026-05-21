@@ -4,7 +4,7 @@
 
 <div class="form-group">
     <label class="form-label">Linea</label>
-    <select id="acoLineaSelect" class="form-control">
+    <select id="acoLineaSelect">
         <option value="">-- Selecciona una linea--</option>
         @foreach (var linea in Model)
         {
@@ -22,18 +22,21 @@
 
 <script>
 (function () {
-    $('#acoLineaSelect').on('change', function () {
-        var lineaId = $(this).val();
-        if (!lineaId) {
-            $('#acoAutocompletadoContainer').empty();
-            $('#btnSubmitAcomodo').hide();
-            return;
+    var $ddlLinea = $('#acoLineaSelect').kendoDropDownList({
+        optionLabel: '-- Selecciona una linea --',
+        change: function () {
+            var lineaId = this.value();
+            if (!lineaId) {
+                $('#acoAutocompletadoContainer').empty();
+                $('#btnSubmitAcomodo').hide();
+                return;
+            }
+            $.get(TG.urls.acomodoAutocompletado, { linea: lineaId }, function (html) {
+                $('#acoAutocompletadoContainer').html(html);
+                $('#btnSubmitAcomodo').show();
+            });
         }
-        $.get(TG.urls.acomodoAutocompletado, { linea: lineaId }, function (html) {
-            $('#acoAutocompletadoContainer').html(html);
-            $('#btnSubmitAcomodo').show();
-        });
-    });
+    }).data('kendoDropDownList');
 
     $(document).on('click', '#btnSubmitAcomodo', function () {
         var programaId = parseInt($('#acoPrograma').val());

@@ -27,9 +27,9 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpPost]
-        public JsonResult ReadKanban(string startDate, string endDate)
+        public JsonResult ReadKanban(string startDate, string endDate, int? semana, int? anio)
         {
-            try   { return Json(new { Data = _svc.Read(startDate, endDate) }); }
+            try   { return Json(new { Data = _svc.Read(startDate, endDate, semana, anio) }); }
             catch (Exception ex) { return Json(new { Data = new List<ProgramGestionViewModel>(), error = ex.Message }); }
         }
 
@@ -66,7 +66,7 @@ namespace SnowTrolleyProduction.Controllers
         {
             try
             {
-                if (item == null)                          return Json(new { success = false, message = "Datos inv�lidos" });
+                if (item == null)                          return Json(new { success = false, message = "Datos invalidos" });
                 if (string.IsNullOrEmpty(item.WorkOrder))  return Json(new { success = false, message = "La orden de trabajo es requerida" });
                 if (item.PiezasProgramadas <= 0)            return Json(new { success = false, message = "Las piezas deben ser mayor a 0" });
 
@@ -108,7 +108,7 @@ namespace SnowTrolleyProduction.Controllers
         {
             try
             {
-                if (item == null || item.Id <= 0) return Json(new { success = false, message = "Datos inv�lidos" });
+                if (item == null || item.Id <= 0) return Json(new { success = false, message = "Datos invalidos" });
                 _svc.Update(item);
                 return Json(new { success = true });
             }
@@ -147,7 +147,7 @@ namespace SnowTrolleyProduction.Controllers
         {
             try
             {
-                if (id == null || id <= 0) return Json(new { success = false, message = "ID inv�lido: " + id });
+                if (id == null || id <= 0) return Json(new { success = false, message = "ID invalido: " + id });
                 _svc.Delete(new ProgramGestionViewModel { Id = id.Value });
                 return Json(new { success = true });
             }
@@ -159,7 +159,7 @@ namespace SnowTrolleyProduction.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(workOrder)) return Json(new { success = false, message = "WorkOrder inv�lido" });
+                if (string.IsNullOrEmpty(workOrder)) return Json(new { success = false, message = "WorkOrder invalido" });
                 _svc.DeleteCarta(workOrder, ensamble);
                 return Json(new { success = true });
             }
@@ -217,7 +217,7 @@ namespace SnowTrolleyProduction.Controllers
             if (preview == true)
             {
                 if (archivoExcel == null || archivoExcel.ContentLength == 0)
-                    return Json(new { success = false, message = "Selecciona un archivo Excel v�lido." });
+                    return Json(new { success = false, message = "Selecciona un archivo Excel valido." });
                 
                 try
                 {
@@ -233,7 +233,7 @@ namespace SnowTrolleyProduction.Controllers
             // Direct save mode (legacy)
             if (archivoExcel == null || archivoExcel.ContentLength == 0)
             {
-                TempData["Error"] = "Por favor selecciona un archivo de Excel v�lido.";
+                TempData["Error"] = "Por favor selecciona un archivo de Excel valido.";
                 return RedirectToAction("Index");
             }
             
@@ -242,8 +242,8 @@ namespace SnowTrolleyProduction.Controllers
                 var items = _svc.ParseExcelForPreview(archivoExcel.InputStream);
                 int count = _svc.GuardarDesdeLista(items);
                 TempData[count == 0 ? "Error" : "Success"] = count == 0
-                    ? "No se encontraron datos v�lidos en el Excel."
-                    : string.Format("��xito! Se cargaron {0} programas.", count);
+                    ? "No se encontraron datos validos en el Excel."
+                    : string.Format("exito! Se cargaron {0} programas.", count);
             }
             catch (Exception ex) 
             { 
@@ -284,6 +284,58 @@ namespace SnowTrolleyProduction.Controllers
                 return Json(result, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex) { return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet); }
+        }
+
+        [HttpPost]
+        public JsonResult PreGuardarPreview()
+        {
+            try
+            {
+                Request.InputStream.Seek(0, System.IO.SeekOrigin.Begin);
+                string body = new System.IO.StreamReader(Request.InputStream).ReadToEnd();
+                if (string.IsNullOrWhiteSpace(body))
+                    return Json(new { success = false, message = "No hay datos para guardar." });
+
+                var items = Newtonsoft.Json.JsonConvert.DeserializeObject<List<ExcelPreviewItemDto>>(body);
+                if (items == null || !items.Any())
+                    return Json(new { success = false, message = "No hay datos para guardar." });
+
+                int count = _svc.PreGuardar(items);
+                return Json(new { success = true, count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public JsonResult GetPrecargas()
+        {
+            try   { return Json(_svc.GetPrecargas(), JsonRequestBehavior.AllowGet); }
+            catch (Exception ex) { return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet); }
+        }
+
+        [HttpPost]
+        public JsonResult AutorizarPrecargas()
+        {
+            try
+            {
+                int count = _svc.AutorizarPrecargas();
+                return Json(new { success = true, count });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
+
+        [HttpPost]
+        public JsonResult RechazarPrecargas()
+        {
+            try
+            {
+                _svc.RechazarPrecargas();
+                return Json(new { success = true });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
 
         [HttpPost]

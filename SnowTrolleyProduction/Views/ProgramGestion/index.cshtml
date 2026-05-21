@@ -4,45 +4,99 @@
 }
 
 @section Styles {
-    <link href="~/Content/css/programa-gestion.css" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/css/programa-gestion.css")?v=@(new System.IO.FileInfo(Server.MapPath("~/Content/css/programa-gestion.css")).LastWriteTime.Ticks)" rel="stylesheet" />
     <style>
         .ts-material-badge { display:inline-flex;align-items:center;gap:3px;border-radius:4px;padding:1px 7px;font-size:.72rem;font-weight:600;margin-top:3px; }
         .ts-material-badge.mat-ok  { background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe; }
         .ts-material-badge.mat-sin { background:#fef2f2;color:#ef4444;border:1px solid #fecaca; }
+
+        .ts-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 12px !important;
+            margin-bottom: 18px !important;
+            background: #fff !important;
+            border: 1px solid #e8ecf1 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 1px 6px rgba(0,0,0,.06) !important;
+            padding: 12px 20px !important;
+        }
+        .ts-header h4 {
+            font-size: 1.15rem !important;
+            font-weight: 700 !important;
+            color: #3d4465 !important;
+            margin: 0 !important;
+            white-space: nowrap !important;
+        }
+        .ts-toolbar {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            flex-wrap: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+        .ts-toolbar label {
+            color: #7d8499 !important;
+            font-size: .78rem !important;
+            font-weight: 600 !important;
+            margin: 0 !important;
+            white-space: nowrap !important;
+        }
+        .ts-toolbar .k-datepicker { width: 125px !important; }
+        img.show-empty { width:120px!important;height:120px!important;background-size:120px 120px!important;display:block!important;margin:0 auto!important; }
+
     </style>
 }
 
 <div class="ts-header">
-    <h4><i class="fas fa-cogs" style="color:#5d78ff;margin-right:8px;"></i>Plan de Produccion</h4>
+    <h4><i class="fas fa-cogs" style="margin-right:8px;"></i>Plan de Produccion</h4>
     <div class="ts-toolbar">
-        <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded" id="btnIrProceso"><span class="k-icon k-i-play"></span> Ir al Proceso</a>
-        <a href="#" class="k-button k-primary btn-rounded" id="btnNuevoPrograma"><span class="k-icon k-i-plus"></span> Nuevo Programa</a>
+        <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded" id="btnIrProceso"><i class="fas fa-play"></i> Ir al Proceso</a>
+        <a href="#" class="k-button k-primary btn-rounded" id="btnNuevoPrograma"><i class="fas fa-plus"></i> Nuevo Programa</a>
         <a href="#" class="k-button btn-excel" id="btnSubirExcel"><i class="fas fa-file-excel"></i>&nbsp;Subir Excel</a>
-        <label>De</label><input id="startDate" class="ts-input-date" />
-        <label>a</label><input id="endDate" class="ts-input-date" />
-        <a href="#" class="k-button btn-rounded" id="btnBuscar"><span class="k-icon k-i-zoom"></span> Buscar</a>
+        <label>Semana</label>@(Html.Kendo().NumericTextBox<int>().Name("numSemana").Min(1).Max(53).HtmlAttributes(new { style = "width:70px;" }))
+        <label>Año</label>@(Html.Kendo().NumericTextBox<int>().Name("numAnio").Min(2020).Max(2099).HtmlAttributes(new { style = "width:78px;" }))
+        <a href="#" class="k-button btn-rounded" id="btnBuscar"><i class="fas fa-search"></i> Buscar</a>
     </div>
 </div>
 
+<div id="secPrecargas" style="display:none;margin-bottom:16px;">
+    <div class="pg-precarga-hdr">
+        <span><i class="fas fa-exclamation-triangle" style="margin-right:6px;"></i>Pendientes de Autorizacion <span id="badgePrecargas" class="pg-precarga-badge">0</span></span>
+        <div style="display:flex;gap:8px;">
+            @(Html.Kendo().Button().Name("btnVerPrecargas").Content("<i class='fas fa-eye'></i> Ver detalle"))
+            @(Html.Kendo().Button().Name("btnAutorizarTodo").Content("<i class='fas fa-check'></i> Autorizar").HtmlAttributes(new { @class = "k-primary" }))
+            @(Html.Kendo().Button().Name("btnRechazarTodo").Content("<i class='fas fa-times'></i> Rechazar"))
+        </div>
+    </div>
+</div>
 
 <div class="ts-kanban" id="kanbanBoard">
     <div class="ts-kanban-col">
         <div class="ts-kanban-col-header">
-            <i class="fas fa-clock" style="color:#f59e0b;"></i> Creado
+            <i class="fas fa-clock"></i> Creado
             <span id="cntPendiente" class="ts-kanban-badge" style="background:#fde68a;color:#92400e;"></span>
         </div>
         <div class="ts-kanban-col-body" id="bodyPendiente"></div>
     </div>
     <div class="ts-kanban-col">
         <div class="ts-kanban-col-header">
-            <i class="fas fa-cog" style="color:#3b82f6;"></i> En Proceso
+            <i class="fas fa-cog"></i> En Proceso
             <span id="cntEnProceso" class="ts-kanban-badge" style="background:#bfdbfe;color:#1e40af;"></span>
         </div>
         <div class="ts-kanban-col-body" id="bodyEnProceso"></div>
     </div>
     <div class="ts-kanban-col">
         <div class="ts-kanban-col-header">
-            <i class="fas fa-check-circle" style="color:#22c55e;"></i> Completado
+            <i class="fas fa-hourglass-half"></i> Piezas por Terminar
+            <span id="cntPiezasPendientes" class="ts-kanban-badge" style="background:#fef3c7;color:#92400e;"></span>
+        </div>
+        <div class="ts-kanban-col-body" id="bodyPiezasPendientes"></div>
+    </div>
+    <div class="ts-kanban-col">
+        <div class="ts-kanban-col-header">
+            <i class="fas fa-check-circle"></i> Completado
             <span id="cntCompletado" class="ts-kanban-badge" style="background:#bbf7d0;color:#166534;"></span>
         </div>
         <div class="ts-kanban-col-body" id="bodyCompletado"></div>
@@ -61,10 +115,10 @@
                 <i class="fas fa-spinner fa-spin"></i> Procesando archivo...
             </div>
             <div style="margin-top:16px;text-align:right;">
-                <button type="button" class="k-button" onclick="$('#wndExcel').data('kendoWindow').close();">Cancelar</button>
-                <button type="button" class="k-button k-primary" id="btnPreviewExcel" style="margin-left:8px;">
-                    <i class="fas fa-search"></i> Vista Previa
-                </button>
+                @(Html.Kendo().Button().Name("btnCancelarExcel").Content("Cancelar")
+                    .Events(e => e.Click("function(){ $('#wndExcel').data('kendoWindow').close(); }")))
+                @(Html.Kendo().Button().Name("btnPreviewExcel").Content("<i class='fas fa-search'></i> Vista Previa")
+                    .HtmlAttributes(new { @class = "k-primary", style = "margin-left:8px;" }))
             </div>
         </div>
     </text>)
@@ -80,19 +134,15 @@
                     <span id="previewDuplicateLabel" style="font-size:13px;color:#ef4444;"></span>
                 </div>
                 <div>
-                    <button type="button" class="k-button k-button-sm" id="btnEliminarDuplicados" style="margin-right:8px;">
-                        <i class="fas fa-broom"></i> Limpiar Duplicados
-                    </button>
+                    @(Html.Kendo().Button().Name("btnEliminarDuplicados").Content("<i class='fas fa-broom'></i> Limpiar Duplicados")
+                        .HtmlAttributes(new { style = "margin-right:8px;display:none;" }))
                 </div>
             </div>
             <div id="gridPreviewContainer" style="flex:1;min-height:0;"></div>
             <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;">
-                <button type="button" class="k-button" id="btnDescartarPreview">
-                    <i class="fas fa-times"></i> Cancelar
-                </button>
-                <button type="button" class="k-button k-primary" id="btnConfirmarCarga">
-                    <i class="fas fa-check"></i> Confirmar y Guardar
-                </button>
+                @(Html.Kendo().Button().Name("btnDescartarPreview").Content("<i class='fas fa-times'></i> Cancelar"))
+                @(Html.Kendo().Button().Name("btnConfirmarCarga").Content("<i class='fas fa-check'></i> Pre-Guardar")
+                    .HtmlAttributes(new { @class = "k-primary" }))
             </div>
         </div>
     </text>)
@@ -128,9 +178,9 @@
             <div class="form-group">
                 <label class="form-label">WorkOrder *</label>
                 <div class="wo-wrap">
-                    <input type="text" id="txtWorkOrderBase" class="form-control wo-base" readonly />
+                    @(Html.Kendo().TextBox().Name("txtWorkOrderBase").Readonly(true).HtmlAttributes(new { @class = "wo-base", style = "width:auto;" }))
                     <span class="wo-sep">-</span>
-                    <input type="text" id="txtWorkOrderSufijo" class="form-control wo-suffix" value="000" maxlength="3" />
+                    @(Html.Kendo().TextBox().Name("txtWorkOrderSufijo").Value("000").HtmlAttributes(new { @class = "wo-suffix", maxlength = "3" }))
                     <input type="hidden" id="hdnWorkOrderFinal" />
                 </div>
                 <small class="wo-hint">La base se genera automáticamente, puedes editar los últimos 3 dígitos.</small>
@@ -138,7 +188,7 @@
             <div class="form-group form-row">
                 <div class="form-col">
                     <label class="form-label">Piezas Programadas *</label>
-                    <input type="number" id="txtPiezas" class="form-control" min="1" />
+                    @(Html.Kendo().NumericTextBox<int>().Name("txtPiezas").Min(1).HtmlAttributes(new { style = "width:100%;" }))
                 </div>
                 <div class="form-col">
                     <label class="form-label">Fecha de Inicio *</label>
@@ -147,12 +197,13 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">Comentarios</label>
-                <textarea id="txtComentarios" class="form-control" rows="2"></textarea>
+                <label class="form-label">Comentarios</label>55
+                @(Html.Kendo().TextArea().Name("txtComentarios").Rows(2).HtmlAttributes(new { style = "width:100%;" }))
             </div>
             <div class="form-actions">
-                <button type="button" class="k-button" id="btnCancelarNuevo">Cancelar</button>
-                <button type="button" class="k-button k-primary" id="btnGuardarNuevo"><i class="fas fa-save"></i> Guardar</button>
+                @(Html.Kendo().Button().Name("btnCancelarNuevo").Content("Cancelar"))
+                @(Html.Kendo().Button().Name("btnGuardarNuevo").Content("<i class='fas fa-save'></i> Guardar")
+                    .HtmlAttributes(new { @class = "k-primary" }))
             </div>
         </div>
     </text>)
@@ -166,16 +217,16 @@
             <div class="form-group form-row">
                 <div class="form-col">
                     <label class="form-label">WorkOrder</label>
-                    <input type="text" id="editWorkOrder" class="form-control" />
+                    @(Html.Kendo().TextBox().Name("editWorkOrder").HtmlAttributes(new { style = "width:100%;" }))
                 </div>
                 <div class="form-col">
                     <label class="form-label">Piezas Programadas *</label>
-                    <input type="number" id="editPiezas" class="form-control" min="1" />
+                    @(Html.Kendo().NumericTextBox<int>().Name("editPiezas").Min(1).HtmlAttributes(new { style = "width:100%;" }))
                 </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Ensamble</label>
-                <input type="text" id="editEnsamble" class="form-control" readonly style="background:#f3f6f9;font-weight:600;" />
+                @(Html.Kendo().TextBox().Name("editEnsamble").Readonly(true).HtmlAttributes(new { style = "width:100%;background:#f3f6f9;font-weight:600;" }))
             </div>
             <div class="form-group">
                 <label class="form-label">Lados</label>
@@ -186,20 +237,21 @@
             <div class="form-group form-row">
                 <div class="form-col">
                     <label class="form-label">Linea</label>
-                    <input type="number" id="editLinea" class="form-control" />
+                    @(Html.Kendo().NumericTextBox<int>().Name("editLinea").HtmlAttributes(new { style = "width:100%;" }))
                 </div>
                 <div class="form-col">
                     <label class="form-label">Trolleys</label>
-                    <input type="text" id="editTrolleys" class="form-control" />
+                    @(Html.Kendo().TextBox().Name("editTrolleys").HtmlAttributes(new { style = "width:100%;" }))
                 </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Comentarios</label>
-                <textarea id="editComentarios" class="form-control" rows="2"></textarea>
+                @(Html.Kendo().TextArea().Name("editComentarios").Rows(2).HtmlAttributes(new { style = "width:100%;" }))
             </div>
             <div class="form-actions">
-                <button type="button" class="k-button" id="btnCancelarEditar">Cancelar</button>
-                <button type="button" class="k-button k-primary" id="btnGuardarEditar"><i class="fas fa-save"></i> Guardar</button>
+                @(Html.Kendo().Button().Name("btnCancelarEditar").Content("Cancelar"))
+                @(Html.Kendo().Button().Name("btnGuardarEditar").Content("<i class='fas fa-save'></i> Guardar")
+                    .HtmlAttributes(new { @class = "k-primary" }))
             </div>
         </div>
     </text>)
@@ -214,11 +266,11 @@
             <input type="hidden" id="setupLinea" />
             <div class="form-group">
                 <label class="form-label">Programa</label>
-                <input type="text" id="setupPrograma" class="form-control" readonly style="background:#f3f6f9;font-weight:600;" />
+                @(Html.Kendo().TextBox().Name("setupPrograma").Readonly(true).HtmlAttributes(new { style = "width:100%;background:#f3f6f9;font-weight:600;" }))
             </div>
-            <div class="form-group">
+            <div class="form-group" style="display:none;">
                 <label class="form-label">Maquina</label>
-                <select id="setupMaquina" class="form-control"></select>
+                <select id="setupMaquina"></select>
             </div>
             <div class="form-group">
                 <label class="form-label">Asignación de Trolleys por Zona</label>
@@ -228,8 +280,9 @@
                 </p>
             </div>
             <div class="form-actions">
-                <button type="button" class="k-button" id="btnCancelarSetup">Cancelar</button>
-                <button type="button" class="k-button k-primary" id="btnGuardarSetup"><i class="fas fa-tools"></i> Guardar Setup</button>
+                @(Html.Kendo().Button().Name("btnCancelarSetup").Content("Cancelar"))
+                @(Html.Kendo().Button().Name("btnGuardarSetup").Content("<i class='fas fa-tools'></i> Guardar Setup")
+                    .HtmlAttributes(new { @class = "k-primary" }))
             </div>
         </div>
     </text>)
@@ -249,7 +302,11 @@ var PG = {
         getTrolleysPorLinea: '@Url.Action("GetTrolleysPorLinea", "ProgramGestion")',
         guardarSetupTrolleys:'@Url.Action("GuardarSetupTrolleys","ProgramGestion")',
         cargaMasiva:         '@Url.Action("CargaMasiva",         "ProgramGestion")',
-        guardarPreview:      '@Url.Action("GuardarPreview",      "ProgramGestion")'
+        guardarPreview:      '@Url.Action("GuardarPreview",      "ProgramGestion")',
+        preGuardar:          '@Url.Action("PreGuardarPreview",   "ProgramGestion")',
+        getPrecargas:        '@Url.Action("GetPrecargas",        "ProgramGestion")',
+        autorizarPrecargas:  '@Url.Action("AutorizarPrecargas",  "ProgramGestion")',
+        rechazarPrecargas:   '@Url.Action("RechazarPrecargas",   "ProgramGestion")'
     },
     msj: {
         exito: '@Html.Raw(TempData["Success"] != null ? TempData["Success"].ToString() : "")',
@@ -257,4 +314,4 @@ var PG = {
     }
 };
 </script>
-@Scripts.Render("~/Scripts/programa-gestion.js")
+<script src="@Url.Content("~/Scripts/programa-gestion.js")?v=@(new System.IO.FileInfo(Server.MapPath("~/Scripts/programa-gestion.js")).LastWriteTime.Ticks)"></script>

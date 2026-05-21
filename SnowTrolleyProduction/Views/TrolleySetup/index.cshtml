@@ -11,13 +11,19 @@
         .machine { filter: drop-shadow(4px 4px 8px rgba(0,0,0,.4)); }
         svg text { font-size: 16px; font-weight: bold; }
         .ts-setup-panel { background: #fff; border: 1px solid #e8ecf1; border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 5px rgba(0,0,0,.06); margin-bottom: 16px; }
+        .ts-btn-row { display: flex; gap: 10px; }
+        .ts-btn-row .k-button { flex: 1; }
     </style>
 }
 
+@(Html.Kendo().Notification().Name("tsNotif")
+    .Position(p => p.Top(30).Right(20))
+    .AutoHideAfter(3000))
+
 <div class="ts-header" style="margin-bottom:14px;">
-    <h4><i class="fas fa-tools" style="color:#5d78ff;margin-right:8px;"></i>Setup de Trolleys</h4>
+    <h4><i class="fas fa-tools" style="margin-right:8px;"></i>Setup de Trolleys</h4>
     <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded">
-        <span class="k-icon k-i-arrow-chevron-left"></span> Ir a Trabajos
+        <i class="fas fa-chevron-left"></i> Ir a Trabajos
     </a>
 </div>
 
@@ -25,20 +31,18 @@
     <div class="form-row" style="gap:16px;align-items:flex-end;">
         <div class="form-col">
             <label class="form-label">Programa</label>
-            <input type="text" id="txtPrograma" class="k-textbox" readonly style="width:100%;" />
+            @(Html.Kendo().TextBox().Name("txtPrograma").Readonly(true).HtmlAttributes(new { style = "width:100%;" }))
         </div>
         <div class="form-col">
             <label class="form-label">Pzas. Programadas</label>
-            <input type="number" id="txtPzasProg" class="k-textbox" readonly style="width:100%;" />
+            @(Html.Kendo().NumericTextBox<int>().Name("txtPzasProg").Decimals(0).HtmlAttributes(new { style = "width:100%;", @readonly = "readonly" }))
         </div>
-        <div class="form-col" style="display:flex;gap:10px;">
-            <button type="button" id="btnEnProceso" class="k-button k-primary btn-rounded" style="flex:1;">
-                <i class="fas fa-play-circle"></i> Iniciar Proceso
-            </button>
-            <button type="button" id="btnFinalizar" class="k-button btn-rounded" disabled
-                    style="flex:1;color:#ef4444;border-color:#fecaca;">
-                <i class="fas fa-stop-circle"></i> Finalizar
-            </button>
+        <div class="form-col ts-btn-row">
+            @(Html.Kendo().Button().Name("btnEnProceso").Content("<i class='fas fa-play-circle'></i> Iniciar Proceso")
+                .HtmlAttributes(new { type = "button", @class = "k-primary btn-rounded" }))
+            @(Html.Kendo().Button().Name("btnFinalizar").Content("<i class='fas fa-stop-circle'></i> Finalizar")
+                .Enable(false)
+                .HtmlAttributes(new { type = "button", @class = "btn-rounded", style = "color:#ef4444;border-color:#fecaca;" }))
         </div>
     </div>
     <input type="hidden" id="hfIdProceso" />
@@ -120,9 +124,17 @@ var U = {
 var linea = @Html.Raw(ViewBag.LineaSeleccionada != null ? ViewBag.LineaSeleccionada.ToString() : "null");
 var m1 = false, m2 = false;
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+function notif(msg, type) {
+    $('#tsNotif').data('kendoNotification').show({ message: msg }, type || 'info');
+}
+
 function tsAlert(title, msg, icon) {
-    Swal.fire(title, msg, icon || 'info');
+    $('<div/>').appendTo('body').kendoDialog({
+        width: 380, title: title, closable: true, modal: true,
+        content: '<p style="margin:0;color:#3d4465;">' + msg + '</p>',
+        actions: [{ text: 'Aceptar', primary: true }],
+        close: function () { this.destroy(); }
+    }).data('kendoDialog').open();
 }
 
 function lbl(text) {
@@ -135,10 +147,12 @@ function reset() {
     $('rect.slot').attr('fill', 'red');
     $('rect.machine').attr('fill', 'lightgray');
     $('#enProceso1,#enProceso2,#engrane1,#engrane2').hide();
-    $('#txtPrograma,#txtPzasProg,#hfPzasYa').val('');
+    $('#txtPrograma').data('kendoTextBox').value('');
+    $('#txtPzasProg').data('kendoNumericTextBox').value(null);
+    $('#hfPzasYa').val('');
     $('#hfIdProceso').val('');
-    $('#btnEnProceso').prop('disabled', false);
-    $('#btnFinalizar').prop('disabled', true);
+    $('#btnEnProceso').data('kendoButton').enable(true);
+    $('#btnFinalizar').data('kendoButton').enable(false);
     m1 = m2 = false;
 }
 
@@ -157,8 +171,8 @@ function svgText($r, id, txt) {
 function activarMaquinas() {
     if (m1) { $('#machineBody1').attr('fill', 'green'); $('#enProceso1,#engrane1').show(); }
     if (m2) { $('#machineBody2').attr('fill', 'green'); $('#enProceso2,#engrane2').show(); }
-    $('#btnEnProceso').prop('disabled', true);
-    $('#btnFinalizar').prop('disabled', false);
+    $('#btnEnProceso').data('kendoButton').enable(false);
+    $('#btnFinalizar').data('kendoButton').enable(true);
 }
 
 // ── cargar ────────────────────────────────────────────────────────────────────
@@ -166,13 +180,13 @@ function cargar(l) {
     if (!l) return;
     reset();
     $.post(U.datos, { linea: l }, function (r) {
-        if (!r || r.message) { $('#txtPrograma').val('Sin proceso activo'); return; }
+        if (!r || r.message) { $('#txtPrograma').data('kendoTextBox').value('Sin proceso activo'); return; }
         var tp = r.trolleyPositions || [];
         m1 = tp.some(function (t) { return t.noCabezal === 1; });
         m2 = tp.some(function (t) { return t.noCabezal === 2; });
         $('#hfPzasYa').val(r.pzaTerminadas || 0);
-        $('#txtPrograma').val(r.programaSeleccionado);
-        $('#txtPzasProg').val(r.piezasProgramadas);
+        $('#txtPrograma').data('kendoTextBox').value(r.programaSeleccionado);
+        $('#txtPzasProg').data('kendoNumericTextBox').value(r.piezasProgramadas);
         $('#hfIdProceso').val(r.idProceso);
 
         if (tp.length) {
@@ -207,7 +221,7 @@ $('#btnEnProceso').on('click', function () {
                     $.post(U.arranque, { idProceso: id }, function (r) {
                         if (r.success) {
                             activarMaquinas();
-                            Swal.fire({ title: 'Iniciado!', text: r.message, type: 'success', timer: 1500, showConfirmButton: false });
+                            notif(r.message, 'success');
                         } else { tsAlert('Error', r.message, 'error'); }
                     }).fail(function () { tsAlert('Error', 'Error de conexion.', 'error'); });
                 }
@@ -236,7 +250,7 @@ $('#btnFinalizar').on('click', function () {
                     var v = $('#dlgInputPzas').val();
                     if (v === '') { tsAlert('Aviso', 'Ingrese las piezas producidas.', 'warning'); return false; }
                     var pzas = parseInt(v);
-                    var prog = parseInt($('#txtPzasProg').val()) || 0;
+                    var prog = parseInt($('#txtPzasProg').data('kendoNumericTextBox').value()) || 0;
                     var ya   = parseInt($('#hfPzasYa').val() || '0');
                     if ((pzas + ya) >= prog) {
                         finalizar($('#hfIdProceso').val(), pzas, prog, '');
@@ -292,8 +306,9 @@ function abrirDialogAdmin(pzas, prog) {
 function finalizar(id, pzas, prog, coment) {
     $.post(U.finalizar, { idProceso: id, piezasProducidas: pzas, piezasProgramadas: prog, comentarios: coment }, function (r) {
         if (r.success) {
-            Swal.fire({ title: 'Completado!', text: 'Proceso finalizado.', type: 'success', confirmButtonColor: '#1bc5bd' })
-                .then(function () { reset(); if (linea) cargar(linea); });
+            notif('Proceso finalizado.', 'success');
+            reset();
+            if (linea) cargar(linea);
         } else { tsAlert('Error', r.message, 'error'); }
     }).fail(function () { tsAlert('Error', 'Error de conexion.', 'error'); });
 }

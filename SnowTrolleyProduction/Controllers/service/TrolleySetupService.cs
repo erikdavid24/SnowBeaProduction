@@ -10,8 +10,8 @@ using System.Text.RegularExpressions;
 namespace SnowTrolleyProduction.Controllers.service
 {
     /// <summary>
-    /// Encapsula toda la lógica de datos para la pantalla de Setup de Trolleys:
-    /// carga del SVG, inicio de proceso, finalización y autorización.
+    /// Encapsula toda la lï¿½gica de datos para la pantalla de Setup de Trolleys:
+    /// carga del SVG, inicio de proceso, finalizaciï¿½n y autorizaciï¿½n.
     /// </summary>
     public class TrolleySetupService
     {
@@ -25,7 +25,7 @@ namespace SnowTrolleyProduction.Controllers.service
         // ?? Datos del Setup (SVG) ?????????????????????????????????????????????
 
         /// <summary>
-        /// Devuelve el programa activo ('En Proceso') para una línea y
+        /// Devuelve el programa activo ('En Proceso') para una lï¿½nea y
         /// las posiciones de trolleys para pintar el SVG.
         /// Retorna null si no hay trabajo activo.
         /// </summary>
@@ -118,7 +118,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
 
         /// <summary>
-        /// Devuelve los trolleys disponibles en la línea y
+        /// Devuelve los trolleys disponibles en la lï¿½nea y
         /// el acomodo actual del programa dado.
         /// (Usado por el modal de Setup en ProgramGestion.)
         /// </summary>
@@ -325,7 +325,7 @@ namespace SnowTrolleyProduction.Controllers.service
         public void FinalizarProceso(int idProceso, int piezasProducidas, string comentarios)
         {
             const string sqlSelect = @"
-                SELECT Id, WorkOrder, Linea, Id_Programa, PiezasProgramadas
+                SELECT Id, WorkOrder, Linea, Id_Linea, Id_Programa, PiezasProgramadas
                 FROM   [Proccess].[TrolleySetup]
                 WHERE  Id = @id AND Status IN ('Setup', 'Arranque')";
 
@@ -338,11 +338,6 @@ namespace SnowTrolleyProduction.Controllers.service
                 UPDATE [Proccess].[TrolleySetup]
                 SET    Status = 'Completado', FechaFinalizacion = GETDATE(), Comentarios = @coment
                 WHERE  Id = @id";
-
-            const string sqlIdLinea = @"
-                SELECT TOP 1 Id_Linea
-                FROM   [Proccess].[Lineas]
-                WHERE  Numero_Linea = @l";
 
             const string sqlInsertPendiente = @"
                 INSERT INTO [Proccess].[TrolleySetup]
@@ -363,7 +358,7 @@ namespace SnowTrolleyProduction.Controllers.service
                   AND  ts2.Status IN ('Setup', 'Arranque')";
 
             const string sqlSiblingSelect = @"
-                SELECT Id, WorkOrder, Linea, Id_Programa, PiezasProgramadas
+                SELECT Id, WorkOrder, Linea, Id_Linea, Id_Programa, PiezasProgramadas
                 FROM   [Proccess].[TrolleySetup]
                 WHERE  Id = @id";
 
@@ -390,15 +385,14 @@ namespace SnowTrolleyProduction.Controllers.service
                         string programa = (string)current.Id_Programa;
                         string nuevaWO  = GenerarNuevaWorkOrder((string)current.WorkOrder);
                         int    pendientes = pzasProg - piezasProducidas;
-
-                        int idLineaFk = conn.QueryFirstOrDefault<int>(sqlIdLinea, new { l = linea }, tx);
+                        int    idLineaOrigen = current.Id_Linea != null ? (int)current.Id_Linea : linea;
 
                         conn.Execute(sqlInsertPendiente, new
                         {
                             prog    = programa,
                             wo      = nuevaWO,
                             pzas    = pendientes,
-                            idLinea = idLineaFk,
+                            idLinea = idLineaOrigen,
                             linea
                         }, tx);
                     }
@@ -422,15 +416,14 @@ namespace SnowTrolleyProduction.Controllers.service
                             string sibPrograma = (string)sibling.Id_Programa;
                             string sibNuevaWO  = GenerarNuevaWorkOrder((string)sibling.WorkOrder);
                             int    sibPendientes = (int)sibling.PiezasProgramadas - piezasProducidas;
-
-                            int sibIdLinea = conn.QueryFirstOrDefault<int>(sqlIdLinea, new { l = sibLinea }, tx);
+                            int    sibIdLineaOrigen = sibling.Id_Linea != null ? (int)sibling.Id_Linea : sibLinea;
 
                             conn.Execute(sqlInsertPendiente, new
                             {
                                 prog    = sibPrograma,
                                 wo      = sibNuevaWO,
                                 pzas    = sibPendientes,
-                                idLinea = sibIdLinea,
+                                idLinea = sibIdLineaOrigen,
                                 linea   = sibLinea
                             }, tx);
                         }
@@ -449,7 +442,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
         /// <summary>
         /// Cambia el status de 'En Proceso' a 'Arranque', marcando la fecha.
-        /// Equivalente al botón "INICIAR PROCESO" de SnowBAEGym.
+        /// Equivalente al botï¿½n "INICIAR PROCESO" de SnowBAEGym.
         /// </summary>
         public (bool Success, string Message) ActualizarArranque(int idProceso)
         {
@@ -487,8 +480,8 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        /// <summary>Comprueba si existe algún proceso activo ('En Proceso'),
-        /// opcionalmente filtrado por línea.</summary>
+        /// <summary>Comprueba si existe algï¿½n proceso activo ('En Proceso'),
+        /// opcionalmente filtrado por lï¿½nea.</summary>
         public (bool Exists, int Linea) GetProcesoActivo(int? linea)
         {
             string sql = @"
@@ -510,12 +503,12 @@ namespace SnowTrolleyProduction.Controllers.service
         }
 
         /// <summary>Valida credenciales de Admin/Supervisor/Ingeniero.
-        /// TODO: Implementar validación real contra [Proccess].[Users] cuando se integre autenticación.
+        /// TODO: Implementar validaciï¿½n real contra [Proccess].[Users] cuando se integre autenticaciï¿½n.
         /// Por ahora siempre retorna true para testing.
         /// </summary>
         public bool VerificarAdmin(string userNumber, string password)
         {
-            // TODO: Descomentar cuando implementes autenticación de usuarios
+            // TODO: Descomentar cuando implementes autenticaciï¿½n de usuarios
             /*
             const string sql = "SELECT Password, UserType FROM [Proccess].[Users] WHERE UserNumber = @userNumber";
             using (var conn = new SqlConnection(_connStr))

@@ -5,46 +5,11 @@
 @section Styles {
     <link href="~/Content/css/programa-gestion.css" rel="stylesheet" />
     <style>
-      
         .tb-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 16px;
         }
-
-  
-        .tb-card {
-            background: #fff;
-            border: 1px solid #e8ecf1;
-            border-radius: 10px;
-            box-shadow: 0 1px 5px rgba(0,0,0,.06);
-            overflow: hidden;
-        }
-
-        .tb-card-header {
-            padding: 10px 14px;
-            background: #eef0f8;
-            border-bottom: 1px solid #e2e6f0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-
-        .tb-card-title {
-            font-weight: 700;
-            color: #3d4465;
-            font-size: .9rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .tb-card-body {
-            padding: 12px 14px;
-        }
-
-    
         .tb-linea-pill {
             background: #5d78ff;
             color: #fff;
@@ -55,42 +20,13 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
-
-
-        .tb-badge-setup {
-            background: #fff8ec;
-            color: #f59e0b;
-            border: 1px solid #fde68a;
-            border-radius: 4px;
-            padding: 2px 9px;
-            font-size: .72rem;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .tb-badge-arranque {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-            border-radius: 4px;
-            padding: 2px 9px;
-            font-size: .72rem;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-  
-        .tb-detail-row {
+        .tb-card-meta {
             display: flex;
             gap: 16px;
             flex-wrap: wrap;
             margin-bottom: 10px;
         }
-
-        .tb-detail-item {
-            min-width: 0;
-        }
-
+        .tb-detail-item { min-width: 0; }
         .tb-detail-label {
             font-size: .68rem;
             color: #9aa0b8;
@@ -98,19 +34,12 @@
             text-transform: uppercase;
             margin-bottom: 2px;
         }
-
         .tb-detail-value {
             font-size: .84rem;
             font-weight: 700;
             color: #3d4465;
         }
-
-        .tb-detail-value.muted {
-            font-weight: 400;
-            color: #646c9a;
-        }
-
-    
+        .tb-detail-value.muted { font-weight: 400; color: #646c9a; }
         .tb-trolleys {
             display: flex;
             flex-wrap: wrap;
@@ -119,61 +48,28 @@
             padding-top: 8px;
             border-top: 1px solid #f0f2f8;
         }
-
-        .tb-trolley-badge {
-            background: #22c55e;
-            color: #fff;
-            font-size: .7rem;
-            font-weight: 700;
-            border-radius: 4px;
-            padding: 2px 8px;
-        }
-
-        /* ?? Empty state ?????????????????????????????????????????????? */
         .tb-empty {
             grid-column: 1 / -1;
             text-align: center;
             padding: 52px 0;
             color: #b0b7d0;
         }
-
-        .tb-empty i {
-            font-size: 2.4rem;
-            display: block;
-            margin-bottom: 10px;
-            color: #d1d5db;
-        }
-
-        .tb-empty strong {
-            display: block;
-            font-size: 1rem;
-            color: #3d4465;
-            margin-bottom: 4px;
-        }
-
-        /* ?? Dot parpadeante ?????????????????????????????????????????? */
+        img.show-empty { width:280px!important;height:280px!important;background-size:280px 280px!important;display:block!important;margin:0 auto!important; }
         .tb-live-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #22c55e;
-            display: inline-block;
-            margin-right: 4px;
-            animation: tb-blink 2s infinite;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #22c55e; display: inline-block;
+            margin-right: 4px; animation: tb-blink 2s infinite;
         }
-
-        @*  @keyframes debe ir en un .css externo para evitar parsing de Razor.
-            Se inyecta via <style> usando @@keyframes (doble @@ escapa en Razor). *@
-    </style>
-    <style>
         @@keyframes tb-blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+        .k-card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .k-card-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     </style>
 }
 
 <div class="ts-header">
     <h4>
-        <i class="fas fa-tv" style="color:#5d78ff;margin-right:8px;"></i>
-        Tablero  En Setup / Proceso
+        <i class="fas fa-tv" style="margin-right:8px;"></i>
+        Tablero En Setup / Proceso
     </h4>
     <div style="display:flex;gap:8px;align-items:center;">
         <span style="font-size:.75rem;color:#9aa0b8;">
@@ -184,7 +80,7 @@
             <i class="fas fa-hard-hat"></i> Tablero Operadores
         </a>
         <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded">
-            <span class="k-icon k-i-arrow-chevron-left"></span> Plan de Produccion
+            <i class="fas fa-chevron-left"></i> Plan de Produccion
         </a>
     </div>
 </div>
@@ -195,11 +91,10 @@
     <script>
         var URL_RESUMEN = '@Url.Action("ObtenerResumenSetup","TrolleyProcess")';
 
-
         function badgeStatus(s) {
             return s === 'Arranque'
-                ? '<span class="tb-badge-arranque"><i class="fas fa-play-circle"></i> Arranque</span>'
-                : '<span class="tb-badge-setup"><i class="fas fa-cog"></i> Setup</span>';
+                ? '<span class="k-badge k-badge-solid k-badge-success" style="padding:2px 9px;font-size:.72rem;font-weight:700;"><i class="fas fa-play-circle"></i> Arranque</span>'
+                : '<span class="k-badge k-badge-solid k-badge-warning" style="padding:2px 9px;font-size:.72rem;font-weight:700;"><i class="fas fa-cog"></i> Setup</span>';
         }
 
         function horaDesde(dateStr) {
@@ -211,42 +106,36 @@
                    d.getMinutes().toString().padStart(2,'0');
         }
 
-  
         function renderTablero(data) {
             var grid = $('#tableroGrid').empty();
 
             if (!data || !data.length) {
                 grid.append(
                     '<div class="tb-empty">' +
-                    '<i class="fas fa-pause-circle"></i>' +
-                    '<strong>Sin trabajos activos</strong>' +
-                    'Ninguna linea tiene trabajo en Setup o Arranque en este momento.' +
+                    '<div class="k-grid" style="border:none;background:transparent;overflow:visible;height:auto;box-shadow:none;"><img class="show-empty" /></div>' +
                     '</div>'
                 );
                 return;
             }
 
             $.each(data, function (_, t) {
-                /* trolley badges */
                 var tBadges = '';
                 if (t.trolleys) {
                     $.each(t.trolleys.split(','), function (_, tr) {
                         tr = tr.trim();
-                        if (tr) tBadges += '<span class="tb-trolley-badge">' + tr + '</span>';
+                        if (tr) tBadges += '<span class="k-badge k-badge-solid k-badge-success" style="font-size:.7rem;font-weight:700;padding:2px 8px;">' + tr + '</span>';
                     });
                 }
                 if (!tBadges) {
-                    tBadges = '<span style="color:#b0b7d0;font-size:.75rem;">' +
-                              '<i class="fas fa-exclamation-circle"></i> Sin trolleys asignados</span>';
+                    tBadges = '<span style="color:#b0b7d0;font-size:.75rem;"><i class="fas fa-exclamation-circle"></i> Sin trolleys asignados</span>';
                 }
 
                 var card =
-                    '<div class="tb-card">' +
+                    '<div class="k-card">' +
 
-                    /* header */
-                    '<div class="tb-card-header">' +
-                    '<span class="tb-card-title">' +
-                    '<i class="fas fa-layer-group" style="color:#5d78ff;margin-right:5px;"></i>' +
+                    '<div class="k-card-header">' +
+                    '<span class="k-card-title" style="color:#3d4465;">' +
+                    '<i class="fas fa-layer-group" style="margin-right:5px;"></i>' +
                     (t.ensamble || t.id_Programa) +
                     '</span>' +
                     '<div style="display:flex;gap:5px;align-items:center;">' +
@@ -255,10 +144,9 @@
                     '</div>' +
                     '</div>' +
 
-                    /* body */
-                    '<div class="tb-card-body">' +
+                    '<div class="k-card-body">' +
 
-                    '<div class="tb-detail-row">' +
+                    '<div class="tb-card-meta">' +
 
                     '<div class="tb-detail-item">' +
                     '<div class="tb-detail-label">Programa</div>' +
@@ -280,17 +168,17 @@
                     '<div class="tb-detail-item">' +
                     '<div class="tb-detail-label">Inicio</div>' +
                     '<div class="tb-detail-value muted">' +
-                    '<i class="fas fa-clock" style="margin-right:3px;color:#9aa0b8;"></i>' +
+                    '<i class="fas fa-clock" style="margin-right:3px;"></i>' +
                     horaDesde(t.fechaCreacion) +
                     '</div>' +
                     '</div>' +
 
-                    '</div>' +  /* tb-detail-row */
+                    '</div>' +
 
                     '<div class="tb-trolleys">' + tBadges + '</div>' +
 
-                    '</div>' +  /* tb-card-body */
-                    '</div>';   /* tb-card */
+                    '</div>' +
+                    '</div>';
 
                 grid.append(card);
             });

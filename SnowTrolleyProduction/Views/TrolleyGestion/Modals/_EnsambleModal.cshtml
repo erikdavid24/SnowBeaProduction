@@ -13,17 +13,17 @@
 }
 
 <div class="form-group">
-    <label class="form-label">Línea</label>
-    <select id="modalEnsambleLineaSelect" class="form-control">
+    <label class="form-label">LÃ­nea</label>
+    <select id="modalEnsambleLineaSelect">
         @foreach (var linea in Model)
         {
             if (esEdicion && ensamble.Linea != null && linea.Id_Linea == ensamble.Linea.Id_Linea)
             {
-                <option value="@linea.Id_Linea" selected>Línea @linea.Numero_Linea</option>
+                <option value="@linea.Id_Linea" selected>LÃ­nea @linea.Numero_Linea</option>
             }
             else
             {
-                <option value="@linea.Id_Linea">Línea @linea.Numero_Linea</option>
+                <option value="@linea.Id_Linea">LÃ­nea @linea.Numero_Linea</option>
             }
         }
     </select>
@@ -31,7 +31,7 @@
 
 <div class="form-group">
     <label class="form-label">Ensamble</label>
-    <input type="text" id="modalEnsambleNumero" class="form-control" value="@(esEdicion ? ensamble.Numero : "")" required />
+    <input id="modalEnsambleNumero" value="@(esEdicion ? ensamble.Numero : "")" style="width:100%;" />
 </div>
 
 <div class="form-actions">
@@ -42,21 +42,25 @@
 <script>
 (function () {
     var esEdicion = @(esEdicion ? "true" : "false");
+
+    $('#modalEnsambleLineaSelect').kendoDropDownList();
+    $('#modalEnsambleNumero').kendoTextBox();
+
     $('#btnSubmitEnsamble').on('click', function () {
-        var numero = $('#modalEnsambleNumero').val().trim();
-        var lineaId = parseInt($('#modalEnsambleLineaSelect').val());
-        if (!numero) { alert('El número de ensamble es requerido.'); return; }
+        var numero = ($('#modalEnsambleNumero').val() || '').trim();
+        var lineaId = parseInt($('#modalEnsambleLineaSelect').data('kendoDropDownList').value());
+        if (!numero) { tgAlert('Campo requerido', 'El nÃºmero de ensamble es requerido.'); return; }
         var $btn = $(this).prop('disabled', true);
         if (esEdicion) {
             var ensambleId = parseInt($('#modalEnsambleId').val());
             $.post(TG.urls.editarEnsamble, { ensambleId: ensambleId, numero: numero, lineaId: lineaId }, function (r) {
                 if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarEnsambles(); }
-                else { alert(r.message); }
+                else { tgAlert('Error', r.message); }
             }).always(function () { $btn.prop('disabled', false); });
         } else {
             $.post(TG.urls.agregarEnsamble, { numero: numero, lineaId: lineaId }, function (r) {
                 if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarEnsambles(); }
-                else { alert(r.message); }
+                else { tgAlert('Error', r.message); }
             }).always(function () { $btn.prop('disabled', false); });
         }
     });

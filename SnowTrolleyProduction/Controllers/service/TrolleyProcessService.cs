@@ -236,7 +236,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
                 int activos = conn.QueryFirstOrDefault<int>(sqlCheck, new { linea });
                 if (activos > 0)
-                    return (false, "Ya existe un trabajo en Setup o Arranque en esta l�nea. Final�celo primero.");
+                    return (false, "Ya existe un trabajo en Setup o Arranque en esta linea. Finalacielo primero.");
 
                 conn.Execute(sqlUpdate, new { id = idProceso });
 

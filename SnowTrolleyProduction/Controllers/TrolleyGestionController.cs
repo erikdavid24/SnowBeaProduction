@@ -27,7 +27,7 @@ namespace SnowTrolleyProduction.Controllers
             return View(vm);
         }
 
-        // M�quinas
+ 
 
         [HttpGet]
         public ActionResult MaquinasTable()
@@ -257,9 +257,9 @@ namespace SnowTrolleyProduction.Controllers
             try
             {
                 if (vm.ProgramaId <= 0)
-                    return Json(new { success = false, message = "Selecciona un programa v�lido." });
+                    return Json(new { success = false, message = "Selecciona un programa valido." });
                 if (vm.MaquinaId <= 0 && vm.MaquinaId2 <= 0)
-                    return Json(new { success = false, message = "No hay m�quinas configuradas para esta l�nea." });
+                    return Json(new { success = false, message = "No hay maquinas configuradas para esta linea." });
 
                 _svc.GuardarAcomodo(vm);
                 return Json(new { success = true });

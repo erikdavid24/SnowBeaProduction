@@ -17,24 +17,18 @@
         .tp-sort-hint   { display: table; background: #fff; border-radius: 8px; box-shadow: 0 8px 28px rgba(61,68,101,.22); opacity: .97; border: 1.5px solid #5d78ff; }
         .tp-sort-hint td { padding: 8px 10px; vertical-align: middle; white-space: nowrap; }
         .tp-sort-placeholder td { background: #eef2ff !important; border-top: 2px solid #5d78ff !important; }
-        .tp-no-data     { text-align: center; padding: 28px 0; color: #b0b7d0; }
-        .tp-no-data i   { font-size: 1.4rem; display: block; margin-bottom: 6px; }
+        img.show-empty  { width:280px!important;height:280px!important;background-size:280px 280px!important;display:block!important;margin:0 auto!important; }
+        .tp-no-data     { text-align:center; padding:40px 0; color:#b0b7d0; }
         .tp-section     { background: #fff; border: 1px solid #e2e6f0; border-radius: 8px; margin-bottom: 14px; }
-        .tp-section-hdr { padding: 10px 16px; background: #eef0f8; border-radius: 8px 8px 0 0; border-bottom: 1px solid #e2e6f0; font-weight: 700; color: #3d4465; font-size: .88rem; }
+        .tp-section-hdr { padding: 12px 18px; border-bottom: 1px solid #e8ecf1; font-weight: 700; color: #3d4465; font-size: .9rem; }
         .tp-section-bdy { padding: 16px; }
-        #gridArranque .k-grid-header th,
-        #gridProcesos .k-grid-header th { background: #3d4465; color: #fff; font-size: .8rem; border-color: #4a5278; }
-        #gridArranque tr:hover td,
-        #gridProcesos tr:hover td { background: #f7f8fc !important; }
-        #gridArranque,
-        #gridProcesos { border-radius: 0 0 6px 6px; border-color: #e8ecf1; }
     </style>
 }
 
 <div class="ts-header">
-    <h4><i class="fas fa-industry" style="color:#5d78ff;margin-right:8px;"></i>Plan de Produccion o Proceso</h4>
+    <h4><i class="fas fa-industry" style="margin-right:8px;"></i>Plan de Produccion o Proceso</h4>
     <a href="@Url.Action("Index","ProgramGestion")" class="k-button btn-rounded">
-        <span class="k-icon k-i-arrow-chevron-left"></span> Volver al Kanban
+        <i class="fas fa-chevron-left"></i> Volver al Kanban
     </a>
 </div>
 
@@ -45,7 +39,7 @@
             <div class="tp-linea-btns" id="lineaBtns"></div>
             <div id="btnIrSetupWrap" style="display:none;">
                 <a id="btnIrASetup" href="#" class="k-button k-primary btn-rounded">
-                    <span class="k-icon k-i-arrow-right"></span> Ir a Setup
+                    <i class="fas fa-arrow-right"></i> Ir a Setup
                 </a>
             </div>
         </div>
@@ -53,18 +47,18 @@
 </div>
 
 <div class="tp-section">
-    <div class="tp-section-hdr"><i class="fas fa-cog" style="color:#3b82f6;margin-right:6px;"></i>En Setup / Proceso</div>
+    <div class="tp-section-hdr"><i class="fas fa-cog" style="margin-right:6px;"></i>En Setup / Proceso</div>
     <div class="tp-section-bdy">
         <div id="gridArranque" style="display:none;"></div>
-        <div id="arranqueVacio" class="tp-no-data"><i class="fas fa-inbox"></i>No hay trabajos en proceso (Setup/Arranque).</div>
+        <div id="arranqueVacio" class="tp-no-data"><img class="show-empty" /></div>
     </div>
 </div>
 
 <div class="tp-section">
-    <div class="tp-section-hdr"><i class="fas fa-clock" style="color:#f59e0b;margin-right:6px;"></i>Disponibles para Setup</div>
+    <div class="tp-section-hdr"><i class="fas fa-clock" style="margin-right:6px;"></i>Disponibles para Setup</div>
     <div class="tp-section-bdy">
         <div id="gridProcesos" style="display:none;"></div>
-        <div id="procesosVacio" class="tp-no-data"><i class="fas fa-inbox"></i>Selecciona una linea para ver los procesos disponibles.</div>
+        <div id="procesosVacio" class="tp-no-data"><img class="show-empty" /></div>
     </div>
 </div>
 
@@ -112,13 +106,15 @@ var gridArranque = $('#gridArranque').kendoGrid({
         { title: 'Status',      template: '#=statusHtml#', width: 120,
           attributes: { style: 'text-align:center;' }, headerAttributes: { style: 'text-align:center;' } }
     ],
-    sortable: false, pageable: false, scrollable: false
+    sortable: false, pageable: false, scrollable: false,
+    noRecords: { template: "<img class='show-empty' />" }
 }).data('kendoGrid');
 
 var gridProcesos = $('#gridProcesos').kendoGrid({
     dataSource: {
         data: [],
         schema: { model: { fields: {
+            id_Proceso:  { type: 'number' },
             id_Programa: { type: 'string' },
             workOrder:   { type: 'string' },
             badgesHtml:  { type: 'string' },
@@ -127,7 +123,7 @@ var gridProcesos = $('#gridProcesos').kendoGrid({
     },
     columns: [
         { title: '', width: 36,
-          template: '<span class="tp-handle"><span class="k-icon k-i-reorder"></span></span>',
+          template: '<span class="tp-handle"><i class="fas fa-grip-vertical"></i></span>',
           attributes: { style: 'text-align:center;padding:6px 4px;' } },
         { field: 'id_Programa', title: 'Programa',  template: '<strong>#=id_Programa#</strong>', width: 200 },
         { field: 'workOrder',   title: 'Work Order', width: 200 },
@@ -136,6 +132,7 @@ var gridProcesos = $('#gridProcesos').kendoGrid({
           attributes: { style: 'text-align:center;' }, headerAttributes: { style: 'text-align:center;' } }
     ],
     sortable: false, pageable: false, scrollable: false,
+    noRecords: { template: "<img class='show-empty' />" },
     dataBound: function () { _aplicarSortable(this); }
 }).data('kendoGrid');
 
@@ -162,10 +159,11 @@ function _aplicarSortable(grid) {
             if (_sortRAF) { cancelAnimationFrame(_sortRAF); _sortRAF = null; }
         },
         change: function (e) {
-            var data = grid.dataSource.data();
-            var ids  = $.map(data, function (item) { return item.id_Proceso; });
-            var moved = ids.splice(e.oldIndex, 1)[0];
-            ids.splice(e.newIndex, 0, moved);
+            var rows = $.map(grid.dataSource.data(), function (d) { return d.toJSON(); });
+            var item = rows.splice(e.oldIndex, 1)[0];
+            rows.splice(e.newIndex, 0, item);
+            grid.dataSource.data(rows);
+            var ids = $.map(rows, function (r) { return r.id_Proceso; });
             $.ajax({
                 url: TP.urls.guardarOrden, type: 'POST',
                 data: { idProcesos: ids }, traditional: true,
