@@ -6,12 +6,98 @@ function formatFecha(a){if(!a)return'�';var b=new Date(parseInt(a.replace('/Da
 function tgConfirm(t,x,fn){$('<div/>').appendTo('body').kendoDialog({width:420,title:t,closable:true,modal:true,content:'<p style="margin:0;color:#3d4465;">'+x+'</p>',actions:[{text:'Cancelar'},{text:'Confirmar',primary:true,action:function(){fn();}}],close:function(){this.destroy();}}).data('kendoDialog').open();}
 function tgAlert(t,x){$('<div/>').appendTo('body').kendoDialog({width:380,title:t,closable:true,modal:true,content:'<p style="margin:0;color:#3d4465;">'+x+'</p>',actions:[{text:'OK',primary:true}],close:function(){this.destroy();}}).data('kendoDialog').open();}
 
-// Kanban
+// Calendario Fiscal
+function inicializarFiltroSemanaFiscal() {
+    var anoActual = new Date().getFullYear();
+    var ddlAno = $('#ddlAno').data('kendoDropDownList');
+    var ddlMes = $('#ddlMes').data('kendoDropDownList');
+    var ddlSemana = $('#ddlSemana').data('kendoDropDownList');
+
+    // Inicializar dropdown de años (últimos 3 años + próximos 2)
+    var anosData = [];
+    for (var i = anoActual - 3; i <= anoActual + 2; i++) {
+        anosData.push({ text: i.toString(), value: i });
+    }
+    ddlAno.setDataSource(anosData);
+    ddlAno.bind('change', function() {
+        var anoSel = parseInt(this.value());
+        if (anoSel > 0) {
+            actualizarMesesFiscales(anoSel);
+        } else {
+            ddlMes.setDataSource([]);
+            ddlSemana.setDataSource([]);
+        }
+    });
+
+    // Inicializar dropdown de meses
+    var mesesData = [
+        { text: 'Enero', value: 1 },
+        { text: 'Febrero', value: 2 },
+        { text: 'Marzo', value: 3 },
+        { text: 'Abril', value: 4 },
+        { text: 'Mayo', value: 5 },
+        { text: 'Junio', value: 6 },
+        { text: 'Julio', value: 7 },
+        { text: 'Agosto', value: 8 },
+        { text: 'Septiembre', value: 9 },
+        { text: 'Octubre', value: 10 },
+        { text: 'Noviembre', value: 11 },
+        { text: 'Diciembre', value: 12 }
+    ];
+    ddlMes.setDataSource(mesesData);
+    ddlMes.bind('change', function() {
+        var anoSel = parseInt($('#ddlAno').data('kendoDropDownList').value());
+        var mesSel = parseInt(this.value());
+        if (anoSel > 0 && mesSel > 0) {
+            actualizarSemanasDelMes(anoSel, mesSel);
+        } else {
+            ddlSemana.setDataSource([]);
+        }
+    });
+
+    // Inicializar dropdown de semanas
+    ddlSemana.setDataSource([]);
+}
+
+function actualizarMesesFiscales(ano) {
+    // Por ahora retornamos todos los meses (la lógica fiscal se aplica al cargar semanas)
+    var mesesData = [
+        { text: 'Enero', value: 1 },
+        { text: 'Febrero', value: 2 },
+        { text: 'Marzo', value: 3 },
+        { text: 'Abril', value: 4 },
+        { text: 'Mayo', value: 5 },
+        { text: 'Junio', value: 6 },
+        { text: 'Julio', value: 7 },
+        { text: 'Agosto', value: 8 },
+        { text: 'Septiembre', value: 9 },
+        { text: 'Octubre', value: 10 },
+        { text: 'Noviembre', value: 11 },
+        { text: 'Diciembre', value: 12 }
+    ];
+    $('#ddlMes').data('kendoDropDownList').setDataSource(mesesData);
+}
+
+function actualizarSemanasDelMes(ano, mes) {
+    $.get(PG.urls.getSemanasDelMes, { ano: ano, mes: mes }, function(resp) {
+        if (resp && resp.semanas) {
+            var semanasData = resp.semanas.map(function(s) {
+                return { text: 'Semana ' + s.Semana + ' (' + s.Rango + ')', value: s.Semana };
+            });
+            $('#ddlSemana').data('kendoDropDownList').setDataSource(semanasData);
+        } else {
+            $('#ddlSemana').data('kendoDropDownList').setDataSource([]);
+        }
+    });
+}
+
+
 function cargarKanban() {
     cargarPrecargas();
-    var semana = parseInt($('#numSemana').data('kendoNumericTextBox').value()) || 0;
-    var anio   = parseInt($('#numAnio').data('kendoNumericTextBox').value())   || 0;
-    $.post(PG.urls.readKanban, { semana: semana, anio: anio }, function (resp) {
+    var ano    = parseInt($('#ddlAno').data('kendoDropDownList').value()) || 0;
+    var mes    = parseInt($('#ddlMes').data('kendoDropDownList').value()) || 0;
+    var semana = parseInt($('#ddlSemana').data('kendoDropDownList').value()) || 0;
+    $.post(PG.urls.readKanban, { semana: semana, anio: ano }, function (resp) {
         var data = resp.Data || [];
         var enProceso        = ['Setup', 'Arranque', 'En Proceso'];
         var piezasPendientes = ['Finalizado Parcial'];
@@ -312,6 +398,9 @@ $(function () {
     if (PG.msj.exito)      { swalOk('Listo!', PG.msj.exito); cargarKanban(); }
     else if (PG.msj.error) { swalErr('Error', PG.msj.error);   cargarKanban(); }
     else                   { cargarKanban(); }
+
+    // Inicializar dropdowns de calendario fiscal
+    inicializarFiltroSemanaFiscal();
 
     $('#btnNuevoPrograma').on('click', function (e) { e.preventDefault(); $('#wndNuevo').data('kendoWindow').center().open(); });
     $('#btnSubirExcel').on('click', function (e) { e.preventDefault(); $('#archivoExcelInput').val(''); $('#excelUploadProgress').hide(); $('#wndExcel').data('kendoWindow').center().open(); });

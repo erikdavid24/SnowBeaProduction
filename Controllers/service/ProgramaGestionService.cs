@@ -653,6 +653,59 @@ namespace SnowTrolleyProduction.Controllers.service
             public int FiscalYear { get; set; }
         }
 
+        public class SemanaDelMesDto
+        {
+            public int Semana { get; set; }
+            public string Rango { get; set; }
+        }
+
+        public List<SemanaDelMesDto> GetSemanasDelMesFiscal(int ano, int mes)
+        {
+            var semanas = new List<SemanaDelMesDto>();
+
+            try
+            {
+                // Obtener primer y último día del mes gregoriano
+                DateTime primerDiaDelMes = new DateTime(ano, mes, 1);
+                DateTime ultimoDiaDelMes = primerDiaDelMes.AddMonths(1).AddDays(-1);
+
+                using (var conn = new SqlConnection(GetConnectionString()))
+                {
+                    conn.Open();
+
+                    // Obtener todas las semanas fiscales únicas en el rango del mes
+                    var semanasDelMes = conn.Query<dynamic>(
+                        @"SELECT DISTINCT fc.FiscalWeek, fc.FiscalYear, 
+                                 MIN(fc.[Date]) as FechaInicio, MAX(fc.[Date]) as FechaFin
+                          FROM dbo.FiscalCalendar fc
+                          WHERE CAST(fc.[Date] AS DATE) >= @inicio 
+                            AND CAST(fc.[Date] AS DATE) <= @fin
+                          GROUP BY fc.FiscalWeek, fc.FiscalYear
+                          ORDER BY fc.FiscalYear, fc.FiscalWeek",
+                        new { inicio = primerDiaDelMes.Date, fin = ultimoDiaDelMes.Date }).ToList();
+
+                    foreach (var row in semanasDelMes)
+                    {
+                        DateTime fechaInicio = ((DateTime)row.FechaInicio).Date;
+                        DateTime fechaFin = ((DateTime)row.FechaFin).Date;
+                        string rango = fechaInicio.ToString("dd/MM") + " - " + fechaFin.ToString("dd/MM");
+
+                        semanas.Add(new SemanaDelMesDto
+                        {
+                            Semana = (int)row.FiscalWeek,
+                            Rango = rango
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error GetSemanasDelMesFiscal: " + ex.Message);
+            }
+
+            return semanas;
+        }
+
         public string GetSemanaFiscal(DateTime fecha)
         {
             try
@@ -674,7 +727,7 @@ namespace SnowTrolleyProduction.Controllers.service
             }
 
             // Fallback: calcular semana fiscal manualmente
-            // El a�o fiscal BAE empieza el �ltimo s�bado de diciembre del a�o anterior
+            // El año fiscal BAE empieza el último sábado de diciembre del año anterior
             return CalcularSemanaFiscal(fecha);
         }
 
