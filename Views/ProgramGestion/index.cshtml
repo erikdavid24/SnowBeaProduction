@@ -44,6 +44,21 @@
             white-space: nowrap !important;
         }
         .ts-toolbar .k-datepicker { width: 125px !important; }
+
+        .ts-calendar-filter {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 4px !important;
+        }
+        .ts-calendar-filter label {
+            color: #7d8499 !important;
+            font-size: .75rem !important;
+            font-weight: 600 !important;
+            margin: 0 !important;
+        }
+        .ts-calendar-filter .fiscal-week-input { width: 160px !important; }
+
         img.show-empty { width:120px!important;height:120px!important;background-size:120px 120px!important;display:block!important;margin:0 auto!important; }
 
     </style>
@@ -55,9 +70,15 @@
         <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded" id="btnIrProceso"><i class="fas fa-play"></i> Ir al Proceso</a>
         <a href="#" class="k-button k-primary btn-rounded" id="btnNuevoPrograma"><i class="fas fa-plus"></i> Nuevo Programa</a>
         <a href="#" class="k-button btn-excel" id="btnSubirExcel"><i class="fas fa-file-excel"></i>&nbsp;Subir Excel</a>
-        <label>Año</label>@(Html.Kendo().DropDownList().Name("ddlAno").OptionLabel("Seleccionar...").HtmlAttributes(new { style = "width:90px;" }))
-        <label>Mes</label>@(Html.Kendo().DropDownList().Name("ddlMes").OptionLabel("Seleccionar...").HtmlAttributes(new { style = "width:90px;" }))
-        <label>Semana</label>@(Html.Kendo().DropDownList().Name("ddlSemana").OptionLabel("Seleccionar...").HtmlAttributes(new { style = "width:90px;" }))
+        <div class="ts-calendar-filter">
+            <label>Seleccionar Semana Fiscal</label>
+            @(Html.Kendo().DatePicker()
+                .Name("fiscalWeekPicker")
+                .Value(DateTime.Now)
+                .DateInput(true)
+                .HtmlAttributes(new { style = "width: 150px;", @class = "fiscal-week-input" })
+            )
+        </div>
         <a href="#" class="k-button btn-rounded" id="btnBuscar"><i class="fas fa-search"></i> Buscar</a>
     </div>
 </div>

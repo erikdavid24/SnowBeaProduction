@@ -8,120 +8,79 @@ function tgAlert(t,x){$('<div/>').appendTo('body').kendoDialog({width:380,title:
 
 // Calendario Fiscal
 function inicializarFiltroSemanaFiscal() {
-    var anoActual = new Date().getFullYear();
-    var ddlAno = $('#ddlAno').data('kendoDropDownList');
-    var ddlMes = $('#ddlMes').data('kendoDropDownList');
-    var ddlSemana = $('#ddlSemana').data('kendoDropDownList');
+    var datePicker = $('#fiscalWeekPicker').data('kendoDatePicker');
+    if (!datePicker) return;
 
-    // Inicializar dropdown de años (últimos 3 años + próximos 2)
-    var anosData = [];
-    for (var i = anoActual - 3; i <= anoActual + 2; i++) {
-        anosData.push({ text: i.toString(), value: i });
-    }
-    ddlAno.setDataSource(anosData);
-    ddlAno.bind('change', function() {
-        var anoSel = parseInt(this.value());
-        if (anoSel > 0) {
-            actualizarMesesFiscales(anoSel);
-        } else {
-            ddlMes.setDataSource([]);
-            ddlSemana.setDataSource([]);
+    datePicker.bind('change', function() {
+        var selectedDate = this.value();
+        if (selectedDate) {
+            // Obtener información de la semana fiscal para la fecha seleccionada
+            var fechaStr = kendo.toString(selectedDate, 'yyyy/MM/dd');
+            $.get(PG.urls.semanaFiscal, { fecha: fechaStr }, function(r) {
+                if (r && r.semana) {
+                    // Guardar la semana fiscal en el datepicker
+                    $('#fiscalWeekPicker').data('fiscal-week', r.semana);
+                    $('#fiscalWeekPicker').data('fiscal-year', r.anio);
+                }
+            });
         }
     });
-
-    // Inicializar dropdown de meses
-    var mesesData = [
-        { text: 'Enero', value: 1 },
-        { text: 'Febrero', value: 2 },
-        { text: 'Marzo', value: 3 },
-        { text: 'Abril', value: 4 },
-        { text: 'Mayo', value: 5 },
-        { text: 'Junio', value: 6 },
-        { text: 'Julio', value: 7 },
-        { text: 'Agosto', value: 8 },
-        { text: 'Septiembre', value: 9 },
-        { text: 'Octubre', value: 10 },
-        { text: 'Noviembre', value: 11 },
-        { text: 'Diciembre', value: 12 }
-    ];
-    ddlMes.setDataSource(mesesData);
-    ddlMes.bind('change', function() {
-        var anoSel = parseInt($('#ddlAno').data('kendoDropDownList').value());
-        var mesSel = parseInt(this.value());
-        if (anoSel > 0 && mesSel > 0) {
-            actualizarSemanasDelMes(anoSel, mesSel);
-        } else {
-            ddlSemana.setDataSource([]);
-        }
-    });
-
-    // Inicializar dropdown de semanas
-    ddlSemana.setDataSource([]);
 }
 
 function actualizarMesesFiscales(ano) {
-    // Por ahora retornamos todos los meses (la lógica fiscal se aplica al cargar semanas)
-    var mesesData = [
-        { text: 'Enero', value: 1 },
-        { text: 'Febrero', value: 2 },
-        { text: 'Marzo', value: 3 },
-        { text: 'Abril', value: 4 },
-        { text: 'Mayo', value: 5 },
-        { text: 'Junio', value: 6 },
-        { text: 'Julio', value: 7 },
-        { text: 'Agosto', value: 8 },
-        { text: 'Septiembre', value: 9 },
-        { text: 'Octubre', value: 10 },
-        { text: 'Noviembre', value: 11 },
-        { text: 'Diciembre', value: 12 }
-    ];
-    $('#ddlMes').data('kendoDropDownList').setDataSource(mesesData);
+    // Esta función ya no se usa con el nuevo diseño
 }
 
 function actualizarSemanasDelMes(ano, mes) {
-    $.get(PG.urls.getSemanasDelMes, { ano: ano, mes: mes }, function(resp) {
-        if (resp && resp.semanas) {
-            var semanasData = resp.semanas.map(function(s) {
-                return { text: 'Semana ' + s.Semana + ' (' + s.Rango + ')', value: s.Semana };
-            });
-            $('#ddlSemana').data('kendoDropDownList').setDataSource(semanasData);
-        } else {
-            $('#ddlSemana').data('kendoDropDownList').setDataSource([]);
-        }
-    });
+    // Esta función ya no se usa con el nuevo diseño
 }
 
 
 function cargarKanban() {
     cargarPrecargas();
-    var ano    = parseInt($('#ddlAno').data('kendoDropDownList').value()) || 0;
-    var mes    = parseInt($('#ddlMes').data('kendoDropDownList').value()) || 0;
-    var semana = parseInt($('#ddlSemana').data('kendoDropDownList').value()) || 0;
-    $.post(PG.urls.readKanban, { semana: semana, anio: ano }, function (resp) {
-        var data = resp.Data || [];
-        var enProceso        = ['Setup', 'Arranque', 'En Proceso'];
-        var piezasPendientes = ['Finalizado Parcial'];
-        var completados      = ['Completado', 'Finalizado'];
-        var todasEspeciales  = enProceso.concat(piezasPendientes, completados);
-        var reSaldo          = /-\d+$/;
 
-        var saldoMap = {};
-        data.forEach(function (x) {
-            var m = /^(.+?)-(\d+)$/.exec(x.WorkOrder || '');
-            if (m && todasEspeciales.indexOf(x.Status) < 0) {
-                saldoMap[m[1]] = (saldoMap[m[1]] || 0) + (x.PiezasProgramadas || 0);
-            }
+    // Obtener la fecha seleccionada del datepicker
+    var datePicker = $('#fiscalWeekPicker').data('kendoDatePicker');
+    var selectedDate = datePicker ? datePicker.value() : new Date();
+
+    if (!selectedDate) {
+        selectedDate = new Date();
+    }
+
+    // Convertir la fecha a formato yyyy/MM/dd para enviar al servidor
+    var fechaStr = kendo.toString(selectedDate, 'yyyy/MM/dd');
+
+    // Obtener la semana fiscal para la fecha seleccionada
+    $.get(PG.urls.semanaFiscal, { fecha: fechaStr }, function(r) {
+        var semana = (r && r.semana) ? parseInt(r.semana) : 0;
+        var anio = (r && r.anio) ? parseInt('20' + r.anio) : new Date().getFullYear();
+
+        $.post(PG.urls.readKanban, { semana: semana, anio: anio }, function (resp) {
+            var data = resp.Data || [];
+            var enProceso        = ['Setup', 'Arranque', 'En Proceso'];
+            var piezasPendientes = ['Finalizado Parcial'];
+            var completados      = ['Completado', 'Finalizado'];
+            var todasEspeciales  = enProceso.concat(piezasPendientes, completados);
+            var reSaldo          = /-\d+$/;
+
+            var saldoMap = {};
+            data.forEach(function (x) {
+                var m = /^(.+?)-(\d+)$/.exec(x.WorkOrder || '');
+                if (m && todasEspeciales.indexOf(x.Status) < 0) {
+                    saldoMap[m[1]] = (saldoMap[m[1]] || 0) + (x.PiezasProgramadas || 0);
+                }
+            });
+            data.forEach(function (x) {
+                x._isSaldo = todasEspeciales.indexOf(x.Status) < 0 && reSaldo.test(x.WorkOrder || '');
+            });
+
+            function esSaldo(x) { return x._isSaldo || piezasPendientes.indexOf(x.Status) >= 0; }
+
+            renderCol('bodyPendiente',       'cntPendiente',       data.filter(function (x) { return todasEspeciales.indexOf(x.Status) < 0 && !x._isSaldo; }), saldoMap);
+            renderCol('bodyEnProceso',       'cntEnProceso',       data.filter(function (x) { return enProceso.indexOf(x.Status) >= 0; }), saldoMap);
+            renderCol('bodyPiezasPendientes','cntPiezasPendientes',data.filter(function (x) { return esSaldo(x); }), saldoMap);
+            renderCol('bodyCompletado',      'cntCompletado',      data.filter(function (x) { return completados.indexOf(x.Status) >= 0; }), saldoMap);
         });
-        data.forEach(function (x) {
-            x._isSaldo = todasEspeciales.indexOf(x.Status) < 0 && reSaldo.test(x.WorkOrder || '');
-        });
-
-        function esSaldo(x) { return x._isSaldo || piezasPendientes.indexOf(x.Status) >= 0; }
-
-        renderCol('bodyPendiente',       'cntPendiente',       data.filter(function (x) { return todasEspeciales.indexOf(x.Status) < 0 && !x._isSaldo; }), saldoMap);
-        renderCol('bodyEnProceso',       'cntEnProceso',       data.filter(function (x) { return enProceso.indexOf(x.Status) >= 0; }), saldoMap);
-        renderCol('bodyPiezasPendientes','cntPiezasPendientes',data.filter(function (x) { return esSaldo(x); }), saldoMap);
-        renderCol('bodyCompletado',      'cntCompletado',      data.filter(function (x) { return completados.indexOf(x.Status) >= 0; }), saldoMap);
     });
 }
 
