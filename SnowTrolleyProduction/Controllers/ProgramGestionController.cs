@@ -210,6 +210,17 @@ namespace SnowTrolleyProduction.Controllers
             catch (Exception ex) { return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet); }
         }
 
+        [HttpGet]
+        public JsonResult GetSemanasDelMes(int ano, int mes)
+        {
+            try
+            {
+                var semanas = _svc.GetSemanasDelMesFiscal(ano, mes);
+                return Json(new { semanas }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex) { return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet); }
+        }
+
         [HttpPost]
         public ActionResult CargaMasiva(HttpPostedFileBase archivoExcel, bool? preview)
         {

@@ -55,8 +55,9 @@
         <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded" id="btnIrProceso"><i class="fas fa-play"></i> Ir al Proceso</a>
         <a href="#" class="k-button k-primary btn-rounded" id="btnNuevoPrograma"><i class="fas fa-plus"></i> Nuevo Programa</a>
         <a href="#" class="k-button btn-excel" id="btnSubirExcel"><i class="fas fa-file-excel"></i>&nbsp;Subir Excel</a>
-        <label>Semana</label>@(Html.Kendo().NumericTextBox<int>().Name("numSemana").Min(1).Max(53).HtmlAttributes(new { style = "width:70px;" }))
-        <label>Año</label>@(Html.Kendo().NumericTextBox<int>().Name("numAnio").Min(2020).Max(2099).HtmlAttributes(new { style = "width:78px;" }))
+        <label>Año</label>@(Html.Kendo().DropDownList().Name("ddlAno").OptionLabel("Seleccionar...").HtmlAttributes(new { style = "width:90px;" }))
+        <label>Mes</label>@(Html.Kendo().DropDownList().Name("ddlMes").OptionLabel("Seleccionar...").HtmlAttributes(new { style = "width:90px;" }))
+        <label>Semana</label>@(Html.Kendo().DropDownList().Name("ddlSemana").OptionLabel("Seleccionar...").HtmlAttributes(new { style = "width:90px;" }))
         <a href="#" class="k-button btn-rounded" id="btnBuscar"><i class="fas fa-search"></i> Buscar</a>
     </div>
 </div>
@@ -298,6 +299,7 @@ var PG = {
         eliminarDirecto:     '@Url.Action("EliminarDirecto",     "ProgramGestion")',
         eliminarCarta:       '@Url.Action("EliminarCarta",       "ProgramGestion")',
         semanaFiscal:        '@Url.Action("GetSemanaFiscal",     "ProgramGestion")',
+        getSemanasDelMes:    '@Url.Action("GetSemanasDelMes",    "ProgramGestion")',
         getLadosPorEnsamble: '@Url.Action("GetLadosPorEnsamble", "ProgramGestion")',
         getTrolleysPorLinea: '@Url.Action("GetTrolleysPorLinea", "ProgramGestion")',
         guardarSetupTrolleys:'@Url.Action("GuardarSetupTrolleys","ProgramGestion")',
