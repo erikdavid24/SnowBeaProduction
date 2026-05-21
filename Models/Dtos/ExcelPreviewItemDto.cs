@@ -7,6 +7,7 @@ namespace SnowTrolleyProduction.Models
 {
     public class ExcelPreviewItemDto
     {
+        public int Id { get; set; }
         public string Id_Programa { get; set; }
         public string WorkOrder { get; set; }
         public int PiezasProgramadas { get; set; }

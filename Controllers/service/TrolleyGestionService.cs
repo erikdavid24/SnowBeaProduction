@@ -109,8 +109,8 @@ namespace SnowTrolleyProduction.Controllers.service
             catch (SqlException ex)
             {
                 return ex.Number == 547
-                    ? "No se puede eliminar esta maquina porque tiene acomodos vinculados."
-                    : "Ocurrio un error al intentar eliminar esta maquina.";
+                    ? "No se puede eliminar esta máquina porque tiene acomodos vinculados."
+                    : "Ocurrió un error al intentar eliminar esta máquina.";
             }
         }
 

@@ -20,8 +20,15 @@ namespace SnowTrolleyProduction.Controllers.service
 
         private string GetConnectionString() => BD.Database.Connection.ConnectionString;
 
-        public List<ProgramGestionViewModel> Read(string startDate, string endDate)
+        public List<ProgramGestionViewModel> Read(string startDate, string endDate, int? semana = null, int? anio = null)
         {
+            if (semana.HasValue && anio.HasValue && semana.Value > 0 && anio.Value > 0)
+            {
+                var rango = GetRangoSemanaFiscal(semana.Value, anio.Value);
+                startDate = rango.Item1.ToString("yyyy/MM/dd");
+                endDate   = rango.Item2.ToString("yyyy/MM/dd");
+            }
+
             string sql = @"
                 SELECT 
                     ts.Id, ts.Id_Proceso, ts.Id_Programa, ts.WorkOrder, ts.PiezasProgramadas,
@@ -48,11 +55,12 @@ namespace SnowTrolleyProduction.Controllers.service
                 List<ProgramGestionViewModel> rows;
                 if (string.IsNullOrEmpty(startDate) || string.IsNullOrEmpty(endDate))
                 {
+                    sql += " WHERE ts.Status != 'PreCarga'";
                     rows = conn.Query<ProgramGestionViewModel>(sql).ToList();
                 }
                 else
                 {
-                    sql += " WHERE CAST(ts.FechaCreacion AS DATE) >= @start AND CAST(ts.FechaCreacion AS DATE) <= @end";
+                    sql += " WHERE ts.Status != 'PreCarga' AND CAST(ts.FechaCreacion AS DATE) >= @start AND CAST(ts.FechaCreacion AS DATE) <= @end";
                     DateTime fechaInicio = DateTime.ParseExact(startDate, "yyyy/MM/dd", null);
                     DateTime fechaFin    = DateTime.ParseExact(endDate,   "yyyy/MM/dd", null);
                     rows = conn.Query<ProgramGestionViewModel>(sql, new { start = fechaInicio.Date, end = fechaFin.Date }).ToList();
@@ -522,6 +530,85 @@ namespace SnowTrolleyProduction.Controllers.service
             catch { return new List<string>(); }
         }
 
+        public int PreGuardar(List<ExcelPreviewItemDto> items)
+        {
+            int conteo = 0;
+            const string sqlInsert = @"INSERT INTO [Proccess].[TrolleySetup]
+                   (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea)
+                   VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
+
+            using (var conn = new SqlConnection(GetConnectionString()))
+            {
+                conn.Open();
+                using (var transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (var item in items)
+                        {
+                            if (item.EsDuplicado) continue;
+                            conn.Execute(sqlInsert, new
+                            {
+                                IdProceso         = 1,
+                                IdPrograma        = (object)item.Id_Programa,
+                                WorkOrder         = (object)item.WorkOrder,
+                                PiezasProgramadas = item.PiezasProgramadas,
+                                Trolleys          = "",
+                                Status            = "PreCarga",
+                                FechaCreacion     = item.FechaCreacion,
+                                IdLinea           = (object)item.Id_Linea ?? DBNull.Value,
+                                Comentarios       = (object)item.Comentarios ?? DBNull.Value,
+                                Linea             = item.Id_Linea ?? 0
+                            }, transaction);
+                            conteo++;
+                        }
+                        transaction.Commit();
+                    }
+                    catch { transaction.Rollback(); throw; }
+                }
+            }
+            return conteo;
+        }
+
+        public List<ExcelPreviewItemDto> GetPrecargas()
+        {
+            const string sql = @"
+                SELECT ts.Id, ts.Id_Programa, ts.WorkOrder, ts.PiezasProgramadas,
+                       ts.FechaCreacion, ts.Id_Linea, ts.Comentarios,
+                       ISNULL(e.EnsambleBase, ts.Id_Programa) AS Ensamble
+                FROM   [Proccess].[TrolleySetup] ts
+                LEFT JOIN [Proccess].[Programas] p ON p.Numero = ts.Id_Programa
+                LEFT JOIN [Proccess].[Ensambles] e ON e.Id     = p.Ensamble
+                WHERE  ts.Status = 'PreCarga'
+                ORDER  BY ts.FechaCreacion ASC";
+
+            using (var conn = new SqlConnection(GetConnectionString()))
+            {
+                conn.Open();
+                return conn.Query<ExcelPreviewItemDto>(sql).ToList();
+            }
+        }
+
+        public int AutorizarPrecargas()
+        {
+            const string sql = "UPDATE [Proccess].[TrolleySetup] SET Status = 'Creado' WHERE Status = 'PreCarga'";
+            using (var conn = new SqlConnection(GetConnectionString()))
+            {
+                conn.Open();
+                return conn.Execute(sql);
+            }
+        }
+
+        public void RechazarPrecargas()
+        {
+            const string sql = "DELETE FROM [Proccess].[TrolleySetup] WHERE Status = 'PreCarga'";
+            using (var conn = new SqlConnection(GetConnectionString()))
+            {
+                conn.Open();
+                conn.Execute(sql);
+            }
+        }
+
         private DateTime? ObtenerFechaDeExcel(IXLCell celda)
         {
             try
@@ -612,6 +699,13 @@ namespace SnowTrolleyProduction.Controllers.service
             int semana = (diasDesdeInicio / 7) + 1;
 
             return semana.ToString().PadLeft(2, '0') + "|" + anioFiscal.ToString().Substring(2);
+        }
+
+        public Tuple<DateTime, DateTime> GetRangoSemanaFiscal(int semana, int anio)
+        {
+            DateTime inicioFiscal = UltimoSabadoDiciembre(anio - 1);
+            DateTime start = inicioFiscal.AddDays((semana - 1) * 7);
+            return Tuple.Create(start, start.AddDays(6));
         }
 
         private DateTime UltimoSabadoDiciembre(int anio)
