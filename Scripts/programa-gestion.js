@@ -36,51 +36,44 @@ function actualizarSemanasDelMes(ano, mes) {
 }
 
 
+function renderKanban(data) {
+    var enProceso        = ['Setup', 'Arranque', 'En Proceso'];
+    var piezasPendientes = ['Finalizado Parcial'];
+    var completados      = ['Completado', 'Finalizado'];
+    var todasEspeciales  = enProceso.concat(piezasPendientes, completados);
+    var reSaldo          = /-\d+$/;
+
+    var saldoMap = {};
+    data.forEach(function (x) {
+        var m = /^(.+?)-(\d+)$/.exec(x.WorkOrder || '');
+        if (m && todasEspeciales.indexOf(x.Status) < 0)
+            saldoMap[m[1]] = (saldoMap[m[1]] || 0) + (x.PiezasProgramadas || 0);
+    });
+    data.forEach(function (x) {
+        x._isSaldo = todasEspeciales.indexOf(x.Status) < 0 && reSaldo.test(x.WorkOrder || '');
+    });
+
+    function esSaldo(x) { return x._isSaldo || piezasPendientes.indexOf(x.Status) >= 0; }
+
+    renderCol('bodyPendiente',        'cntPendiente',        data.filter(function (x) { return todasEspeciales.indexOf(x.Status) < 0 && !x._isSaldo; }), saldoMap);
+    renderCol('bodyEnProceso',        'cntEnProceso',        data.filter(function (x) { return enProceso.indexOf(x.Status) >= 0; }), saldoMap);
+    renderCol('bodyPiezasPendientes', 'cntPiezasPendientes', data.filter(function (x) { return esSaldo(x); }), saldoMap);
+    renderCol('bodyCompletado',       'cntCompletado',       data.filter(function (x) { return completados.indexOf(x.Status) >= 0; }), saldoMap);
+}
+
 function cargarKanban() {
     cargarPrecargas();
-
-    // Obtener la fecha seleccionada del datepicker
     var datePicker = $('#fiscalWeekPicker').data('kendoDatePicker');
-    var selectedDate = datePicker ? datePicker.value() : new Date();
-
+    var selectedDate = datePicker && datePicker.value();
     if (!selectedDate) {
-        selectedDate = new Date();
+        $.post(PG.urls.readKanban, { semana: 0, anio: 0 }, function (resp) { renderKanban(resp.Data || []); });
+        return;
     }
-
-    // Convertir la fecha a formato yyyy/MM/dd para enviar al servidor
     var fechaStr = kendo.toString(selectedDate, 'yyyy/MM/dd');
-
-    // Obtener la semana fiscal para la fecha seleccionada
     $.get(PG.urls.semanaFiscal, { fecha: fechaStr }, function(r) {
         var semana = (r && r.semana) ? parseInt(r.semana) : 0;
-        var anio = (r && r.anio) ? parseInt('20' + r.anio) : new Date().getFullYear();
-
-        $.post(PG.urls.readKanban, { semana: semana, anio: anio }, function (resp) {
-            var data = resp.Data || [];
-            var enProceso        = ['Setup', 'Arranque', 'En Proceso'];
-            var piezasPendientes = ['Finalizado Parcial'];
-            var completados      = ['Completado', 'Finalizado'];
-            var todasEspeciales  = enProceso.concat(piezasPendientes, completados);
-            var reSaldo          = /-\d+$/;
-
-            var saldoMap = {};
-            data.forEach(function (x) {
-                var m = /^(.+?)-(\d+)$/.exec(x.WorkOrder || '');
-                if (m && todasEspeciales.indexOf(x.Status) < 0) {
-                    saldoMap[m[1]] = (saldoMap[m[1]] || 0) + (x.PiezasProgramadas || 0);
-                }
-            });
-            data.forEach(function (x) {
-                x._isSaldo = todasEspeciales.indexOf(x.Status) < 0 && reSaldo.test(x.WorkOrder || '');
-            });
-
-            function esSaldo(x) { return x._isSaldo || piezasPendientes.indexOf(x.Status) >= 0; }
-
-            renderCol('bodyPendiente',       'cntPendiente',       data.filter(function (x) { return todasEspeciales.indexOf(x.Status) < 0 && !x._isSaldo; }), saldoMap);
-            renderCol('bodyEnProceso',       'cntEnProceso',       data.filter(function (x) { return enProceso.indexOf(x.Status) >= 0; }), saldoMap);
-            renderCol('bodyPiezasPendientes','cntPiezasPendientes',data.filter(function (x) { return esSaldo(x); }), saldoMap);
-            renderCol('bodyCompletado',      'cntCompletado',      data.filter(function (x) { return completados.indexOf(x.Status) >= 0; }), saldoMap);
-        });
+        var anio   = (r && r.anio)   ? parseInt('20' + r.anio) : new Date().getFullYear();
+        $.post(PG.urls.readKanban, { semana: semana, anio: anio }, function (resp) { renderKanban(resp.Data || []); });
     });
 }
 
@@ -106,9 +99,6 @@ function renderCol(bodyId, countId, items, saldoMap) {
             ladosHtml += '</div>';
         }
         var cnt = item.CantidadMateriales || 0;
-        var materialBadge = cnt > 0
-            ? '<span class="ts-material-badge mat-ok"><i class="fas fa-microchip"></i>&nbsp;' + cnt + ' mat.</span>'
-            : '<span class="ts-material-badge mat-sin"><i class="fas fa-exclamation-triangle"></i>&nbsp;Sin materiales</span>';
 
         var fechaDisplay = (isDone && item.FechaFinalizacion) ? item.FechaFinalizacion : item.FechaCreacion;
         var piezasDisplay = item.PiezasProgramadas || 0;
@@ -130,7 +120,6 @@ function renderCol(bodyId, countId, items, saldoMap) {
             '</div>' +
             '<div class="ts-card-title">' + (item.Ensamble || item.Id_Programa || '&mdash;') + '</div>' +
             '<div class="ts-card-sub">WO: ' + (item.WorkOrder || '') + '</div>' + ladosHtml +
-            materialBadge +
             (item.Trolleys ? '<div class="ts-card-trolleys"><i class="fas fa-grip-lines"></i>&nbsp;' + item.Trolleys + '</div>' : '') +
             '<div class="ts-card-meta"><span><i class="fas fa-calendar-alt"></i>&nbsp;' + formatFecha(fechaDisplay) + '</span>' +
             '<span><i class="fas fa-boxes"></i>&nbsp;' + piezasDisplay + ' pzas</span>' +
@@ -285,7 +274,7 @@ function abrirPreview(data, soloVer) {
         noRecords: { template: "<img class='show-empty' />" },
         columns: [
             { field: 'EsDuplicado', title: '', width: 50, sortable: false, filterable: false, locked: true,
-              template: function(d){ return d.EsDuplicado ? '<i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:16px;" title="'+(d.RazonRechazo||'')+'"></i>' : '<i class="fas fa-check-circle" style="color:#22c55e;font-size:16px;"></i>'; } },
+              template: function(d){ if(d.EsDuplicado) return '<i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:16px;" title="'+(d.RazonRechazo||'')+'"></i>'; if(d.RazonRechazo) return '<i class="fas fa-exclamation-triangle" style="color:#f59e0b;font-size:16px;" title="'+d.RazonRechazo+'"></i>'; return '<i class="fas fa-check-circle" style="color:#22c55e;font-size:16px;"></i>'; } },
             { field: 'Ensamble', title: 'Ensamble', width: 180 },
             { field: 'Id_Programa', title: 'Programa', width: 170 },
             { field: 'WorkOrder', title: 'WO', width: 130 },
@@ -363,7 +352,14 @@ $(function () {
 
     $('#btnNuevoPrograma').on('click', function (e) { e.preventDefault(); $('#wndNuevo').data('kendoWindow').center().open(); });
     $('#btnSubirExcel').on('click', function (e) { e.preventDefault(); $('#archivoExcelInput').val(''); $('#excelUploadProgress').hide(); $('#wndExcel').data('kendoWindow').center().open(); });
-    $('#btnBuscar').on('click',        function (e) { e.preventDefault(); cargarKanban(); });
+    $('#btnBuscar').on('click',  function (e) { e.preventDefault(); cargarKanban(); });
+    $('#btnLimpiar').on('click', function (e) {
+        e.preventDefault();
+        var dp = $('#fiscalWeekPicker').data('kendoDatePicker');
+        if (dp) { dp.value(null); }
+        cargarPrecargas();
+        $.post(PG.urls.readKanban, { semana: 0, anio: 0 }, function (resp) { renderKanban(resp.Data || []); });
+    });
     $('#btnCancelarNuevo').on('click',  function () { $('#wndNuevo').data('kendoWindow').close(); });
     $('#btnCancelarEditar').on('click', function () { $('#wndEditar').data('kendoWindow').close(); });
     $('#btnCancelarSetup').on('click',  function () { $('#wndSetup').data('kendoWindow').close(); });

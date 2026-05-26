@@ -106,6 +106,7 @@ warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Id_Status' does not hav
           <Property Name="Numero" Type="nvarchar" MaxLength="150" />
           <Property Name="Ensamble" Type="int" />
           <Property Name="CantidadTotalMateriales" Type="int" />
+          <Property Name="CantidadComponentesDiferentes" Type="int" Nullable="false" />
         </EntityType>
         <!--Errors Found During Generation:
 warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Trolley_Program' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
@@ -539,6 +540,7 @@ warning 6035: The relationship 'FK_Ensambles_Programas' has columns that are not
           <Property Name="Ensamble" Type="Int32" />
           <NavigationProperty Name="Acomodoes" Relationship="Self.FK__Acomodo__Program__686C721B" FromRole="Programas" ToRole="Acomodo" />
           <Property Name="CantidadTotalMateriales" Type="Int32" />
+          <Property Name="CantidadComponentesDiferentes" Type="Int32" Nullable="false" />
         </EntityType>
         <EntityType Name="TrolleySetup">
           <Key>
@@ -914,6 +916,7 @@ warning 6035: The relationship 'FK_Ensambles_Programas' has columns that are not
           <EntitySetMapping Name="Programas">
             <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Programa">
               <MappingFragment StoreEntitySet="Programas">
+                <ScalarProperty Name="CantidadComponentesDiferentes" ColumnName="CantidadComponentesDiferentes" />
                 <ScalarProperty Name="CantidadTotalMateriales" ColumnName="CantidadTotalMateriales" />
                 <ScalarProperty Name="Id" ColumnName="Id" />
                 <ScalarProperty Name="Numero" ColumnName="Numero" />

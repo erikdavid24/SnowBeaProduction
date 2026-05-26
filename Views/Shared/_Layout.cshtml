@@ -13,6 +13,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!--begin::Fonts -->
     <link rel="stylesheet" href="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Content/font-google-apis/fontgoogleapi.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <link rel="shortcut icon" href="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Content/baesystems/favicon.ico" />
     <!--end::Fonts -->
     <!--begin:: Kendo Mandatory Styles -->
@@ -332,5 +335,18 @@
 
     <!--end::Global Notification -->
     @RenderSection("Scripts", required: false)
+    <style>
+        /* BORDES EN PICO + FUENTE GLOBAL - carga al final para ganar cualquier especificidad */
+        *, *::before, *::after,
+        [class], [class]::before, [class]::after,
+        [class][class], [class][class]::before, [class][class]::after { border-radius: 0 !important; }
+        /* Excepcion: iconos circulares de SweetAlert2 */
+        .swal2-icon, .swal2-icon::before, .swal2-icon::after,
+        .swal2-success-ring, .swal2-x-mark::before, .swal2-x-mark::after { border-radius: 50% !important; }
+        body { font-family: 'DM Sans', sans-serif !important; }
+        input, button, select, textarea, .k-input, .k-button { font-family: 'DM Sans', sans-serif !important; }
+        .fa, .fas, .far, .fab, .fal, .fad { font-family: "Font Awesome 5 Free" !important; }
+        .fab { font-family: "Font Awesome 5 Brands" !important; }
+    </style>
 </body>
 </html>

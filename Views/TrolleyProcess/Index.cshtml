@@ -1,5 +1,8 @@
 @{
     ViewBag.Title = "Plan de Produccion o Proceso";
+    var _uc     = BAEClassLibrary.UserContext.current;
+    bool isAdmin  = _uc != null && (_uc.IsAdmin || _uc.EmployeeNum.ToString() == "128379");
+    bool canSetup = isAdmin || BAEClassLibrary.UserContext.ModulePermissions.Update("SnowTrolley");
 }
 
 @section Styles {
@@ -64,6 +67,8 @@
 
 @section Scripts {
 <script>
+var TP_isAdmin = @(canSetup ? "true" : "false");
+
 var TP = {
     urls: {
         procesos:     '@Url.Action("ObtenerProcesos",           "TrolleyProcess")',
@@ -123,7 +128,7 @@ var gridProcesos = $('#gridProcesos').kendoGrid({
     },
     columns: [
         { title: '', width: 36,
-          template: '<span class="tp-handle"><i class="fas fa-grip-vertical"></i></span>',
+          template: TP_isAdmin ? '<span class="tp-handle"><i class="fas fa-grip-vertical"></i></span>' : '',
           attributes: { style: 'text-align:center;padding:6px 4px;' } },
         { field: 'id_Programa', title: 'Programa',  template: '<strong>#=id_Programa#</strong>', width: 200 },
         { field: 'workOrder',   title: 'Work Order', width: 200 },
@@ -137,6 +142,7 @@ var gridProcesos = $('#gridProcesos').kendoGrid({
 }).data('kendoGrid');
 
 function _aplicarSortable(grid) {
+    if (!TP_isAdmin) return;
     if (!grid.dataSource.data().length) return;
     var existing = grid.table.data('kendoSortable');
     if (existing) existing.destroy();
@@ -257,13 +263,15 @@ function pintarDisponibles(procesos) {
         var arr          = $.isArray(p.trolleys) ? p.trolleys : [];
         var tieneTrolleys = arr.length > 0;
         var badgesHtml   = $.map(arr, function (t) {
-            return trolleyBadge(t, refTrolleys.indexOf(t) < 0);
+            return trolleyBadge(t, refTrolleys.indexOf(t) >= 0);
         }).join(' ');
         var accionHtml;
-        if (!hayActivo && tieneTrolleys) {
+        if (!hayActivo && tieneTrolleys && TP_isAdmin) {
             accionHtml = '<button class="k-button k-primary btn-rounded" onclick="iniciarSetup(' +
                 p.id_Proceso + ',\'' + (p.id_Programa || '').replace(/'/g, "\\'") + '\')">' +
                 '<i class="fas fa-tools"></i> Setup</button>';
+        } else if (!hayActivo && tieneTrolleys && !TP_isAdmin) {
+            accionHtml = '';
         } else if (hayActivo) {
             accionHtml = '<span style="color:#9aa0b8;font-size:.8rem;">En espera</span>';
         } else {
@@ -304,7 +312,7 @@ function tgAlert(t, x) {
 function iniciarSetup(id, prog) {
     tgConfirm('Mandar a Setup', 'Se cambiara el estado de ' + prog + ' a Setup.', function () {
         $.post(TP.urls.setup, { idProceso: id, linea: lineaSel }, function (r) {
-            if (r.success) { window.location.href = r.redirectUrl; }
+            if (r.success) { cargar(lineaSel); }
             else           { tgAlert('Atencion', r.message); }
         }).fail(function () { tgAlert('Error', 'Error de conexion.'); });
     });
