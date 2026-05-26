@@ -5,6 +5,7 @@ Scripts/modernizr*               linguist-vendored
 Scripts/*.min.js                 linguist-vendored
 Scripts/*.map                    linguist-vendored
 Scripts/jquery.validate*         linguist-vendored
+Scripts/*.map                    linguist-vendored
 
 # Minificados propios — no cuentan como código fuente
 Scripts/programa-gestion.min.js  linguist-generated
