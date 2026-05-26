@@ -27,10 +27,17 @@
     <input id="modalProgramaNumero" value="@(esEdicion ? programa.Numero : "")" style="width:100%;" />
 </div>
 
-<div class="form-group">
-    <label class="form-label">Cantidad de Componentes</label>
-    <input id="modalProgramaMateriales" value="@(esEdicion ? programa.CantidadMateriales : 0)" style="width:140px;" />
-    <small style="color:#9aa0b8;font-size:.75rem;display:block;margin-top:4px;">Numero de componentes diferentes que requiere el ensamble.</small>
+<div class="form-group" style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
+    <div>
+        <label class="form-label">Comp. Diferentes</label>
+        <input id="modalProgramaCantDif" value="@(esEdicion ? programa.CantDiferentes : 0)" style="width:130px;" />
+        <small style="color:#9aa0b8;font-size:.75rem;display:block;margin-top:4px;">Tipos distintos de componentes.</small>
+    </div>
+    <div>
+        <label class="form-label">Total Materiales</label>
+        <input id="modalProgramaMateriales" value="@(esEdicion ? programa.CantidadMateriales : 0)" style="width:130px;" />
+        <small style="color:#9aa0b8;font-size:.75rem;display:block;margin-top:4px;">Cantidad total de componentes.</small>
+    </div>
 </div>
 
 <div class="form-actions">
@@ -44,6 +51,9 @@
 
     var $ensambleDDL = $('#modalProgramaEnsambleSelect').kendoDropDownList().data('kendoDropDownList');
     $('#modalProgramaNumero').kendoTextBox();
+    var $numDif = $('#modalProgramaCantDif').kendoNumericTextBox({
+        min: 0, decimals: 0, format: '##', placeholder: '0'
+    }).data('kendoNumericTextBox');
     var $numMat = $('#modalProgramaMateriales').kendoNumericTextBox({
         min: 0, decimals: 0, format: '##', placeholder: '0'
     }).data('kendoNumericTextBox');
@@ -61,16 +71,17 @@
         var numero     = ($('#modalProgramaNumero').val() || '').trim();
         var ensambleId = parseInt($ensambleDDL.value());
         var materiales = $numMat.value() || 0;
+        var cantDif    = $numDif.value() || 0;
         if (!numero) { tgAlert('Campo requerido', 'El numero de programa es requerido.'); return; }
         var $btn = $(this).prop('disabled', true);
         if (esEdicion) {
             var programaId = parseInt($('#modalProgramaId').val());
-            $.post(TG.urls.editarPrograma, { programaId: programaId, ensambleId: ensambleId, numero: numero, cantidadMateriales: materiales }, function (r) {
+            $.post(TG.urls.editarPrograma, { programaId: programaId, ensambleId: ensambleId, numero: numero, cantidadMateriales: materiales, cantDiferentes: cantDif }, function (r) {
                 if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarProgramas(); }
                 else { tgAlert('Error', r.message); }
             }).always(function () { $btn.prop('disabled', false); });
         } else {
-            $.post(TG.urls.agregarPrograma, { numero: numero, ensambleId: ensambleId, cantidadMateriales: materiales }, function (r) {
+            $.post(TG.urls.agregarPrograma, { numero: numero, ensambleId: ensambleId, cantidadMateriales: materiales, cantDiferentes: cantDif }, function (r) {
                 if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarProgramas(); }
                 else { tgAlert('Error', r.message); }
             }).always(function () { $btn.prop('disabled', false); });

@@ -13,17 +13,17 @@
 }
 
 <div class="form-group">
-    <label class="form-label">Línea</label>
+    <label class="form-label">Linea</label>
     <select id="modalEnsambleLineaSelect">
         @foreach (var linea in Model)
         {
             if (esEdicion && ensamble.Linea != null && linea.Id_Linea == ensamble.Linea.Id_Linea)
             {
-                <option value="@linea.Id_Linea" selected>Línea @linea.Numero_Linea</option>
+                <option value="@linea.Id_Linea" selected>Linea @linea.Numero_Linea</option>
             }
             else
             {
-                <option value="@linea.Id_Linea">Línea @linea.Numero_Linea</option>
+                <option value="@linea.Id_Linea">Linea @linea.Numero_Linea</option>
             }
         }
     </select>

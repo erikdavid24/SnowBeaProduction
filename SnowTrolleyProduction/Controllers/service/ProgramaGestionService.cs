@@ -143,16 +143,33 @@ namespace SnowTrolleyProduction.Controllers.service
                     int piezas = ObtenerEntero(filaReal.Cell("Y"));
 
                     var infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
-                        "SELECT TOP 1 Id, Linea1 FROM [Proccess].[Ensambles] WHERE EnsambleBase = @eb AND Linea1 = @ln",
+                        @"SELECT TOP 1 e.Id, e.Linea1 FROM [Proccess].[Ensambles] e
+                          INNER JOIN [Proccess].[Lineas] l ON l.Id_Linea = e.Linea1
+                          WHERE e.EnsambleBase = @eb AND l.Numero_Linea = @ln",
                         new { eb = programaBaseExcel, ln = lineaFinal });
 
-                    if (infoEnsamble == null)
+                    bool useFallback = (infoEnsamble == null);
+                    if (useFallback)
                         infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
                             "SELECT TOP 1 Id, Linea1 FROM [Proccess].[Ensambles] WHERE EnsambleBase = @eb",
                             new { eb = programaBaseExcel });
 
-                    if (infoEnsamble != null && infoEnsamble.Linea1.HasValue)
-                        lineaFinal = infoEnsamble.Linea1;
+                    string advertenciaLinea = null;
+                    if (!lineaFinal.HasValue && infoEnsamble != null && infoEnsamble.Linea1.HasValue)
+                    {
+                        var numLinea = conn.QueryFirstOrDefault<int?>(
+                            "SELECT TOP 1 Numero_Linea FROM [Proccess].[Lineas] WHERE Id_Linea = @id",
+                            new { id = infoEnsamble.Linea1.Value });
+                        if (numLinea.HasValue && numLinea.Value >= 7 && numLinea.Value <= 9) lineaFinal = numLinea.Value;
+                    }
+                    else if (lineaFinal.HasValue && useFallback && infoEnsamble != null && infoEnsamble.Linea1.HasValue)
+                    {
+                        var numLineaDB = conn.QueryFirstOrDefault<int?>(
+                            "SELECT TOP 1 Numero_Linea FROM [Proccess].[Lineas] WHERE Id_Linea = @id",
+                            new { id = infoEnsamble.Linea1.Value });
+                        if (numLineaDB.HasValue && numLineaDB.Value >= 7 && numLineaDB.Value <= 9 && numLineaDB.Value != lineaFinal.Value)
+                            advertenciaLinea = $"BD línea {numLineaDB.Value}, Excel línea {lineaFinal.Value}";
+                    }
 
                     List<string> programasReales = new List<string>();
                     if (infoEnsamble != null)
@@ -188,7 +205,7 @@ namespace SnowTrolleyProduction.Controllers.service
                             Comentarios = "Carga Excel",
                             Ensamble = programaBaseExcel,
                             EsDuplicado = woDuplicada > 0,
-                            RazonRechazo = woDuplicada > 0 ? $"WorkOrder '{workOrderGenerado}' ya existe" : ""
+                            RazonRechazo = woDuplicada > 0 ? $"WorkOrder '{workOrderGenerado}' ya existe" : advertenciaLinea ?? ""
                         });
                     }
                 }
@@ -283,16 +300,33 @@ namespace SnowTrolleyProduction.Controllers.service
                     int piezas = ObtenerEntero(filaReal.Cell("Y"));
 
                     var infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
-                        "SELECT TOP 1 Id, Linea1 FROM [Proccess].[Ensambles] WHERE EnsambleBase = @eb AND Linea1 = @ln",
+                        @"SELECT TOP 1 e.Id, e.Linea1 FROM [Proccess].[Ensambles] e
+                          INNER JOIN [Proccess].[Lineas] l ON l.Id_Linea = e.Linea1
+                          WHERE e.EnsambleBase = @eb AND l.Numero_Linea = @ln",
                         new { eb = programaBaseExcel, ln = lineaFinal });
 
-                    if (infoEnsamble == null)
+                    bool useFallback = (infoEnsamble == null);
+                    if (useFallback)
                         infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
                             "SELECT TOP 1 Id, Linea1 FROM [Proccess].[Ensambles] WHERE EnsambleBase = @eb",
                             new { eb = programaBaseExcel });
 
-                    if (infoEnsamble != null && infoEnsamble.Linea1.HasValue)
-                        lineaFinal = infoEnsamble.Linea1;
+                    string comentariosExtra = null;
+                    if (!lineaFinal.HasValue && infoEnsamble != null && infoEnsamble.Linea1.HasValue)
+                    {
+                        var numLinea = conn.QueryFirstOrDefault<int?>(
+                            "SELECT TOP 1 Numero_Linea FROM [Proccess].[Lineas] WHERE Id_Linea = @id",
+                            new { id = infoEnsamble.Linea1.Value });
+                        if (numLinea.HasValue && numLinea.Value >= 7 && numLinea.Value <= 9) lineaFinal = numLinea.Value;
+                    }
+                    else if (lineaFinal.HasValue && useFallback && infoEnsamble != null && infoEnsamble.Linea1.HasValue)
+                    {
+                        var numLineaDB = conn.QueryFirstOrDefault<int?>(
+                            "SELECT TOP 1 Numero_Linea FROM [Proccess].[Lineas] WHERE Id_Linea = @id",
+                            new { id = infoEnsamble.Linea1.Value });
+                        if (numLineaDB.HasValue && numLineaDB.Value >= 7 && numLineaDB.Value <= 9 && numLineaDB.Value != lineaFinal.Value)
+                            comentariosExtra = $"BD línea {numLineaDB.Value}, Excel línea {lineaFinal.Value}";
+                    }
 
                     List<string> programasReales = new List<string>();
                     if (infoEnsamble != null)
@@ -330,7 +364,7 @@ namespace SnowTrolleyProduction.Controllers.service
                             Status            = "Creado",
                             FechaCreacion     = fechaPlan,
                             IdLinea           = (object)lineaFinal ?? DBNull.Value,
-                            Comentarios       = "Carga Excel",
+                            Comentarios       = comentariosExtra != null ? $"Carga Excel | {comentariosExtra}" : "Carga Excel",
                             Linea             = lineaFinal ?? 0
                         });
                     }

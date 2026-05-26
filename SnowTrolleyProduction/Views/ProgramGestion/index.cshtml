@@ -6,9 +6,28 @@
 @section Styles {
     <link href="@Url.Content("~/Content/css/programa-gestion.css")?v=@(new System.IO.FileInfo(Server.MapPath("~/Content/css/programa-gestion.css")).LastWriteTime.Ticks)" rel="stylesheet" />
     <style>
-        .ts-material-badge { display:inline-flex;align-items:center;gap:3px;border-radius:4px;padding:1px 7px;font-size:.72rem;font-weight:600;margin-top:3px; }
-        .ts-material-badge.mat-ok  { background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe; }
-        .ts-material-badge.mat-sin { background:#fef2f2;color:#ef4444;border:1px solid #fecaca; }
+        .ts-material-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            border-radius: 4px;
+            padding: 1px 7px;
+            font-size: .72rem;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+            .ts-material-badge.mat-ok {
+                background: #eff6ff;
+                color: #2563eb;
+                border: 1px solid #bfdbfe;
+            }
+
+            .ts-material-badge.mat-sin {
+                background: #fef2f2;
+                color: #ef4444;
+                border: 1px solid #fecaca;
+            }
 
         .ts-header {
             display: flex !important;
@@ -22,66 +41,72 @@
             box-shadow: 0 1px 6px rgba(0,0,0,.06) !important;
             padding: 12px 20px !important;
         }
-        .ts-header h4 {
-            font-size: 1.15rem !important;
-            font-weight: 700 !important;
-            color: #3d4465 !important;
-            margin: 0 !important;
-            white-space: nowrap !important;
-        }
+
+            .ts-header h4 {
+                font-size: 1.15rem !important;
+                font-weight: 700 !important;
+                color: #3d4465 !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+            }
+
         .ts-toolbar {
             display: flex !important;
-            align-items: center !important;
+            align-items: flex-end !important;
             gap: 8px !important;
             flex-wrap: nowrap !important;
             flex-shrink: 0 !important;
         }
-        .ts-toolbar label {
-            color: #7d8499 !important;
-            font-size: .78rem !important;
-            font-weight: 600 !important;
-            margin: 0 !important;
-            white-space: nowrap !important;
-        }
-        .ts-toolbar .k-datepicker { width: 125px !important; }
 
-        .ts-calendar-filter {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 4px !important;
+        .ts-fiscal-filter {
+            border-left: 1px solid #e8ecf1;
+            padding-left: 14px;
         }
-        .ts-calendar-filter label {
-            color: #7d8499 !important;
-            font-size: .75rem !important;
-            font-weight: 600 !important;
-            margin: 0 !important;
+
+            .ts-fiscal-filter label {
+                font-size: .74rem;
+                font-weight: 600;
+                color: #7d8499;
+                margin: 0 0 3px;
+                display: block;
+                white-space: nowrap;
+            }
+
+            .ts-fiscal-filter .k-datepicker {
+                width: 140px;
+            }
+
+        img.show-empty {
+            width: 120px !important;
+            height: 120px !important;
+            background-size: 120px 120px !important;
+            display: block !important;
+            margin: 0 auto !important;
         }
-        .ts-calendar-filter .fiscal-week-input { width: 160px !important; }
-
-        img.show-empty { width:120px!important;height:120px!important;background-size:120px 120px!important;display:block!important;margin:0 auto!important; }
-
     </style>
 }
 
 <div class="ts-header">
     <h4><i class="fas fa-cogs" style="margin-right:8px;"></i>Plan de Produccion</h4>
     <div class="ts-toolbar">
-        <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded" id="btnIrProceso"><i class="fas fa-play"></i> Ir al Proceso</a>
         <a href="#" class="k-button k-primary btn-rounded" id="btnNuevoPrograma"><i class="fas fa-plus"></i> Nuevo Programa</a>
         <a href="#" class="k-button btn-excel" id="btnSubirExcel"><i class="fas fa-file-excel"></i>&nbsp;Subir Excel</a>
-        <div class="ts-calendar-filter">
-            <label>Seleccionar Semana Fiscal</label>
-            @(Html.Kendo().DatePicker()
-                .Name("fiscalWeekPicker")
-                .Value(DateTime.Now)
-                .DateInput(true)
-                .HtmlAttributes(new { style = "width: 150px;", @class = "fiscal-week-input" })
-            )
+        <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded" id="btnIrProceso"><i class="fas fa-play"></i> Ir al Proceso</a>
+        <div class="ts-fiscal-filter k-d-flex k-flex-col">
+            <label for="fiscalWeekPicker">Seleccionar Semana Fiscal</label>
+            <div class="k-d-flex k-align-items-center" style="gap:10px;">
+                @(Html.Kendo().DatePicker()
+                    .Name("fiscalWeekPicker")
+                    .DateInput()
+                )
+                <a href="#" class="k-button btn-rounded" id="btnBuscar"><i class="fas fa-search"></i> Buscar</a>
+                <a href="#" class="k-button btn-rounded" id="btnLimpiar" title="Limpiar filtro"><i class="fas fa-times"></i> Limpiar</a>
+            </div>
         </div>
-        <a href="#" class="k-button btn-rounded" id="btnBuscar"><i class="fas fa-search"></i> Buscar</a>
     </div>
 </div>
+
+
 
 <div id="secPrecargas" style="display:none;margin-bottom:16px;">
     <div class="pg-precarga-hdr">
@@ -93,6 +118,8 @@
         </div>
     </div>
 </div>
+
+
 
 <div class="ts-kanban" id="kanbanBoard">
     <div class="ts-kanban-col">
@@ -145,7 +172,6 @@
         </div>
     </text>)
 )
-
 @(Html.Kendo().Window().Name("wndPreview").Title("Vista Previa - Plan de Produccion").Visible(false).Modal(true).Width(1200).Height(700)
     .Content(@<text>
         <div style="padding:16px;display:flex;flex-direction:column;height:100%;">
@@ -169,7 +195,6 @@
         </div>
     </text>)
 )
-
 @(Html.Kendo().Window().Name("wndNuevo").Title("Nuevo Programa").Visible(false).Modal(true).Width(600)
     .Events(e => e.Close("onWndNuevoCerrar"))
     .Content(@<text>
@@ -205,7 +230,7 @@
                     @(Html.Kendo().TextBox().Name("txtWorkOrderSufijo").Value("000").HtmlAttributes(new { @class = "wo-suffix", maxlength = "3" }))
                     <input type="hidden" id="hdnWorkOrderFinal" />
                 </div>
-                <small class="wo-hint">La base se genera automáticamente, puedes editar los últimos 3 dígitos.</small>
+ 
             </div>
             <div class="form-group form-row">
                 <div class="form-col">
@@ -219,7 +244,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label">Comentarios</label>55
+                <label class="form-label">Comentarios</label>
                 @(Html.Kendo().TextArea().Name("txtComentarios").Rows(2).HtmlAttributes(new { style = "width:100%;" }))
             </div>
             <div class="form-actions">
@@ -230,7 +255,6 @@
         </div>
     </text>)
 )
-
 @(Html.Kendo().Window().Name("wndEditar").Title("Editar Programa").Visible(false).Modal(true).Width(540)
     .Events(e => e.Close("onWndEditarCerrar"))
     .Content(@<text>
@@ -278,8 +302,6 @@
         </div>
     </text>)
 )
-
-
 @(Html.Kendo().Window().Name("wndSetup").Title("Setup de Trolleys").Visible(false).Modal(true).Width(520)
     .Events(e => e.Close("onWndSetupCerrar"))
     .Content(@<text>

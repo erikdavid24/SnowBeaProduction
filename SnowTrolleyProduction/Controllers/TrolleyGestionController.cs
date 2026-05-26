@@ -176,22 +176,22 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpPost]
-        public JsonResult AgregarPrograma(string numero, int ensambleId, int cantidadMateriales = 0)
+        public JsonResult AgregarPrograma(string numero, int ensambleId, int cantidadMateriales = 0, int cantDiferentes = 0)
         {
             try
             {
-                _svc.AgregarPrograma(numero, ensambleId, cantidadMateriales);
+                _svc.AgregarPrograma(numero, ensambleId, cantidadMateriales, cantDiferentes);
                 return Json(new { success = true });
             }
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
 
         [HttpPost]
-        public JsonResult EditarPrograma(int programaId, int ensambleId, string numero, int cantidadMateriales = 0)
+        public JsonResult EditarPrograma(int programaId, int ensambleId, string numero, int cantidadMateriales = 0, int cantDiferentes = 0)
         {
             try
             {
-                _svc.EditarPrograma(programaId, ensambleId, numero, cantidadMateriales);
+                _svc.EditarPrograma(programaId, ensambleId, numero, cantidadMateriales, cantDiferentes);
                 return Json(new { success = true });
             }
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
@@ -318,12 +318,14 @@ namespace SnowTrolleyProduction.Controllers
         {
             var data = _svc.GetProgramasTable(null).Select(p => new ProgramaGridRow
             {
-                Id                  = p.Id,
-                Numero              = p.Numero,
-                Ensamble            = p.Ensamble != null ? p.Ensamble.Numero : null,
-                Linea               = p.Ensamble != null && p.Ensamble.Linea != null
-                                        ? (int?)p.Ensamble.Linea.Numero_Linea : null,
-                CantidadMateriales = p.CantidadMateriales
+                Id                 = p.Id,
+                Numero             = p.Numero,
+                Ensamble           = p.Ensamble != null ? p.Ensamble.Numero : null,
+                Linea              = p.Ensamble != null && p.Ensamble.Linea != null
+                                       ? (int?)p.Ensamble.Linea.Numero_Linea : null,
+                CantidadMateriales = p.CantidadMateriales,
+                CantDiferentes     = p.CantDiferentes,
+                TieneAcomodo       = p.TieneAcomodo
             }).ToList();
             return Json(data.ToDataSourceResult(request));
         }

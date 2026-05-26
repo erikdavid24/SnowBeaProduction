@@ -1,155 +1,192 @@
-﻿<style>
+<style>
     .ts-card {
         width: calc(33.333% - 10px);
-        min-width: 260px;
+        min-width: 240px;
         background: #fff;
         border: 1px solid #e8ecf1;
-        border-radius: 10px;
-        box-shadow: 0 1px 5px rgba(0,0,0,.06);
+        border-top: 4px solid #5d78ff;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
         padding: 14px 16px 12px;
         box-sizing: border-box;
         position: relative;
-        transition: box-shadow .15s;
+        overflow: hidden;
+        transition: box-shadow .15s, transform .15s;
     }
 
-        .ts-card:hover {
-            box-shadow: 0 4px 14px rgba(0,0,0,.1);
-        }
+    .ts-card:hover {
+        box-shadow: 0 6px 18px rgba(0,0,0,.11);
+        transform: translateY(-2px);
+    }
 
-    .ts-card-num {
+    .ts-card.status-open  { border-top-color: #f59e0b; }
+    .ts-card.status-proc  { border-top-color: #3b82f6; }
+    .ts-card.status-saldo { border-top-color: #8b5cf6; }
+    .ts-card.status-done  { border-top-color: #22c55e; }
+
+    .ts-card-bg-icon {
         position: absolute;
-        top: -10px;
-        left: 14px;
-        background: #5d78ff;
-        color: #fff;
-        font-size: .72rem;
+        right: -8px;
+        bottom: 28px;
+        font-size: 4.5rem;
+        opacity: 0.045;
+        color: #3d4465;
+        pointer-events: none;
+    }
+
+    .ts-card-label {
+        font-size: .68rem;
         font-weight: 700;
-        border-radius: 20px;
-        padding: 2px 9px;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        color: #b0b7d0;
+        margin-bottom: 2px;
     }
 
     .ts-card-title {
-        font-size: .9rem;
+        font-size: .88rem;
         font-weight: 700;
         color: #3d4465;
-        margin: 8px 0 2px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        margin-bottom: 1px;
     }
 
-    .ts-card-sub {
-        font-size: .78rem;
+    .ts-card-wo {
+        font-size: .73rem;
         color: #9aa0b8;
         margin-bottom: 10px;
     }
 
-    .ts-card-trolleys {
-        font-size: .74rem;
-        color: #9aa0b8;
-        margin-top: 6px;
+    .ts-card-pzas-wrap {
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+        margin-bottom: 10px;
     }
 
-    .ts-badge {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: .71rem;
+    .ts-card-pzas-num {
+        font-size: 1.75rem;
         font-weight: 700;
-        white-space: nowrap;
+        color: #3d4465;
+        line-height: 1;
     }
 
-        .ts-badge.open {
-            background: #fff8ec;
-            color: #f59e0b;
-            border: 1px solid #fde68a;
-        }
+    .ts-card.status-open  .ts-card-pzas-num { color: #d97706; }
+    .ts-card.status-proc  .ts-card-pzas-num { color: #2563eb; }
+    .ts-card.status-saldo .ts-card-pzas-num { color: #7c3aed; }
+    .ts-card.status-done  .ts-card-pzas-num { color: #16a34a; }
 
-        .ts-badge.proc {
-            background: #eff6ff;
-            color: #3b82f6;
-            border: 1px solid #bfdbfe;
-        }
-
-        .ts-badge.done {
-            background: #f0fdf4;
-            color: #22c55e;
-            border: 1px solid #bbf7d0;
-        }
+    .ts-card-pzas-unit {
+        font-size: .78rem;
+        color: #9aa0b8;
+        font-weight: 500;
+    }
 
     .ts-card-meta {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 10px;
-        font-size: .75rem;
+        font-size: .72rem;
         color: #9aa0b8;
         border-top: 1px solid #f0f2f8;
         padding-top: 9px;
+        margin-bottom: 9px;
+        gap: 4px;
     }
 
-        .ts-card-meta span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+    .ts-card-meta span {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .ts-card-footer-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        margin-bottom: 9px;
+    }
+
+    .ts-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        font-size: .69rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .ts-badge.open  { background: #fff8ec; color: #d97706; border: 1px solid #fde68a; }
+    .ts-badge.proc  { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+    .ts-badge.saldo { background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
+    .ts-badge.done  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+    .ts-card-id {
+        font-size: .68rem;
+        font-weight: 700;
+        color: #b0b7d0;
+        white-space: nowrap;
+    }
 
     .ts-card-actions {
         display: flex;
         gap: 6px;
-        margin-top: 10px;
     }
 
-        .ts-card-actions a {
-            flex: 1;
-            text-align: center;
-            padding: 5px;
-            border-radius: 6px;
-            font-size: .75rem;
-            font-weight: 600;
-            border: 1px solid #e8ecf1;
-            color: #646c9a;
-            text-decoration: none;
-            transition: background .12s;
-        }
+    .ts-card-actions a {
+        flex: 1;
+        text-align: center;
+        padding: 5px;
+        font-size: .74rem;
+        font-weight: 600;
+        border: 1px solid #e8ecf1;
+        color: #646c9a;
+        text-decoration: none;
+        transition: background .12s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
 
-            .ts-card-actions a:hover {
-                background: #f7f8fc;
-            }
-
-            .ts-card-actions a.del {
-                color: #ef4444;
-                border-color: #fecaca;
-            }
-
-                .ts-card-actions a.del:hover {
-                    background: #fff5f5;
-                }
+    .ts-card-actions a:hover { background: #f7f8fc; }
+    .ts-card-actions a.del   { color: #ef4444; border-color: #fecaca; }
+    .ts-card-actions a.del:hover { background: #fff5f5; }
 </style>
 
 <script type="text/x-kendo-tmpl" id="cardTemplate">
-    # var badgeCls = Status === 'Completado' ? 'done' : (Status === 'En Proceso' ? 'proc' : 'open'); #
-    # var badgeIco = Status === 'Completado' ? 'fa-check-circle' : (Status === 'En Proceso' ? 'fa-cog' : 'fa-clock'); #
+    # var badgeCls = (Status === 'Completado' || Status === 'Finalizado') ? 'done'
+                   : (Status === 'En Proceso' || Status === 'Setup' || Status === 'Arranque') ? 'proc'
+                   : (Status === 'Finalizado Parcial') ? 'saldo'
+                   : 'open'; #
+    # var badgeIco = badgeCls === 'done'  ? 'fa-check-circle'
+                   : badgeCls === 'proc'  ? 'fa-cog'
+                   : badgeCls === 'saldo' ? 'fa-hourglass-half'
+                   : 'fa-clock'; #
     # var _fd = FechaCreacion instanceof Date ? FechaCreacion : new Date(parseInt(FechaCreacion.replace('/Date(','').replace(')/',''))); #
     # var fecha = _fd && !isNaN(_fd) ? (_fd.getDate().toString().padStart(2,'0') + '/' + (_fd.getMonth()+1).toString().padStart(2,'0') + '/' + _fd.getFullYear()) : '—'; #
-    <div class="ts-card">
-        <span class="ts-card-num">\##=Id#</span>
-        <div style="margin-top:6px;">
-            <span class="ts-badge #=badgeCls#">
-                <i class="fas #=badgeIco#"></i>&nbsp;#=Status#
-            </span>
+    <div class="ts-card status-#=badgeCls#">
+        <i class="fas #=badgeIco# ts-card-bg-icon"></i>
+        <div class="ts-card-label">Programa</div>
+        <div class="ts-card-title">#=Id_Programa || '&mdash;'#</div>
+        <div class="ts-card-wo">WO: #=WorkOrder#</div>
+        <div class="ts-card-pzas-wrap">
+            <span class="ts-card-pzas-num">#=PiezasProgramadas#</span>
+            <span class="ts-card-pzas-unit">pzas</span>
         </div>
-        <div class="ts-card-title">Prog: #=Id_Programa || '&mdash;'#</div>
-        <div class="ts-card-sub">WO: #=WorkOrder#</div>
-        # if (Trolleys) { #
-        <div class="ts-card-trolleys">
-            <i class="fas fa-grip-lines"></i>&nbsp;#=Trolleys#
-        </div>
-        # } #
         <div class="ts-card-meta">
             <span><i class="fas fa-calendar-alt"></i>&nbsp;#=fecha#</span>
-            <span><i class="fas fa-boxes"></i>&nbsp;#=PiezasProgramadas# pzas</span>
             <span><i class="fas fa-industry"></i>&nbsp;L#=Id_Linea || '?'#</span>
+            # if (Trolleys) { #
+            <span><i class="fas fa-grip-lines"></i>&nbsp;#=Trolleys#</span>
+            # } #
+        </div>
+        <div class="ts-card-footer-row">
+            <span class="ts-badge #=badgeCls#"><i class="fas #=badgeIco#"></i>&nbsp;#=Status#</span>
+            <span class="ts-card-id">\##=Id#</span>
         </div>
         <div class="ts-card-actions">
             <a role="button" class="k-edit-button" href="\#">
