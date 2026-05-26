@@ -1,0 +1,11 @@
+# Vendor libraries — excluir de estadísticas de lenguaje (Linguist)
+Scripts/jquery*                  linguist-vendored
+Scripts/bootstrap*               linguist-vendored
+Scripts/modernizr*               linguist-vendored
+Scripts/*.min.js                 linguist-vendored
+Scripts/*.map                    linguist-vendored
+Scripts/jquery.validate*         linguist-vendored
+
+# Minificados propios — no cuentan como código fuente
+Scripts/programa-gestion.min.js  linguist-generated
+Scripts/trolley-gestion.min.js   linguist-generated
