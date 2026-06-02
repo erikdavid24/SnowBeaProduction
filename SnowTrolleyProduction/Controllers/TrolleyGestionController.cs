@@ -12,7 +12,7 @@ namespace SnowTrolleyProduction.Controllers
 {
     public class TrolleyGestionController : BAEController
     {
-        private readonly TrolleyGestionService _svc = new TrolleyGestionService(new BAESystemsGuaymasEntities());
+        private readonly TrolleyGestionService _svc = new TrolleyGestionService(new BAESystemsGuaymasEntitiesSmtPlan());
 
         [HttpGet]
         public ActionResult Index()
@@ -225,16 +225,16 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpGet]
-        public ActionResult EditarAcomodoModal(int acomodoId)
+        public ActionResult EditarAcomodoModal(int ensambleId)
         {
             var lineas = _svc.GetLineasSMT();
-            var acomodo = _svc.GetAcomodo(acomodoId);
-            ViewBag.Acomodo = acomodo;
+            ViewBag.LineaId    = _svc.GetLineaIdPorEnsamble(ensambleId);
+            ViewBag.EnsambleId = ensambleId;
             return PartialView("Modals/_AcomodoModal", lineas);
         }
 
         [HttpGet]
-        public ActionResult AcomodoAutocompletado(int linea, string orden = "numero")
+        public ActionResult AcomodoAutocompletado(int linea, string orden = "numero", int? ensambleId = null)
         {
             var lineaObj = _svc.GetLineasSMT().FirstOrDefault(l => l.Id_Linea == linea);
             int lineaId = lineaObj != null ? lineaObj.Id_Linea : linea;
@@ -243,10 +243,17 @@ namespace SnowTrolleyProduction.Controllers
             var programas = _svc.GetProgramasPorLinea(lineaId, orden);
             var maquinas = _svc.GetMaquinasPorLinea(lineaId);
 
-            ViewBag.Trollies = trolleys;
+            ViewBag.Trollies  = trolleys;
             ViewBag.Programas = programas;
-            ViewBag.Maquinas = maquinas;
+            ViewBag.Maquinas  = maquinas;
             ViewData["orden"] = orden;
+
+            if (ensambleId.HasValue)
+            {
+                var (programaId, zonas) = _svc.GetAcomodoParaEdicion(ensambleId.Value);
+                ViewBag.ProgramaIdPresel = programaId > 0 ? (int?)programaId : null;
+                ViewBag.ZonasPresel      = zonas;
+            }
 
             return PartialView("Modals/_AcomodoModalAutocompletado", linea);
         }

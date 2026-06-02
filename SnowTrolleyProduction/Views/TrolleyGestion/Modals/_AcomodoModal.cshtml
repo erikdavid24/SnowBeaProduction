@@ -1,6 +1,11 @@
 @model List<SnowTrolleyProduction.Models.LineaGestion>
+@{
+    var lineaPresel    = ViewBag.LineaId    as int?;
+    var ensamblePresel = ViewBag.EnsambleId as int?;
+    string titulo = lineaPresel.HasValue ? "Editar Acomodo" : "Agregar Acomodo";
+}
 
-<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">Agregar Acomodo</h4>
+<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">@titulo</h4>
 
 <div class="form-group">
     <label class="form-label">Linea</label>
@@ -8,7 +13,7 @@
         <option value="">-- Selecciona una linea--</option>
         @foreach (var linea in Model)
         {
-            <option value="@linea.Id_Linea">@linea.Numero_Linea</option>
+            <option value="@linea.Id_Linea" @(lineaPresel.HasValue && lineaPresel.Value == linea.Id_Linea ? "selected" : "")>@linea.Numero_Linea</option>
         }
     </select>
 </div>
@@ -22,21 +27,28 @@
 
 <script>
 (function () {
+    var lineaPresel    = @(lineaPresel.HasValue    ? lineaPresel.Value.ToString()    : "null");
+    var ensamblePresel = @(ensamblePresel.HasValue ? ensamblePresel.Value.ToString() : "null");
+
+    function cargarAutocompletado(lineaId) {
+        if (!lineaId) { $('#acoAutocompletadoContainer').empty(); $('#btnSubmitAcomodo').hide(); return; }
+        var params = { linea: lineaId };
+        if (ensamblePresel) params.ensambleId = ensamblePresel;
+        $.get(TG.urls.acomodoAutocompletado, params, function (html) {
+            $('#acoAutocompletadoContainer').html(html);
+            $('#btnSubmitAcomodo').show();
+        });
+    }
+
     var $ddlLinea = $('#acoLineaSelect').kendoDropDownList({
         optionLabel: '-- Selecciona una linea --',
-        change: function () {
-            var lineaId = this.value();
-            if (!lineaId) {
-                $('#acoAutocompletadoContainer').empty();
-                $('#btnSubmitAcomodo').hide();
-                return;
-            }
-            $.get(TG.urls.acomodoAutocompletado, { linea: lineaId }, function (html) {
-                $('#acoAutocompletadoContainer').html(html);
-                $('#btnSubmitAcomodo').show();
-            });
-        }
+        change: function () { cargarAutocompletado(this.value()); }
     }).data('kendoDropDownList');
+
+    if (lineaPresel) {
+        $ddlLinea.value(lineaPresel);
+        cargarAutocompletado(lineaPresel);
+    }
 
     $(document).on('click', '#btnSubmitAcomodo', function () {
         var programaId = parseInt($('#acoPrograma').val());

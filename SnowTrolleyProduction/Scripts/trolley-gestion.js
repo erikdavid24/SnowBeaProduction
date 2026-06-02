@@ -95,6 +95,10 @@ $(document).on('click', '#btnAgregarAcomodo', function () {
     abrirModal(TG.urls.agregarAcomodoModal);
 });
 
+$(document).on('click', '.btn-edit-acomodo', function () {
+    abrirModal(TG.urls.editarAcomodoModal, { ensambleId: $(this).data('id') });
+});
+
 $(document).on('click', '.acomodo-toggle', function () {
     var targetId = $(this).data('target');
     $('#' + targetId).toggle();

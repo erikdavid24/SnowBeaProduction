@@ -1,7 +1,16 @@
+using System;
 using System.Collections.Generic;
 
 namespace SnowTrolleyProduction.Models.Dtos
 {
+    public class SupervisorDto
+    {
+        public int      Id             { get; set; }
+        public string   EmployeeNumber { get; set; }
+        public string   FullName       { get; set; }
+        public DateTime FechaAlta      { get; set; }
+    }
+
     public class TrolleyPosition
     {
         public string noTrolley     { get; set; }

@@ -85,5 +85,5 @@ var TG = {
     }
 };
 </script>
-@Scripts.Render("~/Scripts/trolley-gestion.min.js")
+<script src="@Url.Content("~/Scripts/trolley-gestion.min.js")?v=@(new System.IO.FileInfo(Server.MapPath("~/Scripts/trolley-gestion.min.js")).LastWriteTime.Ticks)"></script>
 }

@@ -736,7 +736,7 @@ warning 6035: The relationship 'FK_Ensambles_Programas' has columns that are not
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <EntityContainer Name="BAESystemsGuaymasEntities" annotation:LazyLoadingEnabled="true">
+        <EntityContainer Name="BAESystemsGuaymasEntitiesSmtPlan" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Acomodoes" EntityType="Self.Acomodo" />
           <EntitySet Name="Areas" EntityType="Self.Area" />
           <EntitySet Name="Ensambles" EntityType="Self.Ensamble" />
@@ -848,7 +848,7 @@ warning 6035: The relationship 'FK_Ensambles_Programas' has columns that are not
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
-        <EntityContainerMapping StorageEntityContainer="BAESystemsGuaymasModelStoreContainer" CdmEntityContainer="BAESystemsGuaymasEntities">
+        <EntityContainerMapping StorageEntityContainer="BAESystemsGuaymasModelStoreContainer" CdmEntityContainer="BAESystemsGuaymasEntitiesSmtPlan">
           <EntitySetMapping Name="Acomodoes">
             <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Acomodo">
               <MappingFragment StoreEntitySet="Acomodo">

@@ -8,9 +8,9 @@ namespace SnowTrolleyProduction.Models.Service
     public class ProgramaServices
     {
         // Usa el nombre correcto de tu contexto de BD
-        BAESystemsGuaymasEntities BD = new BAESystemsGuaymasEntities();
+        BAESystemsGuaymasEntitiesSmtPlan BD = new BAESystemsGuaymasEntitiesSmtPlan();
 
-        public ProgramaServices(BAESystemsGuaymasEntities BDContext)
+        public ProgramaServices(BAESystemsGuaymasEntitiesSmtPlan BDContext)
         {
             BD = BDContext;
         }

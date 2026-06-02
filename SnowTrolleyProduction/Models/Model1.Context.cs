@@ -13,10 +13,10 @@ namespace SnowTrolleyProduction.Models
     using System.Data.Entity;
     using System.Data.Entity.Infrastructure;
     
-    public partial class BAESystemsGuaymasEntities : DbContext
+    public partial class BAESystemsGuaymasEntitiesSmtPlan : DbContext
     {
-        public BAESystemsGuaymasEntities()
-            : base("name=BAESystemsGuaymasEntities")
+        public BAESystemsGuaymasEntitiesSmtPlan()
+            : base("name=BAESystemsGuaymasEntitiesSmtPlan")
         {
         }
     

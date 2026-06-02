@@ -17,6 +17,23 @@ namespace SnowTrolleyProduction.Models.Dtos
         public List<int>    idsProcesos       { get; set; }
     }
 
+    public class ArranqueGridRow
+    {
+        public string id_Programa { get; set; }
+        public string workOrder   { get; set; }
+        public string badgesHtml  { get; set; }
+        public string statusHtml  { get; set; }
+    }
+
+    public class ProcesoGridRow
+    {
+        public int    id_Proceso  { get; set; }
+        public string id_Programa { get; set; }
+        public string workOrder   { get; set; }
+        public string badgesHtml  { get; set; }
+        public string accionHtml  { get; set; }
+    }
+
     public class ProcesoArranque
     {
         public int          id_Proceso    { get; set; }

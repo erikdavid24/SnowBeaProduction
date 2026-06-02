@@ -1,11 +1,17 @@
 @model List<SnowTrolleyProduction.Models.LineaGestion>
 @{
     var maquina = ViewBag.Maquina as SnowTrolleyProduction.Models.MaquinaGestion;
-    string titulo = maquina != null ? "Editar Máquina" : "Agregar Máquina";
     bool esEdicion = maquina != null;
 }
 
-<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">@titulo</h4>
+@if (esEdicion)
+{
+    <h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">Editar M&#225;quina</h4>
+}
+else
+{
+    <h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">Agregar M&#225;quina</h4>
+}
 
 @if (esEdicion)
 {
@@ -13,7 +19,7 @@
 }
 
 <div class="form-group">
-    <label class="form-label">Línea</label>
+    <label class="form-label">L&#237;nea</label>
     <select id="modalLineaSelect">
         @foreach (var linea in Model)
         {

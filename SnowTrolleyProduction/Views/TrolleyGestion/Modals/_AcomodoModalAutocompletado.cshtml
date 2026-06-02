@@ -1,8 +1,10 @@
 @{
-    var programas = ViewBag.Programas as List<SnowTrolleyProduction.Models.ProgramaGestion>;
-    var equipos   = ViewBag.Trollies  as List<SnowTrolleyProduction.Models.EquipoGestion>;
-    var maquinas  = ViewBag.Maquinas  as List<SnowTrolleyProduction.Models.MaquinaGestion>;
-    string ordenActual = ViewData["orden"] != null ? ViewData["orden"].ToString() : "numero";
+    var programas       = ViewBag.Programas       as List<SnowTrolleyProduction.Models.ProgramaGestion>;
+    var equipos         = ViewBag.Trollies         as List<SnowTrolleyProduction.Models.EquipoGestion>;
+    var maquinas        = ViewBag.Maquinas         as List<SnowTrolleyProduction.Models.MaquinaGestion>;
+    var programaPresel  = ViewBag.ProgramaIdPresel as int?;
+    var zonasPresel     = ViewBag.ZonasPresel      as Dictionary<string, int>;
+    string ordenActual  = ViewData["orden"] != null ? ViewData["orden"].ToString() : "numero";
 }
 
 <div class="form-group" style="margin-bottom:12px;">
@@ -144,6 +146,11 @@
         }
     ];
 
+    var programaPresel = @(programaPresel.HasValue ? programaPresel.Value.ToString() : "null");
+    var zonasPresel    = @Html.Raw(zonasPresel != null && zonasPresel.Count > 0
+        ? Newtonsoft.Json.JsonConvert.SerializeObject(zonasPresel)
+        : "null");
+
     $('#acoPrograma').kendoComboBox({
         dataTextField:  'text',
         dataValueField: 'value',
@@ -154,6 +161,24 @@
         placeholder:    '-- Selecciona Programa --',
         noDataTemplate: 'No se encontraron programas'
     });
+
+    if (programaPresel) {
+        $('#acoPrograma').data('kendoComboBox').value(programaPresel);
+    }
+
+    if (zonasPresel) {
+        setTimeout(function () {
+            Object.keys(zonasPresel).forEach(function (zona) {
+                var trolleyId = zonasPresel[zona].toString();
+                var $zone = $('.aco-drop-zone[data-name="' + zona + '"]');
+                if (!$zone.length) return;
+                var $badge = $('.aco-badge[data-id="' + trolleyId + '"]');
+                var desc = $badge.length ? $badge.data('desc') : trolleyId;
+                $zone.data('val', trolleyId).addClass('aco-filled').find('.aco-drop-text').text(desc);
+            });
+            refreshBadges();
+        }, 50);
+    }
 
     $('#btnOrdenToggle').on('click', function () {
         var lineaId = $('#acoLineaSelect').val();
@@ -183,10 +208,12 @@
         e.preventDefault();
         $(this).removeClass('aco-drag-over');
         if (!dragId) return;
-        $('.aco-drop-zone').each(function () {
-            if ($(this).data('val') == dragId)
-                $(this).data('val', '-1').removeClass('aco-filled').find('.aco-drop-text').text('');
-        });
+        if (dragDesc !== 'MATRIX') {
+            $('.aco-drop-zone').each(function () {
+                if ($(this).data('val') == dragId)
+                    $(this).data('val', '-1').removeClass('aco-filled').find('.aco-drop-text').text('');
+            });
+        }
         $(this).data('val', dragId).addClass('aco-filled').find('.aco-drop-text').text(dragDesc);
         refreshBadges();
     });
@@ -202,6 +229,7 @@
             if (v !== '-1') used.push(v);
         });
         $('.aco-badge').each(function () {
+            if ($(this).data('desc') === 'MATRIX') return; // MATRIX puede usarse en múltiples zonas
             var id = $(this).data('id').toString();
             if ($.inArray(id, used) >= 0) $(this).addClass('aco-used').attr('draggable', 'false');
             else $(this).removeClass('aco-used').attr('draggable', 'true');

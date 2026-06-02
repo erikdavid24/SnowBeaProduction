@@ -11,7 +11,7 @@ namespace SnowTrolleyProduction.Controllers.service
     {
         private readonly string _connStr;
 
-        public TrolleyGestionService(BAESystemsGuaymasEntities ctx)
+        public TrolleyGestionService(BAESystemsGuaymasEntitiesSmtPlan ctx)
         {
             _connStr = ctx.Database.Connection.ConnectionString;
         }
@@ -444,6 +444,55 @@ namespace SnowTrolleyProduction.Controllers.service
                     Trolley = new EquipoGestion { IdEquipo = (int)r.TrolleyId, EquipoDescripcion = (string)r.TrolleyNombre },
                     Locacion = (int)r.Locacion
                 };
+            }
+        }
+
+        public (int ProgramaId, Dictionary<string, int> Zonas) GetAcomodoParaEdicion(int ensambleId)
+        {
+            const string sqlProg = @"
+                SELECT TOP 1 p.Id
+                FROM [Process].[Programas] p
+                WHERE p.Ensamble = @ensambleId
+                ORDER BY p.Numero ASC";
+
+            const string sqlAco = @"
+                SELECT a.Locacion, a.TrolleyId, a.MaquinaId
+                FROM [Process].[Acomodo] a
+                WHERE a.ProgramaId = @programaId
+                ORDER BY a.MaquinaId ASC";
+
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                int programaId = conn.QueryFirstOrDefault<int>(sqlProg, new { ensambleId });
+                if (programaId == 0) return (0, new Dictionary<string, int>());
+
+                var rows = conn.Query<dynamic>(sqlAco, new { programaId }).ToList();
+                var maquinaIds = rows.Select(r => (int)r.MaquinaId).Distinct().OrderBy(x => x).ToList();
+                var zonas = new Dictionary<string, int>();
+
+                foreach (var row in rows)
+                {
+                    int maqIdx = maquinaIds.IndexOf((int)row.MaquinaId);
+                    string suffix = maqIdx == 0 ? "" : "_2";
+                    zonas["Z" + (int)row.Locacion + suffix] = (int)row.TrolleyId;
+                }
+
+                return (programaId, zonas);
+            }
+        }
+
+        public int? GetLineaIdPorEnsamble(int ensambleId)
+        {
+            const string sql = @"
+                SELECT TOP 1 l.Id_Linea
+                FROM [Process].[Ensambles] e
+                JOIN [Process].[Lineas] l ON e.Linea1 = l.Id_Linea
+                WHERE e.Id = @ensambleId";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                return conn.QueryFirstOrDefault<int?>(sql, new { ensambleId });
             }
         }
 

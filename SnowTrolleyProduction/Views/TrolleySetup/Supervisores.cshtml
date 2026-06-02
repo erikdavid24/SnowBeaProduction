@@ -1,0 +1,241 @@
+@using Kendo.Mvc.UI
+@{
+    ViewBag.Title = "Supervisores Autorizados";
+    var _uc      = BAEClassLibrary.UserContext.current;
+    bool isAdmin = _uc != null && (_uc.IsAdmin || _uc.EmployeeNum.ToString() == "128379");
+
+    var btnVer = isAdmin
+        ? "<button class='k-button k-flat btn-ver-pass' data-id='#=Id#' style='color:\\#3b82f6;padding:4px 6px;'><i class='fas fa-eye'></i></button>"
+        : "";
+    var tplAcciones = btnVer
+        + "<button class='k-button k-flat btn-edit-pass' data-id='#=Id#' style='color:\\#f59e0b;padding:4px 6px;'><i class='fas fa-key'></i></button>"
+        + "<button class='k-button k-flat btn-del-sup'  data-id='#=Id#' style='color:\\#ef4444;padding:4px 6px;'><i class='fas fa-trash-alt'></i></button>";
+}
+
+@section Styles {
+    <link href="~/Content/css/programa-gestion.css" rel="stylesheet" />
+}
+
+<div class="ts-header" style="margin-bottom:14px;">
+    <h4><i class="fas fa-user-shield" style="margin-right:8px;"></i>Supervisores Autorizados - SMT Plan</h4>
+</div>
+
+<div style="background:#fff;border:1px solid #e8ecf1;border-radius:10px;padding:20px;margin-bottom:16px;">
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+        <div style="flex:2;min-width:280px;">
+            <label style="font-size:.82rem;font-weight:600;color:#3d4465;display:block;margin-bottom:4px;">Buscar Empleado</label>
+            @(Html.Kendo().ComboBox()
+                .Name("ddlEmpleado")
+                .DataTextField("fullName")
+                .DataValueField("employeeNumber")
+                .Filter("contains")
+                .MinLength(2)
+                .Placeholder("-- Busca por nombre --")
+                .HtmlAttributes(new { style = "width:100%;" })
+                .Events(e => e.Change("onEmpleadoChange"))
+                .DataSource(ds => ds.Read(r => r.Action("GetEmpleadosRH", "TrolleySetup").Type(HttpVerbs.Get))))
+        </div>
+        <div style="min-width:140px;">
+            <label style="font-size:.82rem;font-weight:600;color:#3d4465;display:block;margin-bottom:4px;">No. Empleado</label>
+            @(Html.Kendo().TextBox().Name("txtNumEmpleado")
+                .Readonly(true)
+                .HtmlAttributes(new { style = "width:100%;background:#f3f6f9;font-weight:600;" }))
+        </div>
+        <div style="min-width:160px;">
+            <label style="font-size:.82rem;font-weight:600;color:#3d4465;display:block;margin-bottom:4px;">Asignar Contrase&#241;a</label>
+            @(Html.Kendo().TextBox().Name("txtPassSup")
+                .HtmlAttributes(new { type = "password", style = "width:100%;" }))
+        </div>
+        @(Html.Kendo().Button().Name("btnAgregar")
+            .Content("<i class='fas fa-plus'></i> Agregar")
+            .HtmlAttributes(new { @class = "k-primary btn-rounded", type = "button" }))
+    </div>
+</div>
+
+@(Html.Kendo().Grid<SnowTrolleyProduction.Models.Dtos.SupervisorDto>()
+    .Name("gridSupervisores")
+    .HtmlAttributes(new { style = "height:400px;" })
+    .Columns(cols => {
+        cols.Bound(c => c.EmployeeNumber).Title("No. Empleado").Width(140);
+        cols.Bound(c => c.FullName).Title("Nombre");
+        cols.Bound(c => c.FechaAlta).Title("Fecha Alta").Width(160).Format("{0:dd/MM/yyyy HH:mm}");
+        cols.Bound(c => c.Id).Title("").Width(isAdmin ? 160 : 110).Sortable(false)
+            .ClientTemplate(tplAcciones);
+    })
+    .Sortable()
+    .DataSource(ds => ds.Ajax()
+        .Read(r => r.Action("GetSupervisores", "TrolleySetup").Type(HttpVerbs.Get))
+        .ServerOperation(false))
+)
+
+@* Ventana: Editar contrasena *@
+@(Html.Kendo().Window()
+    .Name("winEditPass")
+    .Title("-")
+    .Modal(true)
+    .Visible(false)
+    .Width(360)
+    .Actions(a => a.Close())
+    .Content(@<text>
+        <div style="padding:16px;">
+            <input type="hidden" id="editSupId" />
+            <label style="font-size:.82rem;font-weight:600;color:#3d4465;display:block;margin-bottom:6px;">Nueva contrase&#241;a</label>
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:16px;">
+                @(Html.Kendo().TextBox()
+                    .Name("editSupPass")
+                    .HtmlAttributes(new { type = "password", style = "width:100%;" }))
+                @(Html.Kendo().Button()
+                    .Name("btnToggleEditPass")
+                    .Content("<i class='fas fa-eye' id='icoEditPass'></i>")
+                    .HtmlAttributes(new { type = "button", title = "Mostrar / ocultar", style = "min-width:36px;" }))
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                @(Html.Kendo().Button()
+                    .Name("btnCancelEditPass")
+                    .Content("Cancelar")
+                    .HtmlAttributes(new { type = "button" }))
+                @(Html.Kendo().Button()
+                    .Name("btnGuardarPass")
+                    .Content("<i class='fas fa-save'></i> Guardar")
+                    .HtmlAttributes(new { @class = "k-primary", type = "button" }))
+            </div>
+        </div>
+    </text>)
+)
+
+@* Ventana: Ver contrasena (solo admin) *@
+@if (isAdmin)
+{
+    @(Html.Kendo().Window()
+        .Name("winVerPass")
+        .Title("-")
+        .Modal(true)
+        .Visible(false)
+        .Width(340)
+        .Actions(a => a.Close())
+        .Content(@<text>
+            <div style="padding:16px;">
+                <div style="display:flex;gap:8px;align-items:center;background:#f3f6f9;border-radius:8px;padding:8px 12px;margin-bottom:12px;">
+                    @(Html.Kendo().TextBox()
+                        .Name("displayPass")
+                        .Readonly(true)
+                        .HtmlAttributes(new { type = "password", style = "width:100%;font-weight:600;background:transparent;border:none;" }))
+                    @(Html.Kendo().Button()
+                        .Name("btnToggleVerPass")
+                        .Content("<i class='fas fa-eye' id='icoVerPass'></i>")
+                        .HtmlAttributes(new { type = "button", title = "Mostrar / ocultar", style = "min-width:36px;" }))
+                </div>
+                <p style="font-size:.78rem;color:#94a3b8;text-align:center;margin:0;">Solo t&#250; puedes ver esta informaci&#243;n.</p>
+            </div>
+        </text>)
+    )
+}
+
+@section Scripts {
+<script>
+function recargar() { $('#gridSupervisores').data('kendoGrid').dataSource.read(); }
+
+function onEmpleadoChange() {
+    var cb  = $('#ddlEmpleado').data('kendoComboBox');
+    var emp = cb.dataItem();
+    $('#txtNumEmpleado').val(emp ? (emp.employeeNumber || '') : '');
+}
+
+$(function () {
+    // Titulos y placeholders con acentos via escape JS \uXXXX (ASCII puro en fuente)
+    $('#winEditPass').data('kendoWindow').title('Editar Contraseña');
+    if ($('#winVerPass').length) {
+        $('#winVerPass').data('kendoWindow').title('Contraseña del Supervisor');
+    }
+    $('#txtPassSup') .attr('placeholder', 'Nueva contraseña');
+    $('#editSupPass').attr('placeholder', 'Escribe la nueva contraseña');
+
+    // Agregar supervisor
+    $('#btnAgregar').on('click', function () {
+        var cb   = $('#ddlEmpleado').data('kendoComboBox');
+        var num  = ($('#txtNumEmpleado').val() || '').trim();
+        var name = (cb.text() || '').trim();
+        var pass = $('#txtPassSup').val() || '';
+
+        if (!num || !name) { alert('Selecciona un empleado de la lista.'); return; }
+        if (!pass)         { alert('Ingresa una contraseña para el supervisor.'); return; }
+
+        var emp = cb.dataItem();
+        var eid = emp ? (emp.employeeId || 0) : 0;
+
+        $.post('@Url.Action("AgregarSupervisor","TrolleySetup")',
+            { employeeId: eid, employeeNumber: num, fullName: name, password: pass },
+            function (r) {
+                if (r.success) {
+                    recargar();
+                    cb.value('');
+                    $('#txtNumEmpleado').val('');
+                    $('#txtPassSup').val('');
+                } else alert(r.message || 'Error al agregar.');
+            }
+        ).fail(function () { alert('Error de conexión.'); });
+    });
+
+    // Ver contrasena
+    $(document).on('click', '.btn-ver-pass', function () {
+        var id = $(this).data('id');
+        $.get('@Url.Action("GetSupervisorPassword","TrolleySetup")', { id: id }, function (r) {
+            if (!r.success) { alert(r.message || 'Error.'); return; }
+            $('#displayPass').val(r.password || '').attr('type', 'password');
+            $('#icoVerPass').removeClass('fa-eye-slash').addClass('fa-eye');
+            $('#winVerPass').data('kendoWindow').center().open();
+        });
+    });
+
+    $('#btnToggleVerPass').on('click', function () {
+        var inp  = $('#displayPass');
+        var show = inp.attr('type') === 'password';
+        inp.attr('type', show ? 'text' : 'password');
+        $('#icoVerPass').toggleClass('fa-eye', !show).toggleClass('fa-eye-slash', show);
+    });
+
+    // Editar contrasena
+    $(document).on('click', '.btn-edit-pass', function () {
+        var id = $(this).data('id');
+        $('#editSupId').val(id);
+        $('#editSupPass').val('').attr('type', 'password');
+        $('#icoEditPass').removeClass('fa-eye-slash').addClass('fa-eye');
+        $('#winEditPass').data('kendoWindow').center().open();
+    });
+
+    $('#btnToggleEditPass').on('click', function () {
+        var inp  = $('#editSupPass');
+        var show = inp.attr('type') === 'password';
+        inp.attr('type', show ? 'text' : 'password');
+        $('#icoEditPass').toggleClass('fa-eye', !show).toggleClass('fa-eye-slash', show);
+    });
+
+    $('#btnCancelEditPass').on('click', function () {
+        $('#winEditPass').data('kendoWindow').close();
+    });
+
+    $('#btnGuardarPass').on('click', function () {
+        var id   = $('#editSupId').val();
+        var pass = $('#editSupPass').val();
+        if (!pass) { alert('Ingresa la nueva contraseña.'); return; }
+        $.post('@Url.Action("ActualizarSupervisorPassword","TrolleySetup")',
+            { id: id, password: pass },
+            function (r) {
+                if (r.success) $('#winEditPass').data('kendoWindow').close();
+                else alert(r.message || 'Error al guardar.');
+            }
+        ).fail(function () { alert('Error de conexión.'); });
+    });
+
+    // Quitar supervisor
+    $(document).on('click', '.btn-del-sup', function () {
+        var id = $(this).data('id');
+        if (!confirm('¿Quitar este supervisor?')) return;
+        $.post('@Url.Action("EliminarSupervisor","TrolleySetup")', { id: id }, function (r) {
+            if (r.success) recargar();
+            else alert(r.message || 'Error al eliminar.');
+        });
+    });
+});
+</script>
+}
