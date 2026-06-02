@@ -1,0 +1,30 @@
+<div class="gestion-toolbar">
+    <button class="k-button k-primary btn-rounded" id="btnAgregarMaquina"><i class="fas fa-plus"></i> Agregar Maquina</button>
+</div>
+
+@(Html.Kendo().Grid<SnowTrolleyProduction.Models.MaquinaGridRow>()
+    .Name("gridMaquinas")
+    .HtmlAttributes(new { style = "height: 600px;" })
+    .ToolBar(t => t.Search())
+    .Columns(cols => {
+        cols.Bound(m => m.Maquina).Title("Maquina");
+        cols.Bound(m => m.Linea).Title("Linea").Width(100);
+        cols.Bound(m => m.Id).Title("Acciones").Width(205)
+            .Sortable(false).Filterable(false)
+            .HtmlAttributes(new { style = "white-space:nowrap;" })
+            .ClientTemplate(
+                "<button class='k-button btn-rounded btn-edit-maquina' data-id='#=Id#'>" +
+                "<i class='fas fa-edit'></i> Editar</button> " +
+                "<button class='k-button btn-rounded btn-del-maquina' data-id='#=Id#' style='color:\\#ef4444;border-color:\\#fecaca;'>" +
+                "<i class='fas fa-trash-alt'></i> Eliminar</button>");
+    })
+    .Sortable()
+    .Filterable()
+    .Resizable(r => r.Columns(true))
+    .Reorderable(r => r.Columns(true))
+    .ColumnMenu()
+    .Scrollable(s => s.Height(550))
+    .DataSource(ds => ds.Ajax()
+        .Read(r => r.Action("MaquinasJson", "TrolleyGestion"))
+        .ServerOperation(false))
+)

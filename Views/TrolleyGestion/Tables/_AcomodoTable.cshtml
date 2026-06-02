@@ -1,0 +1,28 @@
+<div class="gestion-toolbar">
+    <button class="k-button k-primary btn-rounded" id="btnAgregarAcomodo"><i class="fas fa-plus"></i> Agregar Acomodo</button>
+</div>
+
+@(Html.Kendo().Grid<SnowTrolleyProduction.Models.AcomodoGridRow>()
+    .Name("gridAcomodos")
+    .HtmlAttributes(new { style = "height: 600px;" })
+    .ToolBar(t => t.Search())
+    .Columns(cols => {
+        cols.Bound(g => g.Ensamble).Title("Ensamble");
+        cols.Bound(g => g.Linea).Title("Linea").Width(150);
+        cols.Bound(g => g.EnsambleId).Title("Acciones").Width(120)
+            .Sortable(false).Filterable(false)
+            .HtmlAttributes(new { style = "white-space:nowrap;" })
+            .ClientTemplate(
+                "<button class='k-button btn-rounded btn-edit-acomodo' data-id='#=EnsambleId#'>" +
+                "<i class='fas fa-edit'></i> Editar</button>");
+    })
+    .Sortable()
+    .Filterable()
+    .Resizable(r => r.Columns(true))
+    .Reorderable(r => r.Columns(true))
+    .ColumnMenu()
+    .Scrollable(s => s.Height(550))
+    .DataSource(ds => ds.Ajax()
+        .Read(r => r.Action("AcomodoJson", "TrolleyGestion"))
+        .ServerOperation(false))
+)

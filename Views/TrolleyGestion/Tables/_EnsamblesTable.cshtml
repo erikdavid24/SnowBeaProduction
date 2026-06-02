@@ -1,0 +1,30 @@
+<div class="gestion-toolbar">
+    <button class="k-button k-primary btn-rounded" id="btnAgregarEnsamble"><i class="fas fa-plus"></i> Agregar Ensamble</button>
+</div>
+
+@(Html.Kendo().Grid<SnowTrolleyProduction.Models.EnsambleGridRow>()
+    .Name("gridEnsambles")
+    .HtmlAttributes(new { style = "height: 600px;" })
+    .ToolBar(t => t.Search())
+    .Columns(cols => {
+        cols.Bound(e => e.Numero).Title("Ensamble");
+        cols.Bound(e => e.Linea).Title("Linea");
+        cols.Bound(e => e.Id).Title("Acciones").Width(200)
+            .Sortable(false).Filterable(false)
+            .HtmlAttributes(new { style = "white-space:nowrap;" })
+            .ClientTemplate(
+                "<button class='k-button btn-rounded btn-edit-ensamble' data-id='#=Id#'>" +
+                "<i class='fas fa-edit'></i> Editar</button> " +
+                "<button class='k-button btn-rounded btn-del-ensamble' data-id='#=Id#' style='color:\\#ef4444;border-color:\\#fecaca;'>" +
+                "<i class='fas fa-trash-alt'></i> Eliminar</button>");
+    })
+    .Sortable()
+    .Filterable()
+    .Resizable(r => r.Columns(true))
+    .Reorderable(r => r.Columns(true))
+    .ColumnMenu()
+    .Scrollable(s => s.Height(550))
+    .DataSource(ds => ds.Ajax()
+        .Read(r => r.Action("EnsamblesJson", "TrolleyGestion"))
+        .ServerOperation(false))
+)

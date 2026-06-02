@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="b928598e845940b6b605ae6a82132f72" Name="Diagram1" ZoomLevel="71">
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Acomodo" Width="1.5" PointX="7.5" PointY="7.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Area" Width="1.5" PointX="0.75" PointY="11" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Ensamble" Width="1.5" PointX="5.25" PointY="4" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Equipos" Width="1.5" PointX="5.25" PointY="7.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Linea" Width="1.5" PointX="3" PointY="10.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Maquina" Width="1.5" PointX="7.5" PointY="10.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Programa" Width="1.5" PointX="5.25" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.TrolleySetup" Width="1.5" PointX="5.25" PointY="10.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Id_Status" Width="1.5" PointX="0.75" PointY="1.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Work" Width="1.5" PointX="5.25" PointY="15.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Works_Backup" Width="1.5" PointX="0.75" PointY="4.75" IsExpanded="true" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK__Acomodo__Program__686C721B" ManuallyRouted="false" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK__Acomodo__Trolley__69609654" ManuallyRouted="false" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK__Lineas__AreaId__71F5DC55" ManuallyRouted="false" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK_Ensambles_Linea1" ManuallyRouted="false" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK_Ensambles_Linea2" ManuallyRouted="false" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK__Maquinas__Equipo__72EA008E" ManuallyRouted="false" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK_Equipos_Lineas" ManuallyRouted="false" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK__Maquinas__LineaI__73DE24C7" ManuallyRouted="false" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK_TrolleySetup_Lineas" ManuallyRouted="false" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK_Works_Lineas" ManuallyRouted="false" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.FiscalCalendar" Width="1.5" PointX="11.125" PointY="7" />
+        <EntityTypeShape EntityType="BAESystemsGuaymasModel.Trolley_Program" Width="1.5" PointX="5.25" PointY="20.5" />
+        <AssociationConnector Association="BAESystemsGuaymasModel.FK_TrolleyProgram_Lineas" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

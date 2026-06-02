@@ -1,0 +1,1051 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="BAESystemsGuaymasModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <!--Errors Found During Generation:
+warning 6002: The table/view 'BAESystemsGuaymas.dbo.FiscalCalendar' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+        <EntityType Name="FiscalCalendar">
+          <Key>
+            <PropertyRef Name="Date" />
+            <PropertyRef Name="FiscalDay" />
+            <PropertyRef Name="FiscalWeek" />
+            <PropertyRef Name="FiscalMonth" />
+            <PropertyRef Name="FiscalQuarter" />
+            <PropertyRef Name="CalendarDayOfYear" />
+            <PropertyRef Name="CalendarWeekOfYear" />
+            <PropertyRef Name="CalendarMonth" />
+            <PropertyRef Name="CalendarQuarter" />
+          </Key>
+          <Property Name="Date" Type="date" Nullable="false" />
+          <Property Name="FiscalDay" Type="int" Nullable="false" />
+          <Property Name="FiscalWeek" Type="int" Nullable="false" />
+          <Property Name="FiscalMonth" Type="int" Nullable="false" />
+          <Property Name="FiscalQuarter" Type="int" Nullable="false" />
+          <Property Name="CalendarDayOfYear" Type="int" Nullable="false" />
+          <Property Name="CalendarWeekOfYear" Type="int" Nullable="false" />
+          <Property Name="CalendarMonth" Type="int" Nullable="false" />
+          <Property Name="CalendarQuarter" Type="int" Nullable="false" />
+          <Property Name="FiscalYear" Type="int" />
+        </EntityType>
+        <EntityType Name="Acomodo">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ProgramaId" Type="int" />
+          <Property Name="TrolleyId" Type="int" />
+          <Property Name="Locacion" Type="int" />
+          <Property Name="MaquinaId" Type="int" />
+        </EntityType>
+        <EntityType Name="Areas">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Nombre" Type="nvarchar" MaxLength="100" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Ensambles">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="EnsambleBase" Type="nvarchar" MaxLength="150" />
+          <Property Name="EnsambleEspecifico" Type="nvarchar" MaxLength="150" />
+          <Property Name="Linea1" Type="int" />
+          <Property Name="Linea2" Type="int" />
+        </EntityType>
+        <EntityType Name="Equipos">
+          <Key>
+            <PropertyRef Name="Id_Equipo" />
+          </Key>
+          <Property Name="Id_Equipo" Type="int" Nullable="false" />
+          <Property Name="Equipo_descripcion" Type="nvarchar" MaxLength="255" />
+          <Property Name="Prioridad" Type="int" />
+          <Property Name="Id_falla" Type="varchar" MaxLength="100" />
+          <Property Name="AreaId" Type="int" />
+          <Property Name="LineaId" Type="int" />
+          <Property Name="Activo" Type="bit" Nullable="false" />
+        </EntityType>
+        <!--Errors Found During Generation:
+warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Id_Status' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+        <EntityType Name="Id_Status">
+          <Key>
+            <PropertyRef Name="Id_Status" />
+          </Key>
+          <Property Name="Id_Status" Type="int" Nullable="false" />
+          <Property Name="Description" Type="nvarchar" MaxLength="255" />
+          <Property Name="Campo1" Type="nvarchar" MaxLength="255" />
+        </EntityType>
+        <EntityType Name="Lineas">
+          <Key>
+            <PropertyRef Name="Id_Linea" />
+          </Key>
+          <Property Name="Id_Linea" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Numero_Linea" Type="int" Nullable="false" />
+          <Property Name="AreaId" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Maquinas">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="EquipoId" Type="int" />
+          <Property Name="LineaId" Type="int" />
+          <Property Name="MaquinaId" Type="int" />
+          <Property Name="Cabezales" Type="int" />
+          <Property Name="Zonas" Type="int" />
+        </EntityType>
+        <EntityType Name="Programas">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Numero" Type="nvarchar" MaxLength="150" />
+          <Property Name="Ensamble" Type="int" />
+          <Property Name="CantidadTotalMateriales" Type="int" />
+          <Property Name="CantidadComponentesDiferentes" Type="int" Nullable="false" />
+        </EntityType>
+        <!--Errors Found During Generation:
+warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Trolley_Program' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+        <EntityType Name="Trolley_Program">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" Nullable="false" />
+          <Property Name="Id_Programa" Type="nvarchar" MaxLength="255" />
+          <Property Name="No_linea" Type="int" />
+          <Property Name="No_Cabezal" Type="int" />
+          <Property Name="No_Posicion" Type="int" />
+          <Property Name="No_Trolley" Type="nvarchar" MaxLength="255" />
+          <Property Name="Id_Linea" Type="int" />
+        </EntityType>
+        <EntityType Name="TrolleySetup">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Id_Proceso" Type="int" Nullable="false" />
+          <Property Name="Id_Programa" Type="nvarchar(max)" />
+          <Property Name="WorkOrder" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="PiezasProgramadas" Type="int" Nullable="false" />
+          <Property Name="Trolleys" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="Status" Type="nvarchar" MaxLength="20" Nullable="false" />
+          <Property Name="FechaCreacion" Type="datetime" Nullable="false" />
+          <Property Name="FechaFinalizacion" Type="datetime" />
+          <Property Name="Linea" Type="int" Nullable="false" />
+          <Property Name="Id_Linea" Type="int" />
+          <Property Name="Comentarios" Type="nvarchar(max)" />
+          <Property Name="Orden" Type="int" />
+        </EntityType>
+        <!--Errors Found During Generation:
+warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Works' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+        <EntityType Name="Works">
+          <Key>
+            <PropertyRef Name="Id_Proceso" />
+          </Key>
+          <Property Name="Id_Proceso" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Fecha_inicio" Type="datetime" />
+          <Property Name="Id_Ensamble" Type="nvarchar" MaxLength="255" />
+          <Property Name="Id_Programa" Type="nvarchar" MaxLength="255" />
+          <Property Name="ID_WorkOrder" Type="nvarchar" MaxLength="255" />
+          <Property Name="Status" Type="nvarchar" MaxLength="255" />
+          <Property Name="Linea" Type="int" />
+          <Property Name="Orden" Type="int" />
+          <Property Name="Fecha_setup" Type="datetime" />
+          <Property Name="Fecha_arranque" Type="datetime" />
+          <Property Name="fecha_cierre" Type="datetime" />
+          <Property Name="Pzas_programadas" Type="int" />
+          <Property Name="Pza_terminadas" Type="int" />
+          <Property Name="Fecha_Proyectada" Type="datetime" />
+          <Property Name="Id_Linea" Type="int" />
+          <Property Name="Comentarios" Type="varchar" MaxLength="255" />
+        </EntityType>
+        <!--Errors Found During Generation:
+warning 6002: The table/view 'BAESystemsGuaymas.Proccess.Works_Backup' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+        <EntityType Name="Works_Backup">
+          <Key>
+            <PropertyRef Name="Id_Proceso" />
+          </Key>
+          <Property Name="Id_Proceso" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Fecha_inicio" Type="datetime" />
+          <Property Name="Id_Ensamble" Type="nvarchar" MaxLength="255" />
+          <Property Name="Id_Programa" Type="nvarchar" MaxLength="255" />
+          <Property Name="ID_WorkOrder" Type="nvarchar" MaxLength="255" />
+          <Property Name="Status" Type="nvarchar" MaxLength="255" />
+          <Property Name="Linea" Type="int" />
+          <Property Name="Orden" Type="int" />
+          <Property Name="Fecha_setup" Type="datetime" />
+          <Property Name="Fecha_arranque" Type="datetime" />
+          <Property Name="fecha_cierre" Type="datetime" />
+          <Property Name="Pzas_programadas" Type="int" />
+          <Property Name="Pza_terminadas" Type="int" />
+          <Property Name="Comentarios" Type="nvarchar(max)" />
+          <Property Name="Fecha_Proyectada" Type="datetime" />
+          <Property Name="Id_Linea" Type="int" />
+        </EntityType>
+        <Association Name="FK__Acomodo__Program__686C721B">
+          <End Role="Programas" Type="Self.Programas" Multiplicity="0..1" />
+          <End Role="Acomodo" Type="Self.Acomodo" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Programas">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Acomodo">
+              <PropertyRef Name="ProgramaId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Acomodo__Trolley__69609654">
+          <End Role="Equipos" Type="Self.Equipos" Multiplicity="0..1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Acomodo" Type="Self.Acomodo" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Equipos">
+              <PropertyRef Name="Id_Equipo" />
+            </Principal>
+            <Dependent Role="Acomodo">
+              <PropertyRef Name="TrolleyId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Lineas__AreaId__71F5DC55">
+          <End Role="Areas" Type="Self.Areas" Multiplicity="1" />
+          <End Role="Lineas" Type="Self.Lineas" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Areas">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Lineas">
+              <PropertyRef Name="AreaId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Maquinas__Equipo__72EA008E">
+          <End Role="Equipos" Type="Self.Equipos" Multiplicity="0..1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Maquinas" Type="Self.Maquinas" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Equipos">
+              <PropertyRef Name="Id_Equipo" />
+            </Principal>
+            <Dependent Role="Maquinas">
+              <PropertyRef Name="EquipoId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Maquinas__LineaI__73DE24C7">
+          <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
+          <End Role="Maquinas" Type="Self.Maquinas" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Maquinas">
+              <PropertyRef Name="LineaId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Ensambles_Linea1">
+          <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
+          <End Role="Ensambles" Type="Self.Ensambles" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Ensambles">
+              <PropertyRef Name="Linea1" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Ensambles_Linea2">
+          <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
+          <End Role="Ensambles" Type="Self.Ensambles" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Ensambles">
+              <PropertyRef Name="Linea2" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <!--Errors Found During Generation:
+warning 6035: The relationship 'FK_Ensambles_Programas' has columns that are not part of the key of the table on the primary side of the relationship. The relationship was excluded.
+        <Association Name="FK_Ensambles_Programas" />-->
+        <Association Name="FK_Equipos_Lineas">
+          <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
+          <End Role="Equipos" Type="Self.Equipos" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Equipos">
+              <PropertyRef Name="LineaId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_TrolleyProgram_Lineas">
+          <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
+          <End Role="Trolley_Program" Type="Self.Trolley_Program" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Trolley_Program">
+              <PropertyRef Name="Id_Linea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_TrolleySetup_Lineas">
+          <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
+          <End Role="TrolleySetup" Type="Self.TrolleySetup" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="TrolleySetup">
+              <PropertyRef Name="Id_Linea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Works_Lineas">
+          <End Role="Lineas" Type="Self.Lineas" Multiplicity="0..1" />
+          <End Role="Works" Type="Self.Works" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Works">
+              <PropertyRef Name="Id_Linea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="BAESystemsGuaymasModelStoreContainer">
+          <EntitySet Name="Acomodo" EntityType="Self.Acomodo" Schema="Proccess" store:Type="Tables" />
+          <EntitySet Name="Areas" EntityType="Self.Areas" Schema="Proccess" store:Type="Tables" />
+          <EntitySet Name="Ensambles" EntityType="Self.Ensambles" Schema="Proccess" store:Type="Tables" />
+          <EntitySet Name="Equipos" EntityType="Self.Equipos" Schema="Proccess" store:Type="Tables" />
+          <EntitySet Name="Lineas" EntityType="Self.Lineas" Schema="Proccess" store:Type="Tables" />
+          <EntitySet Name="Maquinas" EntityType="Self.Maquinas" Schema="Proccess" store:Type="Tables" />
+          <EntitySet Name="Programas" EntityType="Self.Programas" Schema="Proccess" store:Type="Tables" />
+          <EntitySet Name="TrolleySetup" EntityType="Self.TrolleySetup" Schema="Proccess" store:Type="Tables" />
+          <EntitySet Name="FiscalCalendar" EntityType="Self.FiscalCalendar" store:Type="Tables" store:Schema="dbo">
+            <DefiningQuery>SELECT 
+    [FiscalCalendar].[Date] AS [Date], 
+    [FiscalCalendar].[FiscalDay] AS [FiscalDay], 
+    [FiscalCalendar].[FiscalWeek] AS [FiscalWeek], 
+    [FiscalCalendar].[FiscalMonth] AS [FiscalMonth], 
+    [FiscalCalendar].[FiscalQuarter] AS [FiscalQuarter], 
+    [FiscalCalendar].[CalendarDayOfYear] AS [CalendarDayOfYear], 
+    [FiscalCalendar].[CalendarWeekOfYear] AS [CalendarWeekOfYear], 
+    [FiscalCalendar].[CalendarMonth] AS [CalendarMonth], 
+    [FiscalCalendar].[CalendarQuarter] AS [CalendarQuarter], 
+    [FiscalCalendar].[FiscalYear] AS [FiscalYear]
+    FROM [dbo].[FiscalCalendar] AS [FiscalCalendar]</DefiningQuery>
+          </EntitySet>
+          <EntitySet Name="Id_Status" EntityType="Self.Id_Status" store:Type="Tables" store:Schema="Proccess">
+            <DefiningQuery>SELECT 
+    [Id_Status].[Id_Status] AS [Id_Status], 
+    [Id_Status].[Description] AS [Description], 
+    [Id_Status].[Campo1] AS [Campo1]
+    FROM [Proccess].[Id_Status] AS [Id_Status]</DefiningQuery>
+          </EntitySet>
+          <EntitySet Name="Trolley_Program" EntityType="Self.Trolley_Program" store:Type="Tables" store:Schema="Proccess">
+            <DefiningQuery>SELECT 
+    [Trolley_Program].[Id] AS [Id], 
+    [Trolley_Program].[Id_Programa] AS [Id_Programa], 
+    [Trolley_Program].[No_linea] AS [No_linea], 
+    [Trolley_Program].[No_Cabezal] AS [No_Cabezal], 
+    [Trolley_Program].[No_Posicion] AS [No_Posicion], 
+    [Trolley_Program].[No_Trolley] AS [No_Trolley], 
+    [Trolley_Program].[Id_Linea] AS [Id_Linea]
+    FROM [Proccess].[Trolley_Program] AS [Trolley_Program]</DefiningQuery>
+          </EntitySet>
+          <EntitySet Name="Works" EntityType="Self.Works" store:Type="Tables" store:Schema="Proccess">
+            <DefiningQuery>SELECT 
+    [Works].[Id_Proceso] AS [Id_Proceso], 
+    [Works].[Fecha_inicio] AS [Fecha_inicio], 
+    [Works].[Id_Ensamble] AS [Id_Ensamble], 
+    [Works].[Id_Programa] AS [Id_Programa], 
+    [Works].[ID_WorkOrder] AS [ID_WorkOrder], 
+    [Works].[Status] AS [Status], 
+    [Works].[Linea] AS [Linea], 
+    [Works].[Orden] AS [Orden], 
+    [Works].[Fecha_setup] AS [Fecha_setup], 
+    [Works].[Fecha_arranque] AS [Fecha_arranque], 
+    [Works].[fecha_cierre] AS [fecha_cierre], 
+    [Works].[Pzas_programadas] AS [Pzas_programadas], 
+    [Works].[Pza_terminadas] AS [Pza_terminadas], 
+    [Works].[Fecha_Proyectada] AS [Fecha_Proyectada], 
+    [Works].[Id_Linea] AS [Id_Linea], 
+    [Works].[Comentarios] AS [Comentarios]
+    FROM [Proccess].[Works] AS [Works]</DefiningQuery>
+          </EntitySet>
+          <EntitySet Name="Works_Backup" EntityType="Self.Works_Backup" store:Type="Tables" store:Schema="Proccess">
+            <DefiningQuery>SELECT 
+    [Works_Backup].[Id_Proceso] AS [Id_Proceso], 
+    [Works_Backup].[Fecha_inicio] AS [Fecha_inicio], 
+    [Works_Backup].[Id_Ensamble] AS [Id_Ensamble], 
+    [Works_Backup].[Id_Programa] AS [Id_Programa], 
+    [Works_Backup].[ID_WorkOrder] AS [ID_WorkOrder], 
+    [Works_Backup].[Status] AS [Status], 
+    [Works_Backup].[Linea] AS [Linea], 
+    [Works_Backup].[Orden] AS [Orden], 
+    [Works_Backup].[Fecha_setup] AS [Fecha_setup], 
+    [Works_Backup].[Fecha_arranque] AS [Fecha_arranque], 
+    [Works_Backup].[fecha_cierre] AS [fecha_cierre], 
+    [Works_Backup].[Pzas_programadas] AS [Pzas_programadas], 
+    [Works_Backup].[Pza_terminadas] AS [Pza_terminadas], 
+    [Works_Backup].[Comentarios] AS [Comentarios], 
+    [Works_Backup].[Fecha_Proyectada] AS [Fecha_Proyectada], 
+    [Works_Backup].[Id_Linea] AS [Id_Linea]
+    FROM [Proccess].[Works_Backup] AS [Works_Backup]</DefiningQuery>
+          </EntitySet>
+          <AssociationSet Name="FK__Acomodo__Program__686C721B" Association="Self.FK__Acomodo__Program__686C721B">
+            <End Role="Programas" EntitySet="Programas" />
+            <End Role="Acomodo" EntitySet="Acomodo" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Acomodo__Trolley__69609654" Association="Self.FK__Acomodo__Trolley__69609654">
+            <End Role="Equipos" EntitySet="Equipos" />
+            <End Role="Acomodo" EntitySet="Acomodo" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Lineas__AreaId__71F5DC55" Association="Self.FK__Lineas__AreaId__71F5DC55">
+            <End Role="Areas" EntitySet="Areas" />
+            <End Role="Lineas" EntitySet="Lineas" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Maquinas__Equipo__72EA008E" Association="Self.FK__Maquinas__Equipo__72EA008E">
+            <End Role="Equipos" EntitySet="Equipos" />
+            <End Role="Maquinas" EntitySet="Maquinas" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Maquinas__LineaI__73DE24C7" Association="Self.FK__Maquinas__LineaI__73DE24C7">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Maquinas" EntitySet="Maquinas" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Ensambles_Linea1" Association="Self.FK_Ensambles_Linea1">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Ensambles" EntitySet="Ensambles" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Ensambles_Linea2" Association="Self.FK_Ensambles_Linea2">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Ensambles" EntitySet="Ensambles" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Equipos_Lineas" Association="Self.FK_Equipos_Lineas">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Equipos" EntitySet="Equipos" />
+          </AssociationSet>
+          <AssociationSet Name="FK_TrolleyProgram_Lineas" Association="Self.FK_TrolleyProgram_Lineas">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Trolley_Program" EntitySet="Trolley_Program" />
+          </AssociationSet>
+          <AssociationSet Name="FK_TrolleySetup_Lineas" Association="Self.FK_TrolleySetup_Lineas">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="TrolleySetup" EntitySet="TrolleySetup" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Works_Lineas" Association="Self.FK_Works_Lineas">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Works" EntitySet="Works" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="BAESystemsGuaymasModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="Acomodo">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ProgramaId" Type="Int32" />
+          <Property Name="TrolleyId" Type="Int32" />
+          <Property Name="Locacion" Type="Int32" />
+          <Property Name="MaquinaId" Type="Int32" />
+          <NavigationProperty Name="Programa" Relationship="Self.FK__Acomodo__Program__686C721B" FromRole="Acomodo" ToRole="Programas" />
+          <NavigationProperty Name="Equipos" Relationship="Self.FK__Acomodo__Trolley__69609654" FromRole="Acomodo" ToRole="Equipos" />
+        </EntityType>
+        <EntityType Name="Area">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Nombre" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+          <NavigationProperty Name="Lineas" Relationship="Self.FK__Lineas__AreaId__71F5DC55" FromRole="Areas" ToRole="Lineas" />
+        </EntityType>
+        <EntityType Name="Ensamble">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="EnsambleBase" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="EnsambleEspecifico" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="Linea1" Type="Int32" />
+          <Property Name="Linea2" Type="Int32" />
+          <NavigationProperty Name="Linea" Relationship="Self.FK_Ensambles_Linea1" FromRole="Ensambles" ToRole="Lineas" />
+          <NavigationProperty Name="Linea3" Relationship="Self.FK_Ensambles_Linea2" FromRole="Ensambles" ToRole="Lineas" />
+        </EntityType>
+        <EntityType Name="Equipos">
+          <Key>
+            <PropertyRef Name="Id_Equipo" />
+          </Key>
+          <Property Name="Id_Equipo" Type="Int32" Nullable="false" />
+          <Property Name="Equipo_descripcion" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Prioridad" Type="Int32" />
+          <Property Name="Id_falla" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="AreaId" Type="Int32" />
+          <Property Name="LineaId" Type="Int32" />
+          <Property Name="Activo" Type="Boolean" Nullable="false" />
+          <NavigationProperty Name="Acomodoes" Relationship="Self.FK__Acomodo__Trolley__69609654" FromRole="Equipos" ToRole="Acomodo" />
+          <NavigationProperty Name="Maquinas" Relationship="Self.FK__Maquinas__Equipo__72EA008E" FromRole="Equipos" ToRole="Maquinas" />
+          <NavigationProperty Name="Linea" Relationship="Self.FK_Equipos_Lineas" FromRole="Equipos" ToRole="Lineas" />
+        </EntityType>
+        <EntityType Name="Linea">
+          <Key>
+            <PropertyRef Name="Id_Linea" />
+          </Key>
+          <Property Name="Id_Linea" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Numero_Linea" Type="Int32" Nullable="false" />
+          <Property Name="AreaId" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Area" Relationship="Self.FK__Lineas__AreaId__71F5DC55" FromRole="Lineas" ToRole="Areas" />
+          <NavigationProperty Name="Ensambles" Relationship="Self.FK_Ensambles_Linea1" FromRole="Lineas" ToRole="Ensambles" />
+          <NavigationProperty Name="Ensambles1" Relationship="Self.FK_Ensambles_Linea2" FromRole="Lineas" ToRole="Ensambles" />
+          <NavigationProperty Name="Equipos" Relationship="Self.FK_Equipos_Lineas" FromRole="Lineas" ToRole="Equipos" />
+          <NavigationProperty Name="Maquinas" Relationship="Self.FK__Maquinas__LineaI__73DE24C7" FromRole="Lineas" ToRole="Maquinas" />
+          <NavigationProperty Name="TrolleySetups" Relationship="Self.FK_TrolleySetup_Lineas" FromRole="Lineas" ToRole="TrolleySetup" />
+          <NavigationProperty Name="Works" Relationship="Self.FK_Works_Lineas" FromRole="Lineas" ToRole="Works" />
+          <NavigationProperty Name="Trolley_Program" Relationship="BAESystemsGuaymasModel.FK_TrolleyProgram_Lineas" FromRole="Linea" ToRole="Trolley_Program" />
+        </EntityType>
+        <EntityType Name="Maquina">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="EquipoId" Type="Int32" />
+          <Property Name="LineaId" Type="Int32" />
+          <Property Name="MaquinaId" Type="Int32" />
+          <Property Name="Cabezales" Type="Int32" />
+          <Property Name="Zonas" Type="Int32" />
+          <NavigationProperty Name="Equipos" Relationship="Self.FK__Maquinas__Equipo__72EA008E" FromRole="Maquinas" ToRole="Equipos" />
+          <NavigationProperty Name="Linea" Relationship="Self.FK__Maquinas__LineaI__73DE24C7" FromRole="Maquinas" ToRole="Lineas" />
+        </EntityType>
+        <EntityType Name="Programa">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Numero" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="Ensamble" Type="Int32" />
+          <NavigationProperty Name="Acomodoes" Relationship="Self.FK__Acomodo__Program__686C721B" FromRole="Programas" ToRole="Acomodo" />
+          <Property Name="CantidadTotalMateriales" Type="Int32" />
+          <Property Name="CantidadComponentesDiferentes" Type="Int32" Nullable="false" />
+        </EntityType>
+        <EntityType Name="TrolleySetup">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Id_Proceso" Type="Int32" Nullable="false" />
+          <Property Name="Id_Programa" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="WorkOrder" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="PiezasProgramadas" Type="Int32" Nullable="false" />
+          <Property Name="Trolleys" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Status" Type="String" MaxLength="20" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="FechaCreacion" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="FechaFinalizacion" Type="DateTime" Precision="3" />
+          <Property Name="Linea" Type="Int32" Nullable="false" />
+          <Property Name="Id_Linea" Type="Int32" />
+          <Property Name="Comentarios" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Linea1" Relationship="Self.FK_TrolleySetup_Lineas" FromRole="TrolleySetup" ToRole="Lineas" />
+          <Property Name="Orden" Type="Int32" />
+        </EntityType>
+        <EntityType Name="Id_Status">
+          <Key>
+            <PropertyRef Name="Id_Status1" />
+          </Key>
+          <Property Name="Id_Status1" Type="Int32" Nullable="false" />
+          <Property Name="Description" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Campo1" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="Work">
+          <Key>
+            <PropertyRef Name="Id_Proceso" />
+          </Key>
+          <Property Name="Id_Proceso" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Fecha_inicio" Type="DateTime" Precision="3" />
+          <Property Name="Id_Ensamble" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Id_Programa" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="ID_WorkOrder" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Status" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Linea" Type="Int32" />
+          <Property Name="Orden" Type="Int32" />
+          <Property Name="Fecha_setup" Type="DateTime" Precision="3" />
+          <Property Name="Fecha_arranque" Type="DateTime" Precision="3" />
+          <Property Name="fecha_cierre" Type="DateTime" Precision="3" />
+          <Property Name="Pzas_programadas" Type="Int32" />
+          <Property Name="Pza_terminadas" Type="Int32" />
+          <Property Name="Fecha_Proyectada" Type="DateTime" Precision="3" />
+          <Property Name="Id_Linea" Type="Int32" />
+          <Property Name="Comentarios" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
+          <NavigationProperty Name="Linea1" Relationship="Self.FK_Works_Lineas" FromRole="Works" ToRole="Lineas" />
+        </EntityType>
+        <EntityType Name="Works_Backup">
+          <Key>
+            <PropertyRef Name="Id_Proceso" />
+          </Key>
+          <Property Name="Id_Proceso" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Fecha_inicio" Type="DateTime" Precision="3" />
+          <Property Name="Id_Ensamble" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Id_Programa" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="ID_WorkOrder" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Status" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Linea" Type="Int32" />
+          <Property Name="Orden" Type="Int32" />
+          <Property Name="Fecha_setup" Type="DateTime" Precision="3" />
+          <Property Name="Fecha_arranque" Type="DateTime" Precision="3" />
+          <Property Name="fecha_cierre" Type="DateTime" Precision="3" />
+          <Property Name="Pzas_programadas" Type="Int32" />
+          <Property Name="Pza_terminadas" Type="Int32" />
+          <Property Name="Comentarios" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Fecha_Proyectada" Type="DateTime" Precision="3" />
+          <Property Name="Id_Linea" Type="Int32" />
+        </EntityType>
+        <Association Name="FK__Acomodo__Program__686C721B">
+          <End Role="Programas" Type="Self.Programa" Multiplicity="0..1" />
+          <End Role="Acomodo" Type="Self.Acomodo" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Programas">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Acomodo">
+              <PropertyRef Name="ProgramaId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Acomodo__Trolley__69609654">
+          <End Role="Equipos" Type="Self.Equipos" Multiplicity="0..1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Acomodo" Type="Self.Acomodo" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Equipos">
+              <PropertyRef Name="Id_Equipo" />
+            </Principal>
+            <Dependent Role="Acomodo">
+              <PropertyRef Name="TrolleyId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Lineas__AreaId__71F5DC55">
+          <End Role="Areas" Type="Self.Area" Multiplicity="1" />
+          <End Role="Lineas" Type="Self.Linea" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Areas">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Lineas">
+              <PropertyRef Name="AreaId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Ensambles_Linea1">
+          <End Role="Lineas" Type="Self.Linea" Multiplicity="0..1" />
+          <End Role="Ensambles" Type="Self.Ensamble" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Ensambles">
+              <PropertyRef Name="Linea1" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Ensambles_Linea2">
+          <End Role="Lineas" Type="Self.Linea" Multiplicity="0..1" />
+          <End Role="Ensambles" Type="Self.Ensamble" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Ensambles">
+              <PropertyRef Name="Linea2" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Maquinas__Equipo__72EA008E">
+          <End Role="Equipos" Type="Self.Equipos" Multiplicity="0..1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Maquinas" Type="Self.Maquina" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Equipos">
+              <PropertyRef Name="Id_Equipo" />
+            </Principal>
+            <Dependent Role="Maquinas">
+              <PropertyRef Name="EquipoId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Equipos_Lineas">
+          <End Role="Lineas" Type="Self.Linea" Multiplicity="0..1" />
+          <End Role="Equipos" Type="Self.Equipos" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Equipos">
+              <PropertyRef Name="LineaId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Maquinas__LineaI__73DE24C7">
+          <End Role="Lineas" Type="Self.Linea" Multiplicity="0..1" />
+          <End Role="Maquinas" Type="Self.Maquina" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Maquinas">
+              <PropertyRef Name="LineaId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_TrolleySetup_Lineas">
+          <End Role="Lineas" Type="Self.Linea" Multiplicity="0..1" />
+          <End Role="TrolleySetup" Type="Self.TrolleySetup" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="TrolleySetup">
+              <PropertyRef Name="Id_Linea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Works_Lineas">
+          <End Role="Lineas" Type="Self.Linea" Multiplicity="0..1" />
+          <End Role="Works" Type="Self.Work" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Lineas">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Works">
+              <PropertyRef Name="Id_Linea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="BAESystemsGuaymasEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Acomodoes" EntityType="Self.Acomodo" />
+          <EntitySet Name="Areas" EntityType="Self.Area" />
+          <EntitySet Name="Ensambles" EntityType="Self.Ensamble" />
+          <EntitySet Name="Equipos" EntityType="Self.Equipos" />
+          <EntitySet Name="Lineas" EntityType="Self.Linea" />
+          <EntitySet Name="Maquinas" EntityType="Self.Maquina" />
+          <EntitySet Name="Programas" EntityType="Self.Programa" />
+          <EntitySet Name="TrolleySetups" EntityType="Self.TrolleySetup" />
+          <EntitySet Name="Id_Status" EntityType="Self.Id_Status" />
+          <EntitySet Name="Works" EntityType="Self.Work" />
+          <EntitySet Name="Works_Backup" EntityType="Self.Works_Backup" />
+          <AssociationSet Name="FK__Acomodo__Program__686C721B" Association="Self.FK__Acomodo__Program__686C721B">
+            <End Role="Programas" EntitySet="Programas" />
+            <End Role="Acomodo" EntitySet="Acomodoes" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Acomodo__Trolley__69609654" Association="Self.FK__Acomodo__Trolley__69609654">
+            <End Role="Equipos" EntitySet="Equipos" />
+            <End Role="Acomodo" EntitySet="Acomodoes" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Lineas__AreaId__71F5DC55" Association="Self.FK__Lineas__AreaId__71F5DC55">
+            <End Role="Areas" EntitySet="Areas" />
+            <End Role="Lineas" EntitySet="Lineas" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Ensambles_Linea1" Association="Self.FK_Ensambles_Linea1">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Ensambles" EntitySet="Ensambles" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Ensambles_Linea2" Association="Self.FK_Ensambles_Linea2">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Ensambles" EntitySet="Ensambles" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Maquinas__Equipo__72EA008E" Association="Self.FK__Maquinas__Equipo__72EA008E">
+            <End Role="Equipos" EntitySet="Equipos" />
+            <End Role="Maquinas" EntitySet="Maquinas" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Equipos_Lineas" Association="Self.FK_Equipos_Lineas">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Equipos" EntitySet="Equipos" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Maquinas__LineaI__73DE24C7" Association="Self.FK__Maquinas__LineaI__73DE24C7">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Maquinas" EntitySet="Maquinas" />
+          </AssociationSet>
+          <AssociationSet Name="FK_TrolleySetup_Lineas" Association="Self.FK_TrolleySetup_Lineas">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="TrolleySetup" EntitySet="TrolleySetups" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Works_Lineas" Association="Self.FK_Works_Lineas">
+            <End Role="Lineas" EntitySet="Lineas" />
+            <End Role="Works" EntitySet="Works" />
+          </AssociationSet>
+          <EntitySet Name="FiscalCalendars" EntityType="BAESystemsGuaymasModel.FiscalCalendar" />
+          <EntitySet Name="Trolley_Program" EntityType="BAESystemsGuaymasModel.Trolley_Program" />
+          <AssociationSet Name="FK_TrolleyProgram_Lineas" Association="BAESystemsGuaymasModel.FK_TrolleyProgram_Lineas">
+            <End Role="Linea" EntitySet="Lineas" />
+            <End Role="Trolley_Program" EntitySet="Trolley_Program" />
+          </AssociationSet>
+        </EntityContainer>
+        <EntityType Name="FiscalCalendar">
+          <Key>
+            <PropertyRef Name="Date" />
+            <PropertyRef Name="FiscalDay" />
+            <PropertyRef Name="FiscalWeek" />
+            <PropertyRef Name="FiscalMonth" />
+            <PropertyRef Name="FiscalQuarter" />
+            <PropertyRef Name="CalendarDayOfYear" />
+            <PropertyRef Name="CalendarWeekOfYear" />
+            <PropertyRef Name="CalendarMonth" />
+            <PropertyRef Name="CalendarQuarter" />
+          </Key>
+          <Property Name="Date" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="FiscalDay" Type="Int32" Nullable="false" />
+          <Property Name="FiscalWeek" Type="Int32" Nullable="false" />
+          <Property Name="FiscalMonth" Type="Int32" Nullable="false" />
+          <Property Name="FiscalQuarter" Type="Int32" Nullable="false" />
+          <Property Name="CalendarDayOfYear" Type="Int32" Nullable="false" />
+          <Property Name="CalendarWeekOfYear" Type="Int32" Nullable="false" />
+          <Property Name="CalendarMonth" Type="Int32" Nullable="false" />
+          <Property Name="CalendarQuarter" Type="Int32" Nullable="false" />
+          <Property Name="FiscalYear" Type="Int32" />
+        </EntityType>
+        <EntityType Name="Trolley_Program">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" />
+          <Property Name="Id_Programa" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="No_linea" Type="Int32" />
+          <Property Name="No_Cabezal" Type="Int32" />
+          <Property Name="No_Posicion" Type="Int32" />
+          <Property Name="No_Trolley" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Id_Linea" Type="Int32" />
+          <NavigationProperty Name="Linea" Relationship="BAESystemsGuaymasModel.FK_TrolleyProgram_Lineas" FromRole="Trolley_Program" ToRole="Linea" />
+        </EntityType>
+        <Association Name="FK_TrolleyProgram_Lineas">
+          <End Type="BAESystemsGuaymasModel.Linea" Role="Linea" Multiplicity="0..1" />
+          <End Type="BAESystemsGuaymasModel.Trolley_Program" Role="Trolley_Program" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Linea">
+              <PropertyRef Name="Id_Linea" />
+            </Principal>
+            <Dependent Role="Trolley_Program">
+              <PropertyRef Name="Id_Linea" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="BAESystemsGuaymasModelStoreContainer" CdmEntityContainer="BAESystemsGuaymasEntities">
+          <EntitySetMapping Name="Acomodoes">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Acomodo">
+              <MappingFragment StoreEntitySet="Acomodo">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="ProgramaId" ColumnName="ProgramaId" />
+                <ScalarProperty Name="TrolleyId" ColumnName="TrolleyId" />
+                <ScalarProperty Name="Locacion" ColumnName="Locacion" />
+                <ScalarProperty Name="MaquinaId" ColumnName="MaquinaId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Areas">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Area">
+              <MappingFragment StoreEntitySet="Areas">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Nombre" ColumnName="Nombre" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Ensambles">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Ensamble">
+              <MappingFragment StoreEntitySet="Ensambles">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="EnsambleBase" ColumnName="EnsambleBase" />
+                <ScalarProperty Name="EnsambleEspecifico" ColumnName="EnsambleEspecifico" />
+                <ScalarProperty Name="Linea1" ColumnName="Linea1" />
+                <ScalarProperty Name="Linea2" ColumnName="Linea2" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Equipos">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Equipos">
+              <MappingFragment StoreEntitySet="Equipos">
+                <ScalarProperty Name="Id_Equipo" ColumnName="Id_Equipo" />
+                <ScalarProperty Name="Equipo_descripcion" ColumnName="Equipo_descripcion" />
+                <ScalarProperty Name="Prioridad" ColumnName="Prioridad" />
+                <ScalarProperty Name="Id_falla" ColumnName="Id_falla" />
+                <ScalarProperty Name="AreaId" ColumnName="AreaId" />
+                <ScalarProperty Name="LineaId" ColumnName="LineaId" />
+                <ScalarProperty Name="Activo" ColumnName="Activo" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Lineas">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Linea">
+              <MappingFragment StoreEntitySet="Lineas">
+                <ScalarProperty Name="Id_Linea" ColumnName="Id_Linea" />
+                <ScalarProperty Name="Numero_Linea" ColumnName="Numero_Linea" />
+                <ScalarProperty Name="AreaId" ColumnName="AreaId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Maquinas">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Maquina">
+              <MappingFragment StoreEntitySet="Maquinas">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="EquipoId" ColumnName="EquipoId" />
+                <ScalarProperty Name="LineaId" ColumnName="LineaId" />
+                <ScalarProperty Name="MaquinaId" ColumnName="MaquinaId" />
+                <ScalarProperty Name="Cabezales" ColumnName="Cabezales" />
+                <ScalarProperty Name="Zonas" ColumnName="Zonas" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Programas">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Programa">
+              <MappingFragment StoreEntitySet="Programas">
+                <ScalarProperty Name="CantidadComponentesDiferentes" ColumnName="CantidadComponentesDiferentes" />
+                <ScalarProperty Name="CantidadTotalMateriales" ColumnName="CantidadTotalMateriales" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Numero" ColumnName="Numero" />
+                <ScalarProperty Name="Ensamble" ColumnName="Ensamble" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="TrolleySetups">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.TrolleySetup">
+              <MappingFragment StoreEntitySet="TrolleySetup">
+                <ScalarProperty Name="Orden" ColumnName="Orden" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Id_Proceso" ColumnName="Id_Proceso" />
+                <ScalarProperty Name="Id_Programa" ColumnName="Id_Programa" />
+                <ScalarProperty Name="WorkOrder" ColumnName="WorkOrder" />
+                <ScalarProperty Name="PiezasProgramadas" ColumnName="PiezasProgramadas" />
+                <ScalarProperty Name="Trolleys" ColumnName="Trolleys" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="FechaCreacion" ColumnName="FechaCreacion" />
+                <ScalarProperty Name="FechaFinalizacion" ColumnName="FechaFinalizacion" />
+                <ScalarProperty Name="Linea" ColumnName="Linea" />
+                <ScalarProperty Name="Id_Linea" ColumnName="Id_Linea" />
+                <ScalarProperty Name="Comentarios" ColumnName="Comentarios" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Id_Status">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Id_Status">
+              <MappingFragment StoreEntitySet="Id_Status">
+                <ScalarProperty Name="Id_Status1" ColumnName="Id_Status" />
+                <ScalarProperty Name="Description" ColumnName="Description" />
+                <ScalarProperty Name="Campo1" ColumnName="Campo1" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Works">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Work">
+              <MappingFragment StoreEntitySet="Works">
+                <ScalarProperty Name="Id_Proceso" ColumnName="Id_Proceso" />
+                <ScalarProperty Name="Fecha_inicio" ColumnName="Fecha_inicio" />
+                <ScalarProperty Name="Id_Ensamble" ColumnName="Id_Ensamble" />
+                <ScalarProperty Name="Id_Programa" ColumnName="Id_Programa" />
+                <ScalarProperty Name="ID_WorkOrder" ColumnName="ID_WorkOrder" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="Linea" ColumnName="Linea" />
+                <ScalarProperty Name="Orden" ColumnName="Orden" />
+                <ScalarProperty Name="Fecha_setup" ColumnName="Fecha_setup" />
+                <ScalarProperty Name="Fecha_arranque" ColumnName="Fecha_arranque" />
+                <ScalarProperty Name="fecha_cierre" ColumnName="fecha_cierre" />
+                <ScalarProperty Name="Pzas_programadas" ColumnName="Pzas_programadas" />
+                <ScalarProperty Name="Pza_terminadas" ColumnName="Pza_terminadas" />
+                <ScalarProperty Name="Fecha_Proyectada" ColumnName="Fecha_Proyectada" />
+                <ScalarProperty Name="Id_Linea" ColumnName="Id_Linea" />
+                <ScalarProperty Name="Comentarios" ColumnName="Comentarios" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Works_Backup">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Works_Backup">
+              <MappingFragment StoreEntitySet="Works_Backup">
+                <ScalarProperty Name="Id_Proceso" ColumnName="Id_Proceso" />
+                <ScalarProperty Name="Fecha_inicio" ColumnName="Fecha_inicio" />
+                <ScalarProperty Name="Id_Ensamble" ColumnName="Id_Ensamble" />
+                <ScalarProperty Name="Id_Programa" ColumnName="Id_Programa" />
+                <ScalarProperty Name="ID_WorkOrder" ColumnName="ID_WorkOrder" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="Linea" ColumnName="Linea" />
+                <ScalarProperty Name="Orden" ColumnName="Orden" />
+                <ScalarProperty Name="Fecha_setup" ColumnName="Fecha_setup" />
+                <ScalarProperty Name="Fecha_arranque" ColumnName="Fecha_arranque" />
+                <ScalarProperty Name="fecha_cierre" ColumnName="fecha_cierre" />
+                <ScalarProperty Name="Pzas_programadas" ColumnName="Pzas_programadas" />
+                <ScalarProperty Name="Pza_terminadas" ColumnName="Pza_terminadas" />
+                <ScalarProperty Name="Comentarios" ColumnName="Comentarios" />
+                <ScalarProperty Name="Fecha_Proyectada" ColumnName="Fecha_Proyectada" />
+                <ScalarProperty Name="Id_Linea" ColumnName="Id_Linea" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="FiscalCalendars">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.FiscalCalendar">
+              <MappingFragment StoreEntitySet="FiscalCalendar">
+                <ScalarProperty Name="FiscalYear" ColumnName="FiscalYear" />
+                <ScalarProperty Name="CalendarQuarter" ColumnName="CalendarQuarter" />
+                <ScalarProperty Name="CalendarMonth" ColumnName="CalendarMonth" />
+                <ScalarProperty Name="CalendarWeekOfYear" ColumnName="CalendarWeekOfYear" />
+                <ScalarProperty Name="CalendarDayOfYear" ColumnName="CalendarDayOfYear" />
+                <ScalarProperty Name="FiscalQuarter" ColumnName="FiscalQuarter" />
+                <ScalarProperty Name="FiscalMonth" ColumnName="FiscalMonth" />
+                <ScalarProperty Name="FiscalWeek" ColumnName="FiscalWeek" />
+                <ScalarProperty Name="FiscalDay" ColumnName="FiscalDay" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Trolley_Program">
+            <EntityTypeMapping TypeName="BAESystemsGuaymasModel.Trolley_Program">
+              <MappingFragment StoreEntitySet="Trolley_Program">
+                <ScalarProperty Name="Id_Linea" ColumnName="Id_Linea" />
+                <ScalarProperty Name="No_Trolley" ColumnName="No_Trolley" />
+                <ScalarProperty Name="No_Posicion" ColumnName="No_Posicion" />
+                <ScalarProperty Name="No_Cabezal" ColumnName="No_Cabezal" />
+                <ScalarProperty Name="No_linea" ColumnName="No_linea" />
+                <ScalarProperty Name="Id_Programa" ColumnName="Id_Programa" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="true" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

@@ -1,0 +1,66 @@
+@model List<SnowTrolleyProduction.Models.LineaGestion>
+
+<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">Agregar Acomodo</h4>
+
+<div class="form-group">
+    <label class="form-label">Linea</label>
+    <select id="acoLineaSelect">
+        <option value="">-- Selecciona una linea--</option>
+        @foreach (var linea in Model)
+        {
+            <option value="@linea.Id_Linea">@linea.Numero_Linea</option>
+        }
+    </select>
+</div>
+
+<div id="acoAutocompletadoContainer"></div>
+
+<div class="form-actions" style="margin-top:16px;">
+    <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
+    <button type="button" class="k-button k-primary" id="btnSubmitAcomodo" style="display:none;"><i class="fas fa-save"></i> Guardar</button>
+</div>
+
+<script>
+(function () {
+    var $ddlLinea = $('#acoLineaSelect').kendoDropDownList({
+        optionLabel: '-- Selecciona una linea --',
+        change: function () {
+            var lineaId = this.value();
+            if (!lineaId) {
+                $('#acoAutocompletadoContainer').empty();
+                $('#btnSubmitAcomodo').hide();
+                return;
+            }
+            $.get(TG.urls.acomodoAutocompletado, { linea: lineaId }, function (html) {
+                $('#acoAutocompletadoContainer').html(html);
+                $('#btnSubmitAcomodo').show();
+            });
+        }
+    }).data('kendoDropDownList');
+
+    $(document).on('click', '#btnSubmitAcomodo', function () {
+        var programaId = parseInt($('#acoPrograma').val());
+        if (!programaId) { tgAlert('Error', 'Selecciona un programa.'); return; }
+
+        var data = { ProgramaId: programaId, MaquinaId: 0, MaquinaId2: 0 };
+
+        $('.aco-maquina-id').each(function () {
+            var idx = parseInt($(this).data('idx'));
+            if (idx === 1) data.MaquinaId = parseInt($(this).val()) || 0;
+            else data.MaquinaId2 = parseInt($(this).val()) || 0;
+        });
+
+        $('.aco-drop-zone').each(function () {
+            var name = $(this).data('name');
+            var val = parseInt($(this).data('val'));
+            if (val > 0) data[name] = val;
+        });
+
+        var $btn = $(this).prop('disabled', true);
+        $.post(TG.urls.agregarAcomodo, data, function (r) {
+            if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarAcomodos(); }
+            else tgAlert('Error', r.message);
+        }).always(function () { $btn.prop('disabled', false); });
+    });
+})();
+</script>

@@ -1,0 +1,91 @@
+@model List<SnowTrolleyProduction.Models.EnsambleGestion>
+@{
+    var programa = ViewBag.Programa as SnowTrolleyProduction.Models.ProgramaGestion;
+    string titulo = programa != null ? "Editar Programa" : "Agregar Programa";
+    bool esEdicion = programa != null;
+}
+
+<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">@titulo</h4>
+
+@if (esEdicion)
+{
+    <input type="hidden" id="modalProgramaId" value="@programa.Id" />
+}
+
+<div class="form-group">
+    <label class="form-label">Ensamble</label>
+    <select id="modalProgramaEnsambleSelect">
+        @foreach (var ens in Model)
+        {
+            <option value="@ens.Id" @(esEdicion && programa.Ensamble != null && programa.Ensamble.Id == ens.Id ? "selected" : "")>@ens.Numero</option>
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Numero de Programa *</label>
+    <input id="modalProgramaNumero" value="@(esEdicion ? programa.Numero : "")" style="width:100%;" />
+</div>
+
+<div class="form-group" style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
+    <div>
+        <label class="form-label">Comp. Diferentes</label>
+        <input id="modalProgramaCantDif" value="@(esEdicion ? programa.CantDiferentes : 0)" style="width:130px;" />
+        <small style="color:#9aa0b8;font-size:.75rem;display:block;margin-top:4px;">Tipos distintos de componentes.</small>
+    </div>
+    <div>
+        <label class="form-label">Total Materiales</label>
+        <input id="modalProgramaMateriales" value="@(esEdicion ? programa.CantidadMateriales : 0)" style="width:130px;" />
+        <small style="color:#9aa0b8;font-size:.75rem;display:block;margin-top:4px;">Cantidad total de componentes.</small>
+    </div>
+</div>
+
+<div class="form-actions">
+    <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
+    <button type="button" class="k-button k-primary" id="btnSubmitPrograma"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
+</div>
+
+<script>
+(function () {
+    var esEdicion = @(esEdicion ? "true" : "false");
+
+    var $ensambleDDL = $('#modalProgramaEnsambleSelect').kendoDropDownList().data('kendoDropDownList');
+    $('#modalProgramaNumero').kendoTextBox();
+    var $numDif = $('#modalProgramaCantDif').kendoNumericTextBox({
+        min: 0, decimals: 0, format: '##', placeholder: '0'
+    }).data('kendoNumericTextBox');
+    var $numMat = $('#modalProgramaMateriales').kendoNumericTextBox({
+        min: 0, decimals: 0, format: '##', placeholder: '0'
+    }).data('kendoNumericTextBox');
+
+    if (esEdicion) {
+        var programaId = parseInt($('#modalProgramaId').val());
+        $.get(TG.urls.getDetallesPrograma, { programaId: programaId }, function (r) {
+            if (r.cantidadTotalMateriales !== undefined) {
+                $numMat.value(r.cantidadTotalMateriales);
+            }
+        });
+    }
+
+    $('#btnSubmitPrograma').on('click', function () {
+        var numero     = ($('#modalProgramaNumero').val() || '').trim();
+        var ensambleId = parseInt($ensambleDDL.value());
+        var materiales = $numMat.value() || 0;
+        var cantDif    = $numDif.value() || 0;
+        if (!numero) { tgAlert('Campo requerido', 'El numero de programa es requerido.'); return; }
+        var $btn = $(this).prop('disabled', true);
+        if (esEdicion) {
+            var programaId = parseInt($('#modalProgramaId').val());
+            $.post(TG.urls.editarPrograma, { programaId: programaId, ensambleId: ensambleId, numero: numero, cantidadMateriales: materiales, cantDiferentes: cantDif }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarProgramas(); }
+                else { tgAlert('Error', r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+        } else {
+            $.post(TG.urls.agregarPrograma, { numero: numero, ensambleId: ensambleId, cantidadMateriales: materiales, cantDiferentes: cantDif }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarProgramas(); }
+                else { tgAlert('Error', r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+        }
+    });
+})();
+</script>

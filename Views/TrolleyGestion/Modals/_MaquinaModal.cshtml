@@ -1,0 +1,86 @@
+@model List<SnowTrolleyProduction.Models.LineaGestion>
+@{
+    var maquina = ViewBag.Maquina as SnowTrolleyProduction.Models.MaquinaGestion;
+    string titulo = maquina != null ? "Editar Máquina" : "Agregar Máquina";
+    bool esEdicion = maquina != null;
+}
+
+<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">@titulo</h4>
+
+@if (esEdicion)
+{
+    <input type="hidden" id="modalMaquinaId" value="@maquina.Id" />
+}
+
+<div class="form-group">
+    <label class="form-label">Línea</label>
+    <select id="modalLineaSelect">
+        @foreach (var linea in Model)
+        {
+            if (esEdicion && maquina.Linea != null && maquina.Linea.Id_Linea == linea.Id_Linea)
+            {
+                <option value="@linea.Id_Linea" selected>@linea.Numero_Linea</option>
+            }
+            else
+            {
+                <option value="@linea.Id_Linea">@linea.Numero_Linea</option>
+            }
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Equipo</label>
+    <input id="modalEquipoSelect" style="width:100%;" />
+</div>
+
+<div class="form-actions">
+    <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
+    <button type="button" class="k-button k-primary" id="btnSubmitMaquina"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
+</div>
+
+<script>
+(function () {
+    var esEdicion = @(esEdicion ? "true" : "false");
+    var equipoActual = @(esEdicion && maquina.Equipo != null ? maquina.Equipo.IdEquipo.ToString() : "null");
+
+    var $lineaDDL = $('#modalLineaSelect').kendoDropDownList({
+        change: cargarEquipos
+    }).data('kendoDropDownList');
+
+    var $equipoDDL = $('#modalEquipoSelect').kendoDropDownList({
+        dataTextField: 'EquipoDescripcion',
+        dataValueField: 'IdEquipo',
+        optionLabel: 'Selecciona un equipo...'
+    }).data('kendoDropDownList');
+
+    function cargarEquipos() {
+        var lineaId = $lineaDDL.value();
+        $.get(TG.urls.equiposPorLinea, { lineaId: lineaId, equipoActual: equipoActual }, function (r) {
+            $equipoDDL.setDataSource(r.equipos);
+            if (equipoActual) $equipoDDL.value(equipoActual);
+        });
+    }
+
+    cargarEquipos();
+
+    $('#btnSubmitMaquina').on('click', function () {
+        var equipoId = parseInt($equipoDDL.value());
+        var lineaId  = parseInt($lineaDDL.value());
+        if (!equipoId) { tgAlert('Campo requerido', 'Selecciona un equipo.'); return; }
+        var $btn = $(this).prop('disabled', true);
+        if (esEdicion) {
+            var maquinaId = parseInt($('#modalMaquinaId').val());
+            $.post(TG.urls.editarMaquina, { maquinaId: maquinaId, equipoId: equipoId }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarMaquinas(); }
+                else { tgAlert('Error', r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+        } else {
+            $.post(TG.urls.agregarMaquina, { equipoId: equipoId, lineaId: lineaId }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarMaquinas(); }
+                else { tgAlert('Error', r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+        }
+    });
+})();
+</script>

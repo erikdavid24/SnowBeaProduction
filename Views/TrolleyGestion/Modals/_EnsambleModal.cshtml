@@ -1,0 +1,68 @@
+@model List<SnowTrolleyProduction.Models.LineaGestion>
+@{
+    var ensamble = ViewBag.Ensamble as SnowTrolleyProduction.Models.EnsambleGestion;
+    string titulo = ensamble != null ? "Editar Ensamble" : "Agregar Ensamble";
+    bool esEdicion = ensamble != null;
+}
+
+<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">@titulo</h4>
+
+@if (esEdicion)
+{
+    <input type="hidden" id="modalEnsambleId" value="@ensamble.Id" />
+}
+
+<div class="form-group">
+    <label class="form-label">Linea</label>
+    <select id="modalEnsambleLineaSelect">
+        @foreach (var linea in Model)
+        {
+            if (esEdicion && ensamble.Linea != null && linea.Id_Linea == ensamble.Linea.Id_Linea)
+            {
+                <option value="@linea.Id_Linea" selected>Linea @linea.Numero_Linea</option>
+            }
+            else
+            {
+                <option value="@linea.Id_Linea">Linea @linea.Numero_Linea</option>
+            }
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label class="form-label">Ensamble</label>
+    <input id="modalEnsambleNumero" value="@(esEdicion ? ensamble.Numero : "")" style="width:100%;" />
+</div>
+
+<div class="form-actions">
+    <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
+    <button type="button" class="k-button k-primary" id="btnSubmitEnsamble"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
+</div>
+
+<script>
+(function () {
+    var esEdicion = @(esEdicion ? "true" : "false");
+
+    $('#modalEnsambleLineaSelect').kendoDropDownList();
+    $('#modalEnsambleNumero').kendoTextBox();
+
+    $('#btnSubmitEnsamble').on('click', function () {
+        var numero = ($('#modalEnsambleNumero').val() || '').trim();
+        var lineaId = parseInt($('#modalEnsambleLineaSelect').data('kendoDropDownList').value());
+        if (!numero) { tgAlert('Campo requerido', 'El número de ensamble es requerido.'); return; }
+        var $btn = $(this).prop('disabled', true);
+        if (esEdicion) {
+            var ensambleId = parseInt($('#modalEnsambleId').val());
+            $.post(TG.urls.editarEnsamble, { ensambleId: ensambleId, numero: numero, lineaId: lineaId }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarEnsambles(); }
+                else { tgAlert('Error', r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+        } else {
+            $.post(TG.urls.agregarEnsamble, { numero: numero, lineaId: lineaId }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarEnsambles(); }
+                else { tgAlert('Error', r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+        }
+    });
+})();
+</script>

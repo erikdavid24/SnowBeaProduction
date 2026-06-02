@@ -1,0 +1,251 @@
+/* ========================================================================= */
+/* BORDES EN PICO (SIN REDONDEO)                                             */
+/* ========================================================================= */
+*, *::before, *::after { border-radius: 0 !important; }
+
+/* ========================================================================= */
+/* TROLLEY GESTION STYLES                                                    */
+/* ========================================================================= */
+
+/* ── Kendo TabStrip overrides ─────────────────────────────────────────────── */
+#tabsGestion.k-tabstrip { border: none; background: transparent; }
+
+#tabsGestion > .k-tabstrip-items {
+    border-bottom: 2px solid #e2e6f0;
+    background: transparent;
+    padding: 0;
+}
+
+#tabsGestion > .k-tabstrip-items .k-item {
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    margin-bottom: -2px;
+}
+
+#tabsGestion > .k-tabstrip-items .k-item .k-link {
+    font-weight: 600;
+    color: #646c9a;
+    padding: 10px 20px;
+    font-size: .9rem;
+    transition: color .15s;
+}
+
+#tabsGestion > .k-tabstrip-items .k-item:hover .k-link,
+#tabsGestion > .k-tabstrip-items .k-state-active .k-link {
+    color: #5d78ff;
+}
+
+#tabsGestion > .k-tabstrip-items .k-state-active {
+    border-bottom-color: #5d78ff;
+    background: transparent;
+}
+
+#tabsGestion > .k-tabstrip-items .k-item:focus,
+#tabsGestion > .k-tabstrip-items .k-item.k-state-focused {
+    box-shadow: none;
+}
+
+#tabsGestion > .k-content {
+    background: #fff;
+    border: 1px solid #e2e6f0;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 16px;
+    min-height: 220px;
+}
+
+/* ── Toolbar ──────────────────────────────────────────────────────────────── */
+.gestion-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.gestion-search {
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+}
+
+.tg-tab-body { min-height: 80px; }
+
+/* ── Kendo Grid ───────────────────────────────────────────────────────────── */
+.k-grid {
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.k-grid .k-grid-search {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+/* ========================================================================= */
+/* ACOMODO MACHINE LAYOUT (visual zone layout in modal)                      */
+/* ========================================================================= */
+.acomodo-machine-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    margin: 16px 0;
+}
+
+.acomodo-slots-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    align-items: center;
+}
+
+.acomodo-slot-spacer { width: 30px; }
+
+.acomodo-slot-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.acomodo-slot-label {
+    font-weight: 700;
+    font-size: .75rem;
+    color: #3d4465;
+    text-align: center;
+}
+
+.acomodo-trolley-slot {
+    width: 72px;
+    height: 46px;
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 700;
+    font-size: .78rem;
+    border-radius: 6px;
+    border: 2px solid #333;
+    text-align: center;
+    cursor: pointer;
+    padding: 0 2px;
+}
+
+.acomodo-trolley-slot option {
+    background-color: #fff;
+    color: #333;
+    font-weight: 400;
+}
+
+.acomodo-machine-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    justify-content: center;
+}
+
+.acomodo-machine-rect {
+    background: #d1d5db;
+    border: 2px solid #333;
+    border-radius: 10px;
+    padding: 18px 32px;
+    font-weight: 700;
+    color: #3d4465;
+    font-size: .85rem;
+    text-align: center;
+    min-width: 180px;
+}
+
+/* ========================================================================= */
+/* ACOMODO TOGGLE ARROWS                                                     */
+/* ========================================================================= */
+.acomodo-arrow {
+    transition: transform .15s;
+    color: #646c9a;
+    font-size: .8rem;
+}
+
+/* ========================================================================= */
+/* ACOMODO ACCORDION TABLES  (matches tg-grid dark-header theme)             */
+/* ========================================================================= */
+.acomodo-outer-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #e2e6f0;
+    border-radius: 0 0 6px 6px;
+    margin-bottom: 0;
+}
+
+.acomodo-outer-table thead th {
+    background: #f5f6fa;
+    color: #3d4465;
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 9px 14px;
+    border-color: #e2e6f0;
+}
+
+.acomodo-outer-table tbody td {
+    font-size: .88rem;
+    padding: 9px 14px;
+    border-bottom: 1px solid #f0f2f8;
+    vertical-align: middle;
+}
+
+.acomodo-outer-table tbody tr:nth-child(4n+1) td,
+.acomodo-outer-table tbody tr:nth-child(4n+2) td { background: #fafbfe; }
+
+.acomodo-outer-table tbody tr.acomodo-toggle:hover td { background: #f0f3fc; cursor: pointer; }
+
+.acomodo-mid-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #e2e6f0;
+    margin: 6px 0;
+}
+
+.acomodo-mid-table thead th {
+    background: #f0f2f8;
+    color: #3d4465;
+    font-size: .78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 7px 12px;
+    border-color: #e2e6f0;
+}
+
+.acomodo-mid-table tbody td {
+    font-size: .84rem;
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f2f8;
+    vertical-align: middle;
+}
+
+.acomodo-mid-table tbody tr.acomodo-toggle:hover td { background: #f0f3fc; cursor: pointer; }
+
+.acomodo-inner-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #e2e6f0;
+    margin: 6px 0;
+}
+
+.acomodo-inner-table thead th {
+    background: #eef0f8;
+    color: #3d4465;
+    font-size: .76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 6px 12px;
+    border-color: #e2e6f0;
+}
+
+.acomodo-inner-table tbody td {
+    font-size: .83rem;
+    padding: 6px 12px;
+    border-bottom: 1px solid #f0f2f8;
+}

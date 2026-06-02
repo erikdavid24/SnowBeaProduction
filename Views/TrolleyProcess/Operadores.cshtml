@@ -1,0 +1,158 @@
+@{ Layout = null; }
+@{
+    var resUrl = BAEClassLibrary.UserContext.current.ResourcesApiUrl;
+    var kendo  = "2021.3.1109";
+}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Tablero Operadores</title>
+<link rel="stylesheet" href="@resUrl/Content/allNew.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+<style>
+*{box-sizing:border-box}
+body{background:#f0f2f8;font-family:"Segoe UI",sans-serif;margin:0}
+.op-bar{background:#3d4465;color:#fff;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.op-bar h5{margin:0;font-size:1rem;font-weight:700}
+.op-meta{display:flex;align-items:center;gap:12px;font-size:.78rem;color:#b8bcd8}
+.op-back{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:5px;padding:3px 11px;font-size:.76rem;font-weight:600;text-decoration:none}
+.op-back:hover{background:rgba(255,255,255,.22);color:#fff;text-decoration:none}
+@@keyframes bl{0%,100%{opacity:1}50%{opacity:.2}}
+.dot{width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:4px;animation:bl 2s infinite}
+.op-main{padding:14px}
+.op-grid{display:flex;gap:10px;align-items:flex-start;overflow-x:auto}
+.op-col{flex:1;min-width:200px}
+.op-col-header{background:#5d6a8e;color:#fff;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:6px 11px;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:space-between}
+.op-col-body{background:#e9ecf4;border:1px solid #dde1ef;border-top:none;border-radius:0 0 6px 6px;min-height:60px;padding:7px}
+.op-card-wrap{margin-bottom:7px}
+.k-card{border-left:4px solid transparent}
+.k-card.arranque{border-left-color:#22c55e}
+.k-card.setup{border-left-color:#f59e0b}
+.op-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
+.op-card-ensamble{font-size:.85rem;font-weight:700;color:#3d4465}
+.op-card-prog{font-size:.68rem;color:#9aa0b8;margin-top:1px}
+.op-card-detail{font-size:.7rem;color:#646c9a;display:flex;flex-wrap:wrap;gap:7px;margin-bottom:5px}
+.op-card-detail strong{color:#3d4465}
+.op-chips{display:flex;flex-wrap:wrap;gap:3px;padding-top:5px;border-top:1px solid #f0f2f8}
+.op-col-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-left:4px}
+.op-col-dot.a{background:#22c55e;animation:bl 2s infinite}
+.op-col-dot.s{background:#fbbf24}
+.op-empty{text-align:center;color:#b0b7d0;padding:50px 20px}
+img.show-empty{width:280px!important;height:280px!important;background-size:280px 280px!important;display:block!important;margin:0 auto!important}
+</style>
+</head>
+<body>
+
+<div class="op-bar">
+  <h5><i class="fas fa-hard-hat" style="margin-right:7px"></i>Tablero Operadores &ndash; En Proceso</h5>
+  <div class="op-meta">
+    <span><span class="dot"></span>En vivo &middot; <span id="lh">--:--:--</span></span>
+    <a href="@Url.Action("Index","TrolleyProcess")" class="op-back">&#8592; Plan de Produccion</a>
+  </div>
+</div>
+
+<div class="op-main" id="mn">
+  <div class="op-empty"><i class="fas fa-spinner fa-spin"></i><strong>Cargando...</strong></div>
+</div>
+
+<script src="@resUrl/assets/plugins/global/plugins.bundle.js"></script>
+<script src="@resUrl/Scripts/kendo/@kendo/kendo.all.min.js"></script>
+<script>
+var U = '@Url.Action("ObtenerResumenSetup","TrolleyProcess")';
+
+function hd(s) {
+    if (!s) return '--';
+    var m = parseInt(s.replace(/\/Date\((-?\d+)[^)]*\)\//, '$1'));
+    if (isNaN(m)) return '--';
+    var d = new Date(m);
+    return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function badgeStatus(s) {
+    return s === 'Arranque'
+        ? '<span class="k-badge k-badge-solid k-badge-success" style="padding:1px 6px;font-size:.63rem;font-weight:700;"><i class="fas fa-play-circle"></i> Arranque</span>'
+        : '<span class="k-badge k-badge-solid k-badge-warning" style="padding:1px 6px;font-size:.63rem;font-weight:700;"><i class="fas fa-cog"></i> Setup</span>';
+}
+
+function chips(t) {
+    if (!t) return '<span style="color:#b0b7d0;font-size:.68rem;">Sin trolleys</span>';
+    var o = '';
+    $.each(t.split(','), function (_, x) {
+        x = x.trim();
+        if (x) o += '<span class="k-badge k-badge-solid k-badge-success" style="font-size:.62rem;font-weight:700;padding:1px 6px;">' + x + '</span>';
+    });
+    return o || '<span style="color:#b0b7d0;font-size:.68rem;">Sin trolleys</span>';
+}
+
+function render(data) {
+    var w = $('#mn').empty();
+    if (!data || !data.length) {
+        w.html('<div class="op-empty"><div class="k-grid" style="border:none;background:transparent;overflow:visible;height:auto;box-shadow:none;"><img class="show-empty" /></div></div>');
+        return;
+    }
+
+    var ls = [], pl = {};
+    $.each(data, function (_, t) {
+        if (!pl[t.linea]) { pl[t.linea] = []; ls.push(t.linea); }
+        pl[t.linea].push(t);
+    });
+    ls.sort(function (a, b) { return a - b; });
+
+    var g = $('<div class="op-grid"></div>');
+    $.each(ls, function (_, l) {
+        var rs = pl[l];
+        var ha = $.grep(rs, function (t) { return t.status === 'Arranque'; }).length > 0;
+        var cards = '';
+        $.each(rs, function (_, t) {
+            var cl = t.status === 'Arranque' ? 'arranque' : 'setup';
+            cards +=
+                '<div class="op-card-wrap">' +
+                '<div class="k-card ' + cl + '" style="padding:9px 11px;">' +
+                '<div class="op-card-top">' +
+                '<div><div class="op-card-ensamble">' + (t.ensamble || t.id_Programa || '--') + '</div>' +
+                '<div class="op-card-prog">' + (t.id_Programa || '') + '</div></div>' +
+                badgeStatus(t.status) +
+                '</div>' +
+                '<div class="op-card-detail">' +
+                '<span><strong>WO:</strong> ' + (t.workOrder || '--') + '</span>' +
+                '<span><strong>Pzas:</strong> ' + (t.piezasProgramadas > 0 ? t.piezasProgramadas : '--') + '</span>' +
+                '<span><i class="fas fa-clock" style="margin-right:2px"></i>' + hd(t.fechaCreacion) + '</span>' +
+                '</div>' +
+                '<div class="op-chips">' + chips(t.trolleys) + '</div>' +
+                '</div>' +
+                '</div>';
+        });
+        g.append(
+            '<div class="op-col">' +
+            '<div class="op-col-header">' +
+            '<span><i class="fas fa-industry" style="margin-right:4px"></i>Linea ' + l + '</span>' +
+            '<span class="op-col-dot ' + (ha ? 'a' : 's') + '"></span>' +
+            '</div>' +
+            '<div class="op-col-body">' + cards + '</div>' +
+            '</div>'
+        );
+    });
+    w.append(g);
+}
+
+function tick() {
+    var n = new Date();
+    $('#lh').text(n.getHours().toString().padStart(2,'0') + ':' +
+                  n.getMinutes().toString().padStart(2,'0') + ':' +
+                  n.getSeconds().toString().padStart(2,'0'));
+}
+
+function go() {
+    $.get(U, render).fail(function () {
+        $('#mn').html('<div class="op-empty"><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i><strong>Error de conexion</strong>Reintentando en 30s...</div>');
+    });
+}
+
+go();
+setInterval(go, 30000);
+setInterval(tick, 1000);
+</script>
+</body>
+</html>

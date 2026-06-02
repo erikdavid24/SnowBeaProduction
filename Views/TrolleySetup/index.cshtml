@@ -1,0 +1,318 @@
+@{
+    ViewBag.Title = "Setup de Trolleys";
+}
+
+@section Styles {
+    <link href="~/Content/css/programa-gestion.css" rel="stylesheet" />
+    <style>
+        .svg-container { display: flex; justify-content: center; align-items: center; width: 100%; margin-top: 10px; }
+        svg { width: 85%; max-width: 960px; height: auto; }
+        .slot    { stroke: black; stroke-width: 2; filter: drop-shadow(2px 2px 5px rgba(0,0,0,.3)); }
+        .machine { filter: drop-shadow(4px 4px 8px rgba(0,0,0,.4)); }
+        svg text { font-size: 16px; font-weight: bold; }
+        .ts-setup-panel { background: #fff; border: 1px solid #e8ecf1; border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 5px rgba(0,0,0,.06); margin-bottom: 16px; }
+        .ts-btn-row { display: flex; gap: 10px; }
+        .ts-btn-row .k-button { flex: 1; }
+    </style>
+}
+
+@(Html.Kendo().Notification().Name("tsNotif")
+    .Position(p => p.Top(30).Right(20))
+    .AutoHideAfter(3000))
+
+<div class="ts-header" style="margin-bottom:14px;">
+    <h4><i class="fas fa-tools" style="margin-right:8px;"></i>Setup de Trolleys</h4>
+    <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded">
+        <i class="fas fa-chevron-left"></i> Ir a Trabajos
+    </a>
+</div>
+
+<div class="ts-setup-panel">
+    <div class="form-row" style="gap:16px;align-items:flex-end;">
+        <div class="form-col">
+            <label class="form-label">Programa</label>
+            @(Html.Kendo().TextBox().Name("txtPrograma").Readonly(true).HtmlAttributes(new { style = "width:100%;" }))
+        </div>
+        <div class="form-col">
+            <label class="form-label">Pzas. Programadas</label>
+            @(Html.Kendo().NumericTextBox<int>().Name("txtPzasProg").Decimals(0).HtmlAttributes(new { style = "width:100%;", @readonly = "readonly" }))
+        </div>
+        <div class="form-col ts-btn-row">
+            @(Html.Kendo().Button().Name("btnEnProceso").Content("<i class='fas fa-play-circle'></i> Iniciar Proceso")
+                .HtmlAttributes(new { type = "button", @class = "k-primary btn-rounded" }))
+            @(Html.Kendo().Button().Name("btnFinalizar").Content("<i class='fas fa-stop-circle'></i> Finalizar")
+                .Enable(false)
+                .HtmlAttributes(new { type = "button", @class = "btn-rounded", style = "color:#ef4444;border-color:#fecaca;" }))
+        </div>
+    </div>
+    <input type="hidden" id="hfIdProceso" />
+    <input type="hidden" id="hfPzasYa" />
+</div>
+
+<div class="svg-container">
+    <svg viewBox="0 0 900 400">
+        <rect id="machineBody1" class="machine" x="50"  y="70" width="300" height="180" fill="lightgray" stroke="black" stroke-width="2" rx="10" ry="10"/>
+        <rect id="machineBody2" class="machine" x="550" y="70" width="300" height="180" fill="lightgray" stroke="black" stroke-width="2" rx="10" ry="10"/>
+        <text id="machineName1" x="120" y="140" fill="blue">Europlacer IINEO</text>
+        <text id="machineName2" x="620" y="140" fill="blue">Europlacer IINEO</text>
+        <text x="140" y="160" fill="red" id="enProceso1" style="display:none;">En Proceso</text>
+        <text x="640" y="160" fill="red" id="enProceso2" style="display:none;">En Proceso</text>
+        <g id="engrane1" transform="translate(180,200) scale(2)" style="display:none;">
+            <circle cx="0" cy="0" r="10" stroke="black" stroke-width="2" fill="gray"/>
+            <path d="M -10,-5 L 10,-5 L 10,5 L -10,5 Z" fill="black"/>
+            <animateTransform attributeType="XML" attributeName="transform" type="rotate" from="0" to="360" dur="2s" repeatCount="indefinite" additive="sum"/>
+        </g>
+        <g id="engrane2" transform="translate(680,200) scale(2)" style="display:none;">
+            <circle cx="0" cy="0" r="10" stroke="black" stroke-width="2" fill="gray"/>
+            <path d="M -10,-5 L 10,-5 L 10,5 L -10,5 Z" fill="black"/>
+            <animateTransform attributeType="XML" attributeName="transform" type="rotate" from="0" to="360" dur="2s" repeatCount="indefinite" additive="sum"/>
+        </g>
+        <rect class="machine" x="400" y="130" width="100" height="40" fill="gray" stroke="black" stroke-width="2" rx="10" ry="10"/>
+        <!-- Slots M1 top -->
+        <rect id="Z90_1" class="slot" x="60"  y="80" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z80_1" class="slot" x="70"  y="20" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z70_1" class="slot" x="130" y="20" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z60_1" class="slot" x="230" y="20" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z50_1" class="slot" x="300" y="20" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <!-- Slots M1 bottom -->
+        <rect id="Z10_1" class="slot" x="70"  y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z20_1" class="slot" x="130" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z30_1" class="slot" x="230" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z40_1" class="slot" x="300" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <!-- Slots M2 top -->
+        <rect id="Z90_2" class="slot" x="560" y="80"  width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z80_2" class="slot" x="570" y="20"  width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z70_2" class="slot" x="630" y="20"  width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z60_2" class="slot" x="730" y="20"  width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z50_2" class="slot" x="800" y="20"  width="40" height="40" fill="red" rx="5" ry="5"/>
+        <!-- Slots M2 bottom -->
+        <rect id="Z10_2" class="slot" x="570" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z20_2" class="slot" x="630" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z30_2" class="slot" x="730" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <rect id="Z40_2" class="slot" x="800" y="260" width="40" height="40" fill="red" rx="5" ry="5"/>
+        <!-- Labels M1 -->
+        <text x="65"  y="135" fill="black" font-size="14px">Z90</text>
+        <text x="70"  y="15"  fill="black">Z80</text>
+        <text x="130" y="15"  fill="black">Z70</text>
+        <text x="230" y="15"  fill="black">Z60</text>
+        <text x="300" y="15"  fill="black">Z50</text>
+        <text x="70"  y="315" fill="black">Z10</text>
+        <text x="130" y="315" fill="black">Z20</text>
+        <text x="230" y="315" fill="black">Z30</text>
+        <text x="300" y="315" fill="black">Z40</text>
+        <!-- Labels M2 -->
+        <text x="565" y="135" fill="black" font-size="14px">Z90</text>
+        <text x="570" y="15"  fill="black">Z80</text>
+        <text x="630" y="15"  fill="black">Z70</text>
+        <text x="730" y="15"  fill="black">Z60</text>
+        <text x="800" y="15"  fill="black">Z50</text>
+        <text x="570" y="315" fill="black">Z10</text>
+        <text x="630" y="315" fill="black">Z20</text>
+        <text x="730" y="315" fill="black">Z30</text>
+        <text x="800" y="315" fill="black">Z40</text>
+    </svg>
+</div>
+
+@section Scripts {
+<script>
+var U = {
+    datos:     '@Url.Action("ObtenerDatosPorLinea",   "TrolleySetup")',
+    arranque:  '@Url.Action("ActualizarArranque",     "TrolleySetup")',
+    finalizar: '@Url.Action("FinalizarProceso",       "TrolleySetup")',
+    admin:     '@Url.Action("VerificarPasswordAdmin", "TrolleySetup")'
+};
+var linea = @Html.Raw(ViewBag.LineaSeleccionada != null ? ViewBag.LineaSeleccionada.ToString() : "null");
+var m1 = false, m2 = false;
+
+function notif(msg, type) {
+    $('#tsNotif').data('kendoNotification').show({ message: msg }, type || 'info');
+}
+
+function tsAlert(title, msg, icon) {
+    $('<div/>').appendTo('body').kendoDialog({
+        width: 380, title: title, closable: true, modal: true,
+        content: '<p style="margin:0;color:#3d4465;">' + msg + '</p>',
+        actions: [{ text: 'Aceptar', primary: true }],
+        close: function () { this.destroy(); }
+    }).data('kendoDialog').open();
+}
+
+function lbl(text) {
+    return '<label style="font-size:.82rem;color:#3d4465;font-weight:600;display:block;margin-bottom:4px;">' + text + '</label>';
+}
+
+// ── SVG helpers ───────────────────────────────────────────────────────────────
+function reset() {
+    $('text[id$="_text"]').remove();
+    $('rect.slot').attr('fill', 'red');
+    $('rect.machine').attr('fill', 'lightgray');
+    $('#enProceso1,#enProceso2,#engrane1,#engrane2').hide();
+    $('#txtPrograma').data('kendoTextBox').value('');
+    $('#txtPzasProg').data('kendoNumericTextBox').value(null);
+    $('#hfPzasYa').val('');
+    $('#hfIdProceso').val('');
+    $('#btnEnProceso').data('kendoButton').enable(true);
+    $('#btnFinalizar').data('kendoButton').enable(false);
+    m1 = m2 = false;
+}
+
+function svgText($r, id, txt) {
+    var x = parseFloat($r.attr('x')) + 20, y = parseFloat($r.attr('y')) + 20;
+    $('#' + id + '_text').remove();
+    var el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    el.setAttribute('id', id + '_text');
+    el.setAttribute('x', x); el.setAttribute('y', y);
+    el.setAttribute('text-anchor', 'middle'); el.setAttribute('dominant-baseline', 'central');
+    el.setAttribute('font-size', '11'); el.setAttribute('font-weight', 'bold'); el.setAttribute('fill', 'white');
+    el.textContent = txt;
+    $r.closest('svg').append(el);
+}
+
+function activarMaquinas() {
+    if (m1) { $('#machineBody1').attr('fill', 'green'); $('#enProceso1,#engrane1').show(); }
+    if (m2) { $('#machineBody2').attr('fill', 'green'); $('#enProceso2,#engrane2').show(); }
+    $('#btnEnProceso').data('kendoButton').enable(false);
+    $('#btnFinalizar').data('kendoButton').enable(true);
+}
+
+// ── cargar ────────────────────────────────────────────────────────────────────
+function cargar(l) {
+    if (!l) return;
+    reset();
+    $.post(U.datos, { linea: l }, function (r) {
+        if (!r || r.message) { $('#txtPrograma').data('kendoTextBox').value('Sin proceso activo'); return; }
+        var tp = r.trolleyPositions || [];
+        m1 = tp.some(function (t) { return t.noCabezal === 1; });
+        m2 = tp.some(function (t) { return t.noCabezal === 2; });
+        $('#hfPzasYa').val(r.pzaTerminadas || 0);
+        $('#txtPrograma').data('kendoTextBox').value(r.programaSeleccionado);
+        $('#txtPzasProg').data('kendoNumericTextBox').value(r.piezasProgramadas);
+        $('#hfIdProceso').val(r.idProceso);
+
+        if (tp.length) {
+            var a = tp.find(function (t) { return t.noCabezal === 1; });
+            var b = tp.find(function (t) { return t.noCabezal === 2; });
+            if (a && a.nombreMaquina) $('#machineName1').text(a.nombreMaquina);
+            if (b && b.nombreMaquina) $('#machineName2').text(b.nombreMaquina);
+            $.each(tp, function (_, t) {
+                var rid = 'Z' + t.noPosicion + '_' + t.noCabezal;
+                var $r  = $('#' + rid);
+                if ($r.length) { $r.attr('fill', 'green'); svgText($r, rid, t.noTrolley); }
+            });
+        }
+
+        if (r.status === 'Arranque') activarMaquinas();
+    });
+}
+
+// ── iniciar proceso ───────────────────────────────────────────────────────────
+$('#btnEnProceso').on('click', function () {
+    var id = $('#hfIdProceso').val();
+    if (!id) { tsAlert('Aviso', 'No hay proceso cargado.', 'warning'); return; }
+
+    $('<div/>').appendTo('body').kendoDialog({
+        width: 400, title: 'Iniciar Proceso', closable: true, modal: true,
+        content: '<p style="margin:0;color:#3d4465;">Se cambiara el estado a <b>Arranque</b>. &iquest;Deseas continuar?</p>',
+        actions: [
+            { text: 'Cancelar' },
+            {
+                text: 'Iniciar', primary: true,
+                action: function () {
+                    $.post(U.arranque, { idProceso: id }, function (r) {
+                        if (r.success) {
+                            activarMaquinas();
+                            notif(r.message, 'success');
+                        } else { tsAlert('Error', r.message, 'error'); }
+                    }).fail(function () { tsAlert('Error', 'Error de conexion.', 'error'); });
+                }
+            }
+        ],
+        close: function () { this.destroy(); }
+    }).data('kendoDialog').open();
+});
+
+// ── finalizar ─────────────────────────────────────────────────────────────────
+$('#btnFinalizar').on('click', function () {
+    var htmlPiezas =
+        '<div style="padding:8px 0;">' +
+        lbl('Piezas producidas') +
+        '<input id="dlgInputPzas" type="number" min="0" class="k-textbox" style="width:140px;" placeholder="0" />' +
+        '</div>';
+
+    $('<div/>').appendTo('body').kendoDialog({
+        width: 380, title: 'Finalizar Proceso', closable: true, modal: true,
+        content: htmlPiezas,
+        actions: [
+            { text: 'Cancelar' },
+            {
+                text: 'Continuar', primary: true,
+                action: function () {
+                    var v = $('#dlgInputPzas').val();
+                    if (v === '') { tsAlert('Aviso', 'Ingrese las piezas producidas.', 'warning'); return false; }
+                    var pzas = parseInt(v);
+                    var prog = parseInt($('#txtPzasProg').data('kendoNumericTextBox').value()) || 0;
+                    var ya   = parseInt($('#hfPzasYa').val() || '0');
+                    if ((pzas + ya) >= prog) {
+                        finalizar($('#hfIdProceso').val(), pzas, prog, '');
+                    } else {
+                        abrirDialogAdmin(pzas, prog);
+                    }
+                }
+            }
+        ],
+        close: function () { this.destroy(); }
+    }).data('kendoDialog').open();
+});
+
+function abrirDialogAdmin(pzas, prog) {
+    var htmlAdmin =
+        '<div style="padding:8px 0;">' +
+        '<p style="color:#9aa0b8;font-size:.82rem;margin-bottom:14px;">Las piezas producidas son menores a las programadas. Se requiere autorizacion de supervisor.</p>' +
+        lbl('No. Empleado Admin') +
+        '<input id="dlgAdmUser" type="text" class="k-textbox" style="width:100%;margin-bottom:10px;" />' +
+        lbl('Contrasena') +
+        '<input id="dlgAdmPass" type="password" class="k-textbox" style="width:100%;margin-bottom:10px;" />' +
+        lbl('Motivo / Comentarios') +
+        '<textarea id="dlgAdmComent" class="k-textbox" rows="2" style="width:100%;resize:none;" placeholder="Minimo 10 caracteres..."></textarea>' +
+        '</div>';
+
+    $('<div/>').appendTo('body').kendoDialog({
+        width: 430, title: 'Requiere Autorizacion de Supervisor', closable: true, modal: true,
+        content: htmlAdmin,
+        actions: [
+            { text: 'Cancelar' },
+            {
+                text: 'Confirmar Cierre', primary: true,
+                action: function () {
+                    var u = ($('#dlgAdmUser').val()    || '').trim();
+                    var p = ($('#dlgAdmPass').val()    || '');
+                    var c = ($('#dlgAdmComent').val()  || '').trim();
+                    if (!u || !p)    { tsAlert('Aviso', 'Faltan credenciales.', 'warning'); return false; }
+                    if (c.length < 10) { tsAlert('Aviso', 'Minimo 10 caracteres en el motivo.', 'warning'); return false; }
+                    $.post(U.admin, { userNumber: u, password: p }, function (r) {
+                        if (r.success) {
+                            finalizar($('#hfIdProceso').val(), pzas, prog, c);
+                        } else {
+                            tsAlert('Acceso denegado', r.message || 'Credenciales invalidas.', 'error');
+                        }
+                    }).fail(function () { tsAlert('Error', 'Error de conexion.', 'error'); });
+                }
+            }
+        ],
+        close: function () { this.destroy(); }
+    }).data('kendoDialog').open();
+}
+
+function finalizar(id, pzas, prog, coment) {
+    $.post(U.finalizar, { idProceso: id, piezasProducidas: pzas, piezasProgramadas: prog, comentarios: coment }, function (r) {
+        if (r.success) {
+            notif('Proceso finalizado.', 'success');
+            reset();
+            if (linea) cargar(linea);
+        } else { tsAlert('Error', r.message, 'error'); }
+    }).fail(function () { tsAlert('Error', 'Error de conexion.', 'error'); });
+}
+
+$(function () { if (linea) cargar(linea); });
+</script>
+}

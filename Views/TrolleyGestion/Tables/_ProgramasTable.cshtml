@@ -1,0 +1,56 @@
+<div class="gestion-toolbar">
+    <button class="k-button k-primary btn-rounded" id="btnAgregarPrograma"><i class="fas fa-plus"></i> Agregar Programa</button>
+</div>
+
+@(Html.Kendo().Grid<SnowTrolleyProduction.Models.ProgramaGridRow>()
+    .Name("gridProgramas")
+    .HtmlAttributes(new { style = "height: 600px;" })
+    .ToolBar(t => t.Search())
+    .Columns(cols => {
+        cols.Bound(p => p.Numero).Title("Programa");
+        cols.Bound(p => p.Ensamble).Title("Ensamble");
+        cols.Bound(p => p.Linea).Title("Linea").Width(70);
+        cols.Bound(p => p.CantDiferentes).Title("Comp. Dif.").Width(105)
+            .Sortable(true).Filterable(true)
+            .HtmlAttributes(new { style = "text-align:center;" })
+            .HeaderHtmlAttributes(new { style = "text-align:center;" })
+            .ClientTemplate(
+                "# if (CantDiferentes > 0) { #" +
+                "<span style='display:inline-flex;align-items:center;gap:3px;background:\\#f0fdf4;color:\\#16a34a;" +
+                "border:1px solid \\#bbf7d0;padding:1px 7px;font-size:.78rem;font-weight:600;'>" +
+                "<i class='fas fa-layer-group'></i>&nbsp;#=CantDiferentes#</span>" +
+                "# } else { #" +
+                "<span style='color:\\#9aa0b8;font-size:.75rem;'>0</span>" +
+                "# } #");
+        cols.Bound(p => p.CantidadMateriales).Title("Total Mat.").Width(110)
+            .Sortable(true).Filterable(true)
+            .HtmlAttributes(new { style = "text-align:center;" })
+            .HeaderHtmlAttributes(new { style = "text-align:center;" })
+            .ClientTemplate(
+                "# if (CantidadMateriales > 0) { #" +
+                "<span style='display:inline-flex;align-items:center;gap:3px;background:\\#eff6ff;color:\\#2563eb;" +
+                "border:1px solid \\#bfdbfe;padding:1px 7px;font-size:.78rem;font-weight:600;'>" +
+                "<i class='fas fa-microchip'></i>&nbsp;#=CantidadMateriales#</span>" +
+                "# } else { #" +
+                "<span style='color:\\#ef4444;font-size:.75rem;font-weight:600;'>" +
+                "<i class='fas fa-exclamation-triangle'></i> Sin mat.</span>" +
+                "# } #");
+        cols.Bound(p => p.Id).Title("Acciones").Width(200)
+            .Sortable(false).Filterable(false)
+            .HtmlAttributes(new { style = "white-space:nowrap;" })
+            .ClientTemplate(
+                "<button class='k-button btn-rounded btn-edit-programa' data-id='#=Id#'>" +
+                "<i class='fas fa-edit'></i> Editar</button> " +
+                "<button class='k-button btn-rounded btn-del-programa' data-id='#=Id#' style='color:\\#ef4444;border-color:\\#fecaca;'>" +
+                "<i class='fas fa-trash-alt'></i> Eliminar</button>");
+    })
+    .Sortable()
+    .Filterable()
+    .Resizable(r => r.Columns(true))
+    .Reorderable(r => r.Columns(true))
+    .ColumnMenu()
+    .Scrollable(s => s.Height(550))
+    .DataSource(ds => ds.Ajax()
+        .Read(r => r.Action("ProgramasJson", "TrolleyGestion"))
+        .ServerOperation(false))
+)
