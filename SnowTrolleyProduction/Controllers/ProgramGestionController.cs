@@ -13,8 +13,8 @@ namespace SnowTrolleyProduction.Controllers
 {
     public class ProgramGestionController : BAEController
     {
-        private readonly ProgramGestionService _svc   = new ProgramGestionService(new BAESystemsGuaymasEntities());
-        private readonly TrolleySetupService   _setup = new TrolleySetupService(new BAESystemsGuaymasEntities());
+        private readonly ProgramGestionService _svc   = new ProgramGestionService(new BAESystemsGuaymasEntitiesSmtPlan());
+        private readonly TrolleySetupService   _setup = new TrolleySetupService(new BAESystemsGuaymasEntitiesSmtPlan());
 
         [HttpGet]
         public ActionResult Index() => View();
@@ -387,6 +387,13 @@ namespace SnowTrolleyProduction.Controllers
 
                 return Json(new { success = true });
             }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
+
+        [HttpPost]
+        public JsonResult CambiarStatusKanban(int id, string status)
+        {
+            try { _svc.CambiarStatusKanban(id, status); return Json(new { success = true }); }
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
     }

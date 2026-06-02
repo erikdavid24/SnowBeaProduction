@@ -16,9 +16,28 @@ namespace SnowTrolleyProduction.Controllers.service
     {
         private readonly string _connStr;
 
-        public TrolleyProcessService(BAESystemsGuaymasEntities ctx)
+        public TrolleyProcessService(BAESystemsGuaymasEntitiesSmtPlan ctx)
         {
             _connStr = ctx.Database.Connection.ConnectionString;
+        }
+
+        // ?? L�neas SMT ????????????????????????????????????????????????????????????????
+
+        public List<SelectItemDto> GetLineas()
+        {
+            const string sql = @"
+                SELECT DISTINCT l.Numero_Linea
+                FROM [Process].[Lineas] l
+                INNER JOIN [Process].[Ensambles] e ON e.Linea1 = l.Id_Linea
+                WHERE e.EnsambleBase IS NOT NULL AND e.EnsambleBase <> ''
+                ORDER BY l.Numero_Linea ASC";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                return conn.Query<int>(sql)
+                           .Select(n => new SelectItemDto { Text = "Linea " + n, Value = n.ToString() })
+                           .ToList();
+            }
         }
 
         // ?? Consultas ?????????????????????????????????????????????????????????
@@ -34,9 +53,9 @@ namespace SnowTrolleyProduction.Controllers.service
                     ts.WorkOrder        AS workOrder,
                     ts.PiezasProgramadas AS piezasProgramadas,
                     ISNULL(e.EnsambleBase, ts.Id_Programa) AS ensamble
-                FROM   [Proccess].[TrolleySetup]  ts
-                LEFT JOIN [Proccess].[Programas]  p  ON p.Numero  = ts.Id_Programa
-                LEFT JOIN [Proccess].[Ensambles]  e  ON e.Id      = p.Ensamble
+                FROM   [Process].[TrolleySetup]  ts
+                LEFT JOIN [Process].[Programas]  p  ON p.Numero  = ts.Id_Programa
+                LEFT JOIN [Process].[Ensambles]  e  ON e.Id      = p.Ensamble
                 WHERE  ts.Linea   = @linea
                   AND  ts.Status IN ('Creado', 'Pendiente')
                 ORDER  BY ISNULL(ts.Orden, 999999) ASC, ts.FechaCreacion ASC";
@@ -68,16 +87,16 @@ namespace SnowTrolleyProduction.Controllers.service
             const string sqlWorks = @"
                 SELECT ts.Id AS id_Proceso, ts.Linea AS linea, ts.Id_Programa AS id_Programa,
                        ts.WorkOrder AS workOrder, ts.Status AS status, ts.FechaCreacion AS fechaCreacion
-                FROM   [Proccess].[TrolleySetup] ts
+                FROM   [Process].[TrolleySetup] ts
                 WHERE  ts.Linea   = @linea
                   AND  ts.Status IN ('Setup', 'Arranque')
                 ORDER  BY ts.FechaCreacion ASC";
 
             const string sqlTrolleys = @"
                 SELECT e.Equipo_descripcion
-                FROM   [Proccess].[Acomodo] a
-                INNER JOIN [Proccess].[Programas] p ON a.ProgramaId = p.Id
-                INNER JOIN [Proccess].[Equipos]   e ON a.TrolleyId  = e.Id_Equipo
+                FROM   [Process].[Acomodo] a
+                INNER JOIN [Process].[Programas] p ON a.ProgramaId = p.Id
+                INNER JOIN [Process].[Equipos]   e ON a.TrolleyId  = e.Id_Equipo
                 WHERE  p.Numero = @prog
                 ORDER  BY a.Locacion";
 
@@ -108,7 +127,7 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        /// <summary>Enriquece cada ProcesoItem con su lista de trolleys desde [Proccess].[Acomodo].
+        /// <summary>Enriquece cada ProcesoItem con su lista de trolleys desde [Process].[Acomodo].
         /// Busca trolleys de todos los lados del grupo, no solo del representante.</summary>
         public List<ProcesoItem> EnriquecerConTrolleys(List<ProcesoItem> procesos)
         {
@@ -117,9 +136,9 @@ namespace SnowTrolleyProduction.Controllers.service
 
             const string sql = @"
                 SELECT e.Equipo_descripcion
-                FROM   [Proccess].[Acomodo] a
-                INNER JOIN [Proccess].[Programas] p ON a.ProgramaId = p.Id
-                INNER JOIN [Proccess].[Equipos]   e ON a.TrolleyId  = e.Id_Equipo
+                FROM   [Process].[Acomodo] a
+                INNER JOIN [Process].[Programas] p ON a.ProgramaId = p.Id
+                INNER JOIN [Process].[Equipos]   e ON a.TrolleyId  = e.Id_Equipo
                 WHERE  p.Numero = @prog
                 ORDER  BY a.Locacion";
 
@@ -156,17 +175,17 @@ namespace SnowTrolleyProduction.Controllers.service
                     ts.WorkOrder        AS workOrder,
                     ts.PiezasProgramadas AS piezasProgramadas,
                     ISNULL(e.EnsambleBase, ts.Id_Programa) AS ensamble
-                FROM   [Proccess].[TrolleySetup] ts
-                LEFT JOIN [Proccess].[Programas] p  ON p.Numero = ts.Id_Programa
-                LEFT JOIN [Proccess].[Ensambles] e  ON e.Id     = p.Ensamble
+                FROM   [Process].[TrolleySetup] ts
+                LEFT JOIN [Process].[Programas] p  ON p.Numero = ts.Id_Programa
+                LEFT JOIN [Process].[Ensambles] e  ON e.Id     = p.Ensamble
                 WHERE  ts.Id IN @ids
                 ORDER  BY ISNULL(ts.Orden, 999999) ASC, ts.FechaCreacion ASC";
 
             const string sqlTrolleys = @"
                 SELECT e.Equipo_descripcion
-                FROM   [Proccess].[Acomodo] a
-                INNER JOIN [Proccess].[Programas] p ON a.ProgramaId = p.Id
-                INNER JOIN [Proccess].[Equipos]   e ON a.TrolleyId  = e.Id_Equipo
+                FROM   [Process].[Acomodo] a
+                INNER JOIN [Process].[Programas] p ON a.ProgramaId = p.Id
+                INNER JOIN [Process].[Equipos]   e ON a.TrolleyId  = e.Id_Equipo
                 WHERE  p.Numero = @prog
                 ORDER  BY a.Locacion";
 
@@ -206,7 +225,7 @@ namespace SnowTrolleyProduction.Controllers.service
                 for (int i = 0; i < idProcesos.Count; i++)
                 {
                     conn.Execute(
-                        "UPDATE [Proccess].[TrolleySetup] SET Orden = @orden WHERE Id = @id",
+                        "UPDATE [Process].[TrolleySetup] SET Orden = @orden WHERE Id = @id",
                         new { orden = i + 1, id = idProcesos[i] });
                 }
             }
@@ -221,12 +240,12 @@ namespace SnowTrolleyProduction.Controllers.service
         {
             const string sqlCheck = @"
                 SELECT COUNT(*)
-                FROM   [Proccess].[TrolleySetup]
+                FROM   [Process].[TrolleySetup]
                 WHERE  Linea  = @linea
                   AND  Status IN ('Setup', 'Arranque')";
 
             const string sqlUpdate = @"
-                UPDATE [Proccess].[TrolleySetup]
+                UPDATE [Process].[TrolleySetup]
                 SET    Status = 'Setup'
                 WHERE  Id = @id";
 

@@ -21,7 +21,7 @@ namespace SnowTrolleyProduction.Models.Service
         {
             // Insertamos en la tabla usando Raw SQL para mayor velocidad
             BD.Database.ExecuteSqlCommand(
-                "INSERT INTO [Proccess].[Programas] (Numero, Ensamble) VALUES (@p0, @p1)",
+                "INSERT INTO [Process].[Programas] (Numero, Ensamble) VALUES (@p0, @p1)",
                 new System.Data.SqlClient.SqlParameter("@p0", model.Numero),
                 new System.Data.SqlClient.SqlParameter("@p1", model.Ensamble)
             );

@@ -17,7 +17,7 @@ namespace SnowTrolleyProduction.Controllers.service
     {
         private readonly string _connStr;
 
-        public TrolleySetupService(BAESystemsGuaymasEntities ctx)
+        public TrolleySetupService(BAESystemsGuaymasEntitiesSmtPlan ctx)
         {
             _connStr = ctx.Database.Connection.ConnectionString;
         }
@@ -37,7 +37,7 @@ namespace SnowTrolleyProduction.Controllers.service
                     Id_Programa      AS ProgramaSeleccionado,
                     PiezasProgramadas,
                     Status
-                FROM  [Proccess].[TrolleySetup]
+                FROM  [Process].[TrolleySetup]
                 WHERE  Linea   = @linea
                   AND  Status IN ('Setup', 'Arranque')
                 ORDER  BY
@@ -45,7 +45,7 @@ namespace SnowTrolleyProduction.Controllers.service
                     FechaCreacion ASC";
 
             const string sqlProgId = @"
-                SELECT Id FROM [Proccess].[Programas]
+                SELECT Id FROM [Process].[Programas]
                 WHERE  Numero = @prog;";
 
             const string sqlAcomodo = @"
@@ -53,10 +53,10 @@ namespace SnowTrolleyProduction.Controllers.service
                     et.Equipo_descripcion  AS noTrolley,
                     a.Locacion             AS noPosicion,
                     em.Equipo_descripcion  AS nombreMaquina
-                FROM  [Proccess].[Acomodo]  a
-                INNER JOIN [Proccess].[Equipos]  et ON a.TrolleyId  = et.Id_Equipo
-                INNER JOIN [Proccess].[Maquinas]  m ON a.MaquinaId  =  m.Id
-                INNER JOIN [Proccess].[Equipos]  em ON m.EquipoId   = em.Id_Equipo
+                FROM  [Process].[Acomodo]  a
+                INNER JOIN [Process].[Equipos]  et ON a.TrolleyId  = et.Id_Equipo
+                INNER JOIN [Process].[Maquinas]  m ON a.MaquinaId  =  m.Id
+                INNER JOIN [Process].[Equipos]  em ON m.EquipoId   = em.Id_Equipo
                 WHERE  a.ProgramaId = @programaId;";
 
             using (var conn = new SqlConnection(_connStr))
@@ -126,8 +126,8 @@ namespace SnowTrolleyProduction.Controllers.service
         {
             const string sqlTrolleys = @"
                 SELECT e.Id_Equipo AS Id, e.Equipo_descripcion AS Descripcion
-                FROM   [Proccess].[Equipos] e
-                INNER  JOIN [Proccess].[Lineas] l ON e.LineaId = l.Id_Linea
+                FROM   [Process].[Equipos] e
+                INNER  JOIN [Process].[Lineas] l ON e.LineaId = l.Id_Linea
                 WHERE  l.Numero_Linea = @linea
                   AND  (   (e.Equipo_descripcion LIKE 'A%'
                          OR e.Equipo_descripcion LIKE 'B%'
@@ -140,19 +140,19 @@ namespace SnowTrolleyProduction.Controllers.service
             const string sqlAcomodo = @"
                 SELECT a.Locacion, a.TrolleyId, a.MaquinaId,
                        em.Equipo_descripcion AS MaquinaNombre
-                FROM   [Proccess].[Acomodo] a
-                INNER  JOIN [Proccess].[Programas]    p  ON a.ProgramaId = p.Id
-                INNER  JOIN [Proccess].[TrolleySetup] ts ON ts.Id_Programa = p.Numero
-                LEFT   JOIN [Proccess].[Maquinas]     m  ON a.MaquinaId = m.Id
-                LEFT   JOIN [Proccess].[Equipos]      em ON m.EquipoId  = em.Id_Equipo
+                FROM   [Process].[Acomodo] a
+                INNER  JOIN [Process].[Programas]    p  ON a.ProgramaId = p.Id
+                INNER  JOIN [Process].[TrolleySetup] ts ON ts.Id_Programa = p.Numero
+                LEFT   JOIN [Process].[Maquinas]     m  ON a.MaquinaId = m.Id
+                LEFT   JOIN [Process].[Equipos]      em ON m.EquipoId  = em.Id_Equipo
                 WHERE  ts.Id = @programaId
                 ORDER  BY a.MaquinaId, a.Locacion";
 
             const string sqlMaquinas = @"
                 SELECT m.Id, e.Equipo_descripcion AS Descripcion
-                FROM   [Proccess].[Maquinas] m
-                INNER  JOIN [Proccess].[Equipos] e ON m.EquipoId = e.Id_Equipo
-                WHERE  m.LineaId = (SELECT TOP 1 l.Id_Linea FROM [Proccess].[Lineas] l WHERE l.Numero_Linea = @linea)
+                FROM   [Process].[Maquinas] m
+                INNER  JOIN [Process].[Equipos] e ON m.EquipoId = e.Id_Equipo
+                WHERE  m.LineaId = (SELECT TOP 1 l.Id_Linea FROM [Process].[Lineas] l WHERE l.Numero_Linea = @linea)
                 ORDER  BY e.Equipo_descripcion";
 
             var result = new TrolleySetupDataDto
@@ -221,22 +221,22 @@ namespace SnowTrolleyProduction.Controllers.service
         {
             const string sqlGetProg = @"
                 SELECT TOP 1 p.Id
-                FROM   [Proccess].[Programas]    p
-                INNER  JOIN [Proccess].[TrolleySetup] ts ON ts.Id_Programa = p.Numero
+                FROM   [Process].[Programas]    p
+                INNER  JOIN [Process].[TrolleySetup] ts ON ts.Id_Programa = p.Numero
                 WHERE  ts.Id = @programaId";
 
             const string sqlGetMaquina = @"
                 SELECT TOP 1 m.Id
-                FROM   [Proccess].[Maquinas] m
-                INNER  JOIN [Proccess].[Lineas]        l  ON m.LineaId    = l.Id_Linea
-                INNER  JOIN [Proccess].[TrolleySetup]  ts ON l.Numero_Linea = ts.Linea
+                FROM   [Process].[Maquinas] m
+                INNER  JOIN [Process].[Lineas]        l  ON m.LineaId    = l.Id_Linea
+                INNER  JOIN [Process].[TrolleySetup]  ts ON l.Numero_Linea = ts.Linea
                 WHERE  ts.Id = @programaId
                 ORDER  BY m.Id";
 
-            const string sqlDelete = "DELETE FROM [Proccess].[Acomodo] WHERE ProgramaId = @progId";
+            const string sqlDelete = "DELETE FROM [Process].[Acomodo] WHERE ProgramaId = @progId";
 
             const string sqlInsert = @"
-                INSERT INTO [Proccess].[Acomodo] (ProgramaId, TrolleyId, Locacion, MaquinaId)
+                INSERT INTO [Process].[Acomodo] (ProgramaId, TrolleyId, Locacion, MaquinaId)
                 VALUES (@progId, @trolleyId, @locacion, @maquinaId)";
 
             using (var conn = new SqlConnection(_connStr))
@@ -287,12 +287,12 @@ namespace SnowTrolleyProduction.Controllers.service
         {
             const string sqlGetProg = @"
                 SELECT TOP 1 p.Id
-                FROM   [Proccess].[Programas]    p
-                INNER  JOIN [Proccess].[TrolleySetup] ts ON ts.Id_Programa = p.Numero
+                FROM   [Process].[Programas]    p
+                INNER  JOIN [Process].[TrolleySetup] ts ON ts.Id_Programa = p.Numero
                 WHERE  ts.Id = @programaId";
 
             const string sqlInsert = @"
-                INSERT INTO [Proccess].[Acomodo] (ProgramaId, TrolleyId, Locacion, MaquinaId)
+                INSERT INTO [Process].[Acomodo] (ProgramaId, TrolleyId, Locacion, MaquinaId)
                 VALUES (@progId, @trolleyId, @locacion, @maquinaId)";
 
             using (var conn = new SqlConnection(_connStr))
@@ -326,40 +326,41 @@ namespace SnowTrolleyProduction.Controllers.service
         {
             const string sqlSelect = @"
                 SELECT Id, WorkOrder, Linea, Id_Linea, Id_Programa, PiezasProgramadas
-                FROM   [Proccess].[TrolleySetup]
+                FROM   [Process].[TrolleySetup]
                 WHERE  Id = @id AND Status IN ('Setup', 'Arranque')";
 
             const string sqlCompletado = @"
-                UPDATE [Proccess].[TrolleySetup]
+                UPDATE [Process].[TrolleySetup]
                 SET    Status = 'Completado', FechaFinalizacion = GETDATE()
                 WHERE  Id = @id";
 
             const string sqlParcial = @"
-                UPDATE [Proccess].[TrolleySetup]
-                SET    Status = 'Completado', FechaFinalizacion = GETDATE(), Comentarios = @coment
+                UPDATE [Process].[TrolleySetup]
+                SET    Status = 'Finalizado Parcial', FechaFinalizacion = GETDATE(),
+                       Comentarios = @coment, PiezasProgramadas = @pzasProducidas
                 WHERE  Id = @id";
 
             const string sqlInsertPendiente = @"
-                INSERT INTO [Proccess].[TrolleySetup]
+                INSERT INTO [Process].[TrolleySetup]
                     (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas,
                      Trolleys, Status, FechaCreacion, Id_Linea, Linea, Comentarios)
                 VALUES
                     (1, @prog, @wo, @pzas,
-                     '', 'Creado', GETDATE(), @idLinea, @linea, 'Generado por cierre parcial')";
+                     '', 'Creado', GETDATE(), @idLinea, @linea, @comentario)";
 
             const string sqlSiblings = @"
                 SELECT ts2.Id
-                FROM   [Proccess].[TrolleySetup] ts1
-                INNER JOIN [Proccess].[Programas] p1 ON p1.Numero = ts1.Id_Programa
-                INNER JOIN [Proccess].[Programas] p2 ON p2.Ensamble = p1.Ensamble AND p2.Numero <> p1.Numero
-                INNER JOIN [Proccess].[TrolleySetup] ts2 ON ts2.Id_Programa = p2.Numero
+                FROM   [Process].[TrolleySetup] ts1
+                INNER JOIN [Process].[Programas] p1 ON p1.Numero = ts1.Id_Programa
+                INNER JOIN [Process].[Programas] p2 ON p2.Ensamble = p1.Ensamble AND p2.Numero <> p1.Numero
+                INNER JOIN [Process].[TrolleySetup] ts2 ON ts2.Id_Programa = p2.Numero
                 WHERE  ts1.Id = @id
                   AND  ts2.Linea = ts1.Linea
                   AND  ts2.Status IN ('Setup', 'Arranque')";
 
             const string sqlSiblingSelect = @"
                 SELECT Id, WorkOrder, Linea, Id_Linea, Id_Programa, PiezasProgramadas
-                FROM   [Proccess].[TrolleySetup]
+                FROM   [Process].[TrolleySetup]
                 WHERE  Id = @id";
 
             using (var conn = new SqlConnection(_connStr))
@@ -373,13 +374,16 @@ namespace SnowTrolleyProduction.Controllers.service
 
                     int pzasProg = (int)current.PiezasProgramadas;
 
+                    if (piezasProducidas > pzasProg)
+                        throw new Exception($"No se pueden producir {piezasProducidas} piezas. El máximo programado es {pzasProg}.");
+
                     if (piezasProducidas >= pzasProg)
                     {
                         conn.Execute(sqlCompletado, new { id = idProceso }, tx);
                     }
                     else
                     {
-                        conn.Execute(sqlParcial, new { id = idProceso, coment = comentarios ?? string.Empty }, tx);
+                        conn.Execute(sqlParcial, new { id = idProceso, coment = comentarios ?? string.Empty, pzasProducidas = piezasProducidas }, tx);
 
                         int    linea    = (int)current.Linea;
                         string programa = (string)current.Id_Programa;
@@ -389,11 +393,12 @@ namespace SnowTrolleyProduction.Controllers.service
 
                         conn.Execute(sqlInsertPendiente, new
                         {
-                            prog    = programa,
-                            wo      = nuevaWO,
-                            pzas    = pendientes,
-                            idLinea = idLineaOrigen,
-                            linea
+                            prog      = programa,
+                            wo        = nuevaWO,
+                            pzas      = pendientes,
+                            idLinea   = idLineaOrigen,
+                            linea,
+                            comentario = $"Saldo de {(string)current.WorkOrder} | Producidas: {piezasProducidas} | Pendientes: {pendientes}"
                         }, tx);
                     }
 
@@ -410,7 +415,7 @@ namespace SnowTrolleyProduction.Controllers.service
                         }
                         else
                         {
-                            conn.Execute(sqlParcial, new { id = sibId, coment = comentarios ?? string.Empty }, tx);
+                            conn.Execute(sqlParcial, new { id = sibId, coment = comentarios ?? string.Empty, pzasProducidas = piezasProducidas }, tx);
 
                             int    sibLinea    = (int)sibling.Linea;
                             string sibPrograma = (string)sibling.Id_Programa;
@@ -420,11 +425,12 @@ namespace SnowTrolleyProduction.Controllers.service
 
                             conn.Execute(sqlInsertPendiente, new
                             {
-                                prog    = sibPrograma,
-                                wo      = sibNuevaWO,
-                                pzas    = sibPendientes,
-                                idLinea = sibIdLineaOrigen,
-                                linea   = sibLinea
+                                prog      = sibPrograma,
+                                wo        = sibNuevaWO,
+                                pzas      = sibPendientes,
+                                idLinea   = sibIdLineaOrigen,
+                                linea     = sibLinea,
+                                comentario = $"Saldo de {(string)sibling.WorkOrder} | Producidas: {piezasProducidas} | Pendientes: {sibPendientes}"
                             }, tx);
                         }
                     }
@@ -447,17 +453,17 @@ namespace SnowTrolleyProduction.Controllers.service
         public (bool Success, string Message) ActualizarArranque(int idProceso)
         {
             const string sql = @"
-                UPDATE [Proccess].[TrolleySetup]
+                UPDATE [Process].[TrolleySetup]
                 SET    Status = 'Arranque'
                 WHERE  Id = @id AND Status = 'Setup'";
 
            
             const string sqlSiblings = @"
                 SELECT ts2.Id
-                FROM   [Proccess].[TrolleySetup] ts1
-                INNER JOIN [Proccess].[Programas] p1 ON p1.Numero = ts1.Id_Programa
-                INNER JOIN [Proccess].[Programas] p2 ON p2.Ensamble = p1.Ensamble AND p2.Numero <> p1.Numero
-                INNER JOIN [Proccess].[TrolleySetup] ts2 ON ts2.Id_Programa = p2.Numero
+                FROM   [Process].[TrolleySetup] ts1
+                INNER JOIN [Process].[Programas] p1 ON p1.Numero = ts1.Id_Programa
+                INNER JOIN [Process].[Programas] p2 ON p2.Ensamble = p1.Ensamble AND p2.Numero <> p1.Numero
+                INNER JOIN [Process].[TrolleySetup] ts2 ON ts2.Id_Programa = p2.Numero
                 WHERE  ts1.Id = @id
                   AND  ts2.Linea = ts1.Linea
                   AND  ts2.Status = 'Setup'";
@@ -486,7 +492,7 @@ namespace SnowTrolleyProduction.Controllers.service
         {
             string sql = @"
                 SELECT TOP 1 Id AS Id_Proceso, Linea
-                FROM   [Proccess].[TrolleySetup]
+                FROM   [Process].[TrolleySetup]
                 WHERE  Status IN ('Setup', 'Arranque')";
 
             if (linea.HasValue) sql += " AND Linea = @linea";
@@ -502,31 +508,85 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        /// <summary>Valida credenciales de Admin/Supervisor/Ingeniero.
-        /// TODO: Implementar validaci�n real contra [Proccess].[Users] cuando se integre autenticaci�n.
-        /// Por ahora siempre retorna true para testing.
-        /// </summary>
-        public bool VerificarAdmin(string userNumber, string password)
+        public bool VerificarSupervisor(string employeeNumber, string password)
         {
-            // TODO: Descomentar cuando implementes autenticaci�n de usuarios
-            /*
-            const string sql = "SELECT Password, UserType FROM [Proccess].[Users] WHERE UserNumber = @userNumber";
+            const string sql = @"
+                SELECT COUNT(*)
+                FROM [Process].[SmtPlan_Supervisores]
+                WHERE EmployeeNumber = @employeeNumber
+                  AND Password       = @password";
             using (var conn = new SqlConnection(_connStr))
             {
                 conn.Open();
-                var row = conn.QueryFirstOrDefault<dynamic>(sql, new { userNumber });
-                if (row == null) return false;
-
-                string dbPass = (string)row.Password;
-                string dbType = (string)row.UserType;
-
-                return dbPass == password &&
-                       (dbType == "Administrador" || dbType == "Supervisor" || dbType == "Ingeniero");
+                return conn.QueryFirstOrDefault<int>(sql, new { employeeNumber, password }) > 0;
             }
-            */
-            
-            // Temporal: permitir todos los usuarios para testing
-            return !string.IsNullOrEmpty(userNumber) && !string.IsNullOrEmpty(password);
+        }
+
+        public List<dynamic> GetSupervisores()
+        {
+            const string sql = "SELECT Id, EmployeeNumber, FullName, FechaAlta FROM [Process].[SmtPlan_Supervisores] ORDER BY FullName";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                return conn.Query<dynamic>(sql).ToList();
+            }
+        }
+
+        public List<dynamic> GetEmpleadosRH()
+        {
+            const string sql = @"
+                SELECT EmployeeID, EmployeeNumber, FullName
+                FROM [RH].[EmployeeFullInfo]
+                WHERE EmployeeStatus = 1
+                  AND EmployeeNumber IS NOT NULL
+                ORDER BY FullName";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                return conn.Query<dynamic>(sql).ToList();
+            }
+        }
+
+        public void AgregarSupervisor(int employeeId, string employeeNumber, string fullName, string password)
+        {
+            const string sql = @"
+                IF NOT EXISTS (SELECT 1 FROM [Process].[SmtPlan_Supervisores] WHERE EmployeeNumber = @employeeNumber)
+                INSERT INTO [Process].[SmtPlan_Supervisores] (EmployeeID, EmployeeNumber, FullName, Password)
+                VALUES (@employeeId, @employeeNumber, @fullName, @password)";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                conn.Execute(sql, new { employeeId, employeeNumber, fullName, password });
+            }
+        }
+
+        public string GetSupervisorPassword(int id)
+        {
+            const string sql = "SELECT Password FROM [Process].[SmtPlan_Supervisores] WHERE Id = @id";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                return conn.QueryFirstOrDefault<string>(sql, new { id });
+            }
+        }
+
+        public void ActualizarSupervisorPassword(int id, string password)
+        {
+            const string sql = "UPDATE [Process].[SmtPlan_Supervisores] SET Password = @password WHERE Id = @id";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                conn.Execute(sql, new { id, password });
+            }
+        }
+
+        public void EliminarSupervisor(int id)
+        {
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                conn.Execute("DELETE FROM [Process].[SmtPlan_Supervisores] WHERE Id = @id", new { id });
+            }
         }
 
         private static string GenerarNuevaWorkOrder(string woActual)
@@ -536,7 +596,7 @@ namespace SnowTrolleyProduction.Controllers.service
             {
                 int numero   = int.Parse(match.Groups[1].Value) + 1;
                 string baseW = woActual.Substring(0, match.Index);
-                return string.Format("{0}-{1}", baseW, numero);
+                return $"{baseW}-{numero}";
             }
             return (woActual ?? string.Empty) + "-1";
         }

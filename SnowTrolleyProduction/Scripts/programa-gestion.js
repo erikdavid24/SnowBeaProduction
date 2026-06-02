@@ -37,28 +37,134 @@ function actualizarSemanasDelMes(ano, mes) {
 
 
 function renderKanban(data) {
-    var enProceso        = ['Setup', 'Arranque', 'En Proceso'];
-    var piezasPendientes = ['Finalizado Parcial'];
-    var completados      = ['Completado', 'Finalizado'];
-    var todasEspeciales  = enProceso.concat(piezasPendientes, completados);
-    var reSaldo          = /-\d+$/;
+    var enProceso   = ['Setup', 'Arranque', 'En Proceso'];
+    var completados = ['Completado', 'Finalizado', 'Finalizado Parcial'];
+    var reSaldo     = /-\d+$/;
 
     var saldoMap = {};
     data.forEach(function (x) {
         var m = /^(.+?)-(\d+)$/.exec(x.WorkOrder || '');
-        if (m && todasEspeciales.indexOf(x.Status) < 0)
+        if (m && enProceso.indexOf(x.Status) < 0 && completados.indexOf(x.Status) < 0 && x.Status !== 'Pendiente')
             saldoMap[m[1]] = (saldoMap[m[1]] || 0) + (x.PiezasProgramadas || 0);
     });
     data.forEach(function (x) {
-        x._isSaldo = todasEspeciales.indexOf(x.Status) < 0 && reSaldo.test(x.WorkOrder || '');
+        x._isSaldo = enProceso.indexOf(x.Status) < 0 && completados.indexOf(x.Status) < 0
+                     && x.Status !== 'Pendiente' && reSaldo.test(x.WorkOrder || '');
     });
 
-    function esSaldo(x) { return x._isSaldo || piezasPendientes.indexOf(x.Status) >= 0; }
+    renderCol('bodyPendiente', 'cntPendiente', 'filterLineaPendiente',
+        data.filter(function (x) { return x.Status === 'Pendiente'; }), saldoMap);
+    renderCol('bodyCreado',    'cntCreado',    'filterLineaCreado',
+        data.filter(function (x) { return enProceso.indexOf(x.Status) < 0 && completados.indexOf(x.Status) < 0 && x.Status !== 'Pendiente'; }), saldoMap);
+    renderCol('bodyEnProceso', 'cntEnProceso', 'filterLineaEnProceso',
+        data.filter(function (x) { return enProceso.indexOf(x.Status) >= 0; }), saldoMap);
+    renderCol('bodyCompletado','cntCompletado','filterLineaCompletado',
+        data.filter(function (x) { return completados.indexOf(x.Status) >= 0; }), saldoMap);
 
-    renderCol('bodyPendiente',        'cntPendiente',        data.filter(function (x) { return todasEspeciales.indexOf(x.Status) < 0 && !x._isSaldo; }), saldoMap);
-    renderCol('bodyEnProceso',        'cntEnProceso',        data.filter(function (x) { return enProceso.indexOf(x.Status) >= 0; }), saldoMap);
-    renderCol('bodyPiezasPendientes', 'cntPiezasPendientes', data.filter(function (x) { return esSaldo(x); }), saldoMap);
-    renderCol('bodyCompletado',       'cntCompletado',       data.filter(function (x) { return completados.indexOf(x.Status) >= 0; }), saldoMap);
+    agruparCreadoPorLinea();
+    initKanbanSortables();
+}
+
+function agruparCreadoPorLinea() {
+    var $body = $('#bodyCreado');
+    var cards = $body.find('.ts-card').toArray();
+    if (!cards.length) return;
+
+    cards.sort(function (a, b) { return ($(a).data('linea') || 0) - ($(b).data('linea') || 0); });
+    $body.empty();
+
+    var currentLinea = null, $grp = null;
+    cards.forEach(function (card) {
+        var linea = $(card).data('linea') || 0;
+        if (linea !== currentLinea) {
+            currentLinea = linea;
+            $grp = $('<div class="kanban-linea-group" id="lineaGrp' + linea + '" data-linea="' + linea + '">').appendTo($body);
+            $('<div class="kanban-linea-hdr"><i class="fas fa-industry"></i> L' + linea + '</div>').appendTo($grp);
+        }
+        $grp.append(card);
+    });
+}
+
+function initKanbanSortables(lineaActiva) {
+    _lineaFiltroCreado = lineaActiva || '';
+
+    // Destruir sortables de grupos previos
+    $('.kanban-linea-group').each(function () {
+        var s = $(this).data('kendoSortable'); if (s) s.destroy();
+    });
+
+    // En modo TODAS no se permite reordenar dentro de Creado
+    if (!_lineaFiltroCreado) return;
+
+    $('.kanban-linea-group').each(function () {
+        $(this).kendoSortable({
+            filter: '.ts-card', cursor: 'grabbing',
+            hint: kanbanHint, placeholder: kanbanPlaceholder,
+            connectWith: '#bodyPendiente',
+            change: function (e) { onKanbanCardMoved(e); }
+        });
+    });
+}
+
+var _lineaFiltroCreado = '';
+var _kanbanScrollTimer = null;
+
+function kanbanHint(element) {
+    return element.clone().css({ width: element.outerWidth(), opacity: 0.85, boxShadow: '0 4px 16px rgba(0,0,0,.18)', borderRadius: '8px' });
+}
+
+function kanbanPlaceholder(element) {
+    return element.clone()
+        .addClass('pg-sort-placeholder')
+        .css({ opacity: 0.35, border: '2px dashed #6366f1', borderRadius: '8px' });
+}
+
+function onPendienteMove(e) {
+    var $body = $('#bodyPendiente');
+    var $empty = $body.find('.ts-kanban-empty');
+    var $ph = $body.find('.pg-sort-placeholder');
+    if ($empty.length && $ph.length && $body.children().first()[0] !== $ph[0]) {
+        $body.prepend($ph);
+    }
+}
+
+function onKanbanCardMoved(e) {
+    if (e.action !== 'receive') return;
+    var id     = e.item.data('id');
+    var $dest  = e.sender.element;
+    var isPend = $dest.attr('id') === 'bodyPendiente';
+    var status = isPend ? 'Pendiente' : 'Creado';
+
+    if (isPend) {
+        var $it = e.item, $c = $dest;
+        setTimeout(function () {
+            $c.find('.ts-kanban-empty').remove();
+            $c.prepend($it);
+        }, 0);
+    }
+
+    $.post(PG.urls.cambiarStatus, { id: id, status: status }, function (r) {
+        if (!r.success) { tgAlert('Error', r.message || 'No se pudo mover la carta.'); cargarKanban(); }
+    }).fail(function () { tgAlert('Error', 'Error de conexion.'); cargarKanban(); });
+}
+
+function onFiltrarLinea() {
+    var ddl    = $(this.element);
+    var linea  = this.value();
+    var bodyId = ddl.data('body');
+
+    if (bodyId === 'bodyCreado') {
+        $('#bodyCreado .kanban-linea-group').each(function () {
+            var show = !linea || String($(this).data('linea')) === String(linea);
+            $(this).toggle(show);
+        });
+        initKanbanSortables(linea);
+        _lineaFiltroCreado = linea;
+    } else {
+        $('#' + bodyId + ' .ts-card').each(function () {
+            $(this).toggle(!linea || String($(this).data('linea')) === String(linea));
+        });
+    }
 }
 
 function cargarKanban() {
@@ -77,9 +183,21 @@ function cargarKanban() {
     });
 }
 
-function renderCol(bodyId, countId, items, saldoMap) {
+function renderCol(bodyId, countId, filterId, items, saldoMap) {
     var $body = $('#' + bodyId).empty();
     $('#' + countId).text(items.length);
+
+    // Poblar Kendo DropDownList de lineas para esta columna
+    var ddl = $('#' + filterId).data('kendoDropDownList');
+    if (ddl) {
+        var lineas = [];
+        items.forEach(function (x) { var l = x.Id_Linea; if (l && lineas.indexOf(l) < 0) lineas.push(l); });
+        lineas.sort(function (a, b) { return a - b; });
+        var ds = [{ text: 'Todas', value: '' }];
+        lineas.forEach(function (l) { ds.push({ text: 'L' + l, value: String(l) }); });
+        ddl.setDataSource(new kendo.data.DataSource({ data: ds }));
+        ddl.value('');
+    }
     if (!items.length) { $body.append('<div class="ts-kanban-empty"><div class="k-grid" style="border:none;background:transparent;overflow:visible;height:auto;box-shadow:none;"><img class="show-empty" /></div></div>'); return; }
 
     var procStatuses    = ['Setup', 'Arranque', 'En Proceso'];
@@ -255,36 +373,56 @@ function abrirPreview(data, soloVer) {
         dataSource: {
             data: data,
             schema: { model: { fields: {
-                Id_Programa: { type: 'string', editable: false },
-                Ensamble: { type: 'string', editable: false },
-                WorkOrder: { type: 'string' },
+                Id_Programa:       { type: 'string',  editable: false },
+                Ensamble:          { type: 'string',  editable: false },
+                WorkOrder:         { type: 'string' },
                 PiezasProgramadas: { type: 'number' },
-                Id_Linea: { type: 'number' },
-                FechaCreacion: { type: 'date' },
-                Comentarios: { type: 'string' },
-                Status: { type: 'string' },
-                EsDuplicado: { type: 'boolean', editable: false },
-                RazonRechazo: { type: 'string', editable: false }
+                Id_Linea:          { type: 'number' },
+                FechaCreacion:     { type: 'date' },
+                Comentarios:       { type: 'string' },
+                Status:            { type: 'string' },
+                EsDuplicado:       { type: 'boolean', editable: false },
+                RazonRechazo:      { type: 'string',  editable: false },
+                Pendiente:         { type: 'boolean', defaultValue: false }
             } } },
             pageSize: 100
         },
         height: 500, scrollable: true,
         pageable: { refresh: true, pageSizes: [50, 100, 200, 'all'], buttonCount: 5 },
-        sortable: true, filterable: { mode: 'row' }, editable: 'incell',
+        sortable: true,
+        filterable: { mode: 'row' },
+        editable: 'incell',
         noRecords: { template: "<img class='show-empty' />" },
         columns: [
-            { field: 'EsDuplicado', title: '', width: 50, sortable: false, filterable: false, locked: true,
+            { field: 'EsDuplicado', title: '', width: 50, sortable: false, filterable: false,
               template: function(d){ if(d.EsDuplicado) return '<i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:16px;" title="'+(d.RazonRechazo||'')+'"></i>'; if(d.RazonRechazo) return '<i class="fas fa-exclamation-triangle" style="color:#f59e0b;font-size:16px;" title="'+d.RazonRechazo+'"></i>'; return '<i class="fas fa-check-circle" style="color:#22c55e;font-size:16px;"></i>'; } },
-            { field: 'Ensamble', title: 'Ensamble', width: 180 },
-            { field: 'Id_Programa', title: 'Programa', width: 170 },
-            { field: 'WorkOrder', title: 'WO', width: 130 },
-            { field: 'PiezasProgramadas', title: 'Piezas', width: 90, format: '{0:n0}' },
-            { field: 'Id_Linea', title: 'L#', width: 60 },
-            { field: 'FechaCreacion', title: 'Fecha', width: 110, format: '{0:dd/MM/yyyy}' },
-            { field: 'Comentarios', title: 'Notas', width: 180 },
-            { title: '', width: 70, sortable: false, filterable: false,
+            { field: 'Pendiente', title: 'Restricción', width: 100, sortable: false, filterable: false,
+              headerAttributes: { style: 'text-align:center;font-size:.78rem;' },
+              attributes: { style: 'text-align:center;' },
+              template: function(d){ return '<input type="checkbox" class="preview-pend-chk" ' + (d.Pendiente ? 'checked' : '') + ' style="width:16px;height:16px;cursor:pointer;" title="Marcar como Requerido no programado por restricción" />'; } },
+            { field: 'Ensamble',          title: 'Ensamble', width: 200,
+              filterable: { cell: { operator: 'contains', showOperators: false } } },
+            { field: 'Id_Programa',       title: 'Programa',  width: 180,
+              filterable: { cell: { operator: 'contains', showOperators: false } } },
+            { field: 'WorkOrder',         title: 'WO',        width: 140,
+              filterable: { cell: { operator: 'contains', showOperators: false } } },
+            { field: 'PiezasProgramadas', title: 'Piezas',    width: 90, format: '{0:n0}',
+              filterable: { cell: { operator: 'gte', showOperators: false } } },
+            { field: 'Id_Linea',          title: 'L#',        width: 70,
+              filterable: { cell: { operator: 'eq', showOperators: false } } },
+            { field: 'FechaCreacion',     title: 'Fecha',     width: 120, format: '{0:dd/MM/yyyy}',
+              filterable: { cell: { operator: 'gte', showOperators: false } } },
+            { field: 'Comentarios',       title: 'Notas',     width: 180,
+              filterable: { cell: { operator: 'contains', showOperators: false } } },
+            { title: '', width: 60, sortable: false, filterable: false,
               template: '<a class="k-button k-button-sm pg-preview-del" href="\\#" style="color:\\#ef4444;min-width:0;padding:4px 8px;"><i class="fas fa-trash-alt"></i></a>' }
         ]
+    });
+
+    $(document).off('change.pgpend').on('change.pgpend', '.preview-pend-chk', function () {
+        var grid = $('#gridPreview').data('kendoGrid');
+        var item = grid.dataItem($(this).closest('tr'));
+        if (item) item.set('Pendiente', this.checked);
     });
     actualizarConteoPreview();
     $(document).off('click.pgpreview').on('click.pgpreview', '.pg-preview-del', function(e) {
@@ -335,8 +473,13 @@ function cargarPrecargas() {
     $.get(PG.urls.getPrecargas, function (data) {
         var count = (data && data.length) ? data.length : 0;
         $('#badgePrecargas').text(count);
-        if (count > 0) { $('#secPrecargas').slideDown(200); }
-        else           { $('#secPrecargas').slideUp(200);   }
+        if (count > 0) {
+            $('#secPrecargas').slideDown(200);
+            $('#btnSubirExcel').addClass('k-state-disabled').attr('title', 'Autoriza o rechaza los pendientes antes de subir otro Excel.');
+        } else {
+            $('#secPrecargas').slideUp(200);
+            $('#btnSubirExcel').removeClass('k-state-disabled').removeAttr('title');
+        }
     });
 }
 
@@ -351,7 +494,14 @@ $(function () {
     inicializarFiltroSemanaFiscal();
 
     $('#btnNuevoPrograma').on('click', function (e) { e.preventDefault(); $('#wndNuevo').data('kendoWindow').center().open(); });
-    $('#btnSubirExcel').on('click', function (e) { e.preventDefault(); $('#archivoExcelInput').val(''); $('#excelUploadProgress').hide(); $('#wndExcel').data('kendoWindow').center().open(); });
+    $('#btnSubirExcel').on('click', function (e) {
+        e.preventDefault();
+        if ($(this).hasClass('k-state-disabled')) {
+            tgAlert('Pendientes de autorizacion', 'Debes autorizar o rechazar los registros pendientes antes de subir otro Excel.');
+            return;
+        }
+        $('#archivoExcelInput').val(''); $('#excelUploadProgress').hide(); $('#wndExcel').data('kendoWindow').center().open();
+    });
     $('#btnBuscar').on('click',  function (e) { e.preventDefault(); cargarKanban(); });
     $('#btnLimpiar').on('click', function (e) {
         e.preventDefault();
@@ -577,6 +727,27 @@ $(function () {
                     cargarPrecargas();
                 } else { swalErr('Error', res && res.message ? res.message : 'Error desconocido'); }
             }).fail(function () { swalErr('Error', 'Error de conexion.'); });
+        });
+    });
+
+    // Auto-scroll de columnas kanban mientras se arrastra una carta
+    $(document).on('mousemove.kanbanscroll', function (e) {
+        clearInterval(_kanbanScrollTimer);
+        _kanbanScrollTimer = null;
+        if (!$('.pg-sort-placeholder').length) return;
+        var ZONE = 100, SPEED = 15;
+        $('.ts-kanban-col-body').each(function () {
+            var r = this.getBoundingClientRect();
+            if (e.clientX < r.left - 20 || e.clientX > r.right + 20) return;
+            var el = this, delta = 0;
+            if (e.clientY > r.top && e.clientY < r.top + ZONE)
+                delta = -Math.ceil(SPEED * (1 - (e.clientY - r.top) / ZONE));
+            else if (e.clientY > r.bottom - ZONE && e.clientY < r.bottom)
+                delta = Math.ceil(SPEED * (1 - (r.bottom - e.clientY) / ZONE));
+            if (delta) {
+                var d = delta, target = el;
+                _kanbanScrollTimer = setInterval(function () { target.scrollTop += d; }, 16);
+            }
         });
     });
 });

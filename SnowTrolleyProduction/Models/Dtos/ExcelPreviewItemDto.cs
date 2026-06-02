@@ -18,5 +18,7 @@ namespace SnowTrolleyProduction.Models
         public string Ensamble { get; set; }
         public bool EsDuplicado { get; set; }
         public string RazonRechazo { get; set; }
+        public bool Pendiente { get; set; }
+        public int ExistingId { get; set; }
     }
 }

@@ -1,6 +1,8 @@
+@using Kendo.Mvc.UI
 @{
     ViewBag.Title = "Plan de Produccion o Proceso";
-    var _uc     = BAEClassLibrary.UserContext.current;
+    var lineas    = ViewBag.Lineas as List<SnowTrolleyProduction.Models.SelectItemDto>;
+    var _uc       = BAEClassLibrary.UserContext.current;
     bool isAdmin  = _uc != null && (_uc.IsAdmin || _uc.EmployeeNum.ToString() == "128379");
     bool canSetup = isAdmin || BAEClassLibrary.UserContext.ModulePermissions.Update("SnowTrolley");
 }
@@ -30,16 +32,28 @@
 
 <div class="ts-header">
     <h4><i class="fas fa-industry" style="margin-right:8px;"></i>Plan de Produccion o Proceso</h4>
-    <a href="@Url.Action("Index","ProgramGestion")" class="k-button btn-rounded">
-        <i class="fas fa-chevron-left"></i> Volver al Kanban
-    </a>
 </div>
 
 <div class="tp-section">
     <div class="tp-section-hdr">Seleccionar Linea</div>
     <div class="tp-section-bdy">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div class="tp-linea-btns" id="lineaBtns"></div>
+            <div class="tp-linea-btns">
+                @if (lineas != null && lineas.Any())
+                {
+                    foreach (var linea in lineas)
+                    {
+                        @(Html.Kendo().Button()
+                            .Name("btnLinea_" + linea.Value)
+                            .Content("Linea " + linea.Value)
+                            .HtmlAttributes(new { @class = "tp-btn-linea btn-rounded", data_val = linea.Value }))
+                    }
+                }
+                else
+                {
+                    <span style="color:#9aa0b8;">Sin lineas</span>
+                }
+            </div>
             <div id="btnIrSetupWrap" style="display:none;">
                 <a id="btnIrASetup" href="#" class="k-button k-primary btn-rounded">
                     <i class="fas fa-arrow-right"></i> Ir a Setup
@@ -52,7 +66,27 @@
 <div class="tp-section">
     <div class="tp-section-hdr"><i class="fas fa-cog" style="margin-right:6px;"></i>En Setup / Proceso</div>
     <div class="tp-section-bdy">
-        <div id="gridArranque" style="display:none;"></div>
+        @(Html.Kendo().Grid<SnowTrolleyProduction.Models.Dtos.ArranqueGridRow>()
+            .Name("gridArranque")
+            .HtmlAttributes(new { style = "display:none;" })
+            .Columns(cols => {
+                cols.Bound(r => r.id_Programa).Title("Programa")
+                    .ClientTemplate("<strong>#=id_Programa#</strong>").Width(200);
+                cols.Bound(r => r.workOrder).Title("Work Order").Width(200);
+                cols.Bound(r => r.badgesHtml).Title("Trolleys")
+                    .ClientTemplate("#=badgesHtml#").Encoded(false);
+                cols.Bound(r => r.statusHtml).Title("Status")
+                    .ClientTemplate("#=statusHtml#").Encoded(false).Width(120)
+                    .HtmlAttributes(new { style = "text-align:center;" })
+                    .HeaderHtmlAttributes(new { style = "text-align:center;" });
+            })
+            .Scrollable(s => s.Enabled(false))
+            .AutoBind(false)
+            .NoRecords(n => n.Template("<img class='show-empty' />"))
+            .DataSource(ds => ds.Ajax()
+                .Read(r => r.Action("ObtenerTrabajosEnArranque", "TrolleyProcess"))
+            )
+        )
         <div id="arranqueVacio" class="tp-no-data"><img class="show-empty" /></div>
     </div>
 </div>
@@ -60,10 +94,61 @@
 <div class="tp-section">
     <div class="tp-section-hdr"><i class="fas fa-clock" style="margin-right:6px;"></i>Disponibles para Setup</div>
     <div class="tp-section-bdy">
-        <div id="gridProcesos" style="display:none;"></div>
+        @(Html.Kendo().Grid<SnowTrolleyProduction.Models.Dtos.ProcesoGridRow>()
+            .Name("gridProcesos")
+            .HtmlAttributes(new { style = "display:none;" })
+            .Columns(cols => {
+                if (!BAEClassLibrary.UserContext.current.Employee.JobTitles.Name.Contains("Operador")) {
+                    cols.Template(r => "").Title("").Width(36)
+                        .ClientTemplate("<span class='tp-handle'><i class='fas fa-grip-vertical'></i></span>")
+                        .HtmlAttributes(new { style = "text-align:center;padding:6px 4px;" });
+                }
+                cols.Bound(r => r.id_Programa).Title("Programa")
+                    .ClientTemplate("<strong>#=id_Programa#</strong>").Width(200);
+                cols.Bound(r => r.workOrder).Title("Work Order").Width(200);
+                cols.Bound(r => r.badgesHtml).Title("Trolleys")
+                    .ClientTemplate("#=badgesHtml#").Encoded(false);
+                cols.Bound(r => r.accionHtml).Title("Accion")
+                    .ClientTemplate("#=accionHtml#").Encoded(false).Width(160)
+                    .HtmlAttributes(new { style = "text-align:center;" })
+                    .HeaderHtmlAttributes(new { style = "text-align:center;" });
+            })
+            .Scrollable(s => s.Enabled(false))
+            .AutoBind(false)
+            .NoRecords(n => n.Template("<img class='show-empty' />"))
+            .Events(e => e.DataBound("onProcesosBound"))
+            .DataSource(ds => ds.Ajax()
+                .Read(r => r.Action("ObtenerProcesos", "TrolleyProcess"))
+            )
+        )
         <div id="procesosVacio" class="tp-no-data"><img class="show-empty" /></div>
     </div>
 </div>
+
+@(Html.Kendo().Dialog()
+    .Name("dlgAlert")
+    .Title("Aviso")
+    .Closable(true)
+    .Modal(true)
+    .Width(380)
+    .Visible(false)
+    .Content("<p id='dlgAlertMsg' style='margin:0;color:#3d4465;'></p>")
+    .Actions(a => a.Add().Text("OK").Primary(true))
+)
+
+@(Html.Kendo().Dialog()
+    .Name("dlgConfirm")
+    .Title("Confirmar")
+    .Closable(true)
+    .Modal(true)
+    .Width(420)
+    .Visible(false)
+    .Content("<p id='dlgConfirmMsg' style='margin:0;color:#3d4465;'></p>")
+    .Actions(a => {
+        a.Add().Text("Cancelar");
+        a.Add().Text("Confirmar").Primary(true).Action("_onConfirmar");
+    })
+)
 
 @section Scripts {
 <script>
@@ -81,7 +166,9 @@ var TP = {
 };
 
 var lineaSel = null, refTrolleys = [], hayProcesoActivo = false;
+var _confirmFn = null;
 var _sortMouseY = 0, _sortRAF = null;
+var gridArranque, gridProcesos;
 
 function _sortScroll() {
     var zone = 90, speed = 14, vh = window.innerHeight;
@@ -94,55 +181,9 @@ function trolleyBadge(t, ok) {
     return '<span class="trolley-badge ' + (ok ? 'ok' : 'mismatch') + '">' + t + '</span>';
 }
 
-var gridArranque = $('#gridArranque').kendoGrid({
-    dataSource: {
-        data: [],
-        schema: { model: { fields: {
-            id_Programa: { type: 'string' },
-            workOrder:   { type: 'string' },
-            badgesHtml:  { type: 'string' },
-            statusHtml:  { type: 'string' }
-        }}}
-    },
-    columns: [
-        { field: 'id_Programa', title: 'Programa',   template: '<strong>#=id_Programa#</strong>', width: 200 },
-        { field: 'workOrder',   title: 'Work Order',  width: 200 },
-        { title: 'Trolleys',    template: '#=badgesHtml#' },
-        { title: 'Status',      template: '#=statusHtml#', width: 120,
-          attributes: { style: 'text-align:center;' }, headerAttributes: { style: 'text-align:center;' } }
-    ],
-    sortable: false, pageable: false, scrollable: false,
-    noRecords: { template: "<img class='show-empty' />" }
-}).data('kendoGrid');
-
-var gridProcesos = $('#gridProcesos').kendoGrid({
-    dataSource: {
-        data: [],
-        schema: { model: { fields: {
-            id_Proceso:  { type: 'number' },
-            id_Programa: { type: 'string' },
-            workOrder:   { type: 'string' },
-            badgesHtml:  { type: 'string' },
-            accionHtml:  { type: 'string' }
-        }}}
-    },
-    columns: [
-        { title: '', width: 36,
-          template: TP_isAdmin ? '<span class="tp-handle"><i class="fas fa-grip-vertical"></i></span>' : '',
-          attributes: { style: 'text-align:center;padding:6px 4px;' } },
-        { field: 'id_Programa', title: 'Programa',  template: '<strong>#=id_Programa#</strong>', width: 200 },
-        { field: 'workOrder',   title: 'Work Order', width: 200 },
-        { title: 'Trolleys',    template: '#=badgesHtml#' },
-        { title: 'Accion',      template: '#=accionHtml#', width: 160,
-          attributes: { style: 'text-align:center;' }, headerAttributes: { style: 'text-align:center;' } }
-    ],
-    sortable: false, pageable: false, scrollable: false,
-    noRecords: { template: "<img class='show-empty' />" },
-    dataBound: function () { _aplicarSortable(this); }
-}).data('kendoGrid');
+function onProcesosBound() { _aplicarSortable(gridProcesos); }
 
 function _aplicarSortable(grid) {
-    if (!TP_isAdmin) return;
     if (!grid.dataSource.data().length) return;
     var existing = grid.table.data('kendoSortable');
     if (existing) existing.destroy();
@@ -179,22 +220,20 @@ function _aplicarSortable(grid) {
     });
 }
 
-$.get('@Url.Action("GetLineas","ProgramGestion")', function (l) {
-    var w = $('#lineaBtns');
-    if (!l || !l.length) { w.html('<span style="color:#9aa0b8;">Sin lineas</span>'); return; }
-    $.each(l, function (_, x) {
-        w.append('<button class="k-button btn-rounded tp-btn-linea" data-val="' + x.Value + '">Linea ' + x.Value + '</button>');
-    });
-    var match = /[?&]linea=(\d+)/.exec(window.location.search);
-    var btn   = match ? w.find('.tp-btn-linea[data-val="' + match[1] + '"]') : null;
-    if (!btn || !btn.length) btn = w.find('.tp-btn-linea:first');
-    btn.trigger('click');
-});
-
 $(document).on('click', '.tp-btn-linea', function () {
     $('.tp-btn-linea').removeClass('k-primary');
     $(this).addClass('k-primary');
     cargar(parseInt($(this).data('val')));
+});
+
+$(function () {
+    gridArranque = $("#gridArranque").data("kendoGrid");
+    gridProcesos = $("#gridProcesos").data("kendoGrid");
+
+    var match = /[?&]linea=(\d+)/.exec(window.location.search);
+    var btn   = match ? $('.tp-btn-linea[data-val="' + match[1] + '"]') : null;
+    if (!btn || !btn.length) btn = $('.tp-btn-linea:first');
+    if (btn.length) btn.trigger('click');
 });
 
 function cargar(linea) { lineaSel = linea; cargarActivos(linea); }
@@ -235,6 +274,7 @@ function cargarActivos(linea) {
         });
 
         gridArranque.dataSource.data(rows);
+        gridArranque.refresh();
         gridArranque.wrapper.show(); $('#arranqueVacio').hide();
         $('#btnIrASetup').attr('href', TP.urls.irSetup + '?linea=' + linea);
         $('#btnIrSetupWrap').show();
@@ -259,23 +299,21 @@ function cargarDisponibles(linea) {
 
 function pintarDisponibles(procesos) {
     var hayActivo = hayProcesoActivo;
-    var rows = $.map(procesos, function (p) {
-        var arr          = $.isArray(p.trolleys) ? p.trolleys : [];
+    var rows = $.map(procesos, function (p, idx) {
+        var arr           = $.isArray(p.trolleys) ? p.trolleys : [];
         var tieneTrolleys = arr.length > 0;
-        var badgesHtml   = $.map(arr, function (t) {
+        var badgesHtml    = $.map(arr, function (t) {
             return trolleyBadge(t, refTrolleys.indexOf(t) >= 0);
         }).join(' ');
         var accionHtml;
-        if (!hayActivo && tieneTrolleys && TP_isAdmin) {
-            accionHtml = '<button class="k-button k-primary btn-rounded" onclick="iniciarSetup(' +
-                p.id_Proceso + ',\'' + (p.id_Programa || '').replace(/'/g, "\\'") + '\')">' +
+        if (!hayActivo && tieneTrolleys && idx === 0) {
+            accionHtml = '<button class="k-button k-primary btn-rounded" onclick="pedirSupervision(' +
+                p.id_Proceso + ')">' +
                 '<i class="fas fa-tools"></i> Setup</button>';
-        } else if (!hayActivo && tieneTrolleys && !TP_isAdmin) {
-            accionHtml = '';
-        } else if (hayActivo) {
-            accionHtml = '<span style="color:#9aa0b8;font-size:.8rem;">En espera</span>';
-        } else {
+        } else if (!tieneTrolleys) {
             accionHtml = '<span style="color:#9aa0b8;font-size:.8rem;">Sin trolleys</span>';
+        } else {
+            accionHtml = '<span style="color:#9aa0b8;font-size:.8rem;">En espera</span>';
         }
         return $.extend({}, p, { badgesHtml: badgesHtml, accionHtml: accionHtml });
     });
@@ -284,38 +322,35 @@ function pintarDisponibles(procesos) {
         gridProcesos.wrapper.hide(); $('#procesosVacio').show();
     } else {
         gridProcesos.dataSource.data(rows);
+        gridProcesos.refresh();
         gridProcesos.wrapper.show(); $('#procesosVacio').hide();
     }
 }
 
-function tgConfirm(t, x, fn) {
-    $('<div/>').appendTo('body').kendoDialog({
-        width: 420, title: t, closable: true, modal: true,
-        content: '<p style="margin:0;color:#3d4465;">' + x + '</p>',
-        actions: [
-            { text: 'Cancelar' },
-            { text: 'Confirmar', primary: true, action: function () { fn(); } }
-        ],
-        close: function () { this.destroy(); }
-    }).data('kendoDialog').open();
-}
-
 function tgAlert(t, x) {
-    $('<div/>').appendTo('body').kendoDialog({
-        width: 380, title: t, closable: true, modal: true,
-        content: '<p style="margin:0;color:#3d4465;">' + x + '</p>',
-        actions: [{ text: 'OK', primary: true }],
-        close: function () { this.destroy(); }
-    }).data('kendoDialog').open();
+    var dlg = $("#dlgAlert").data("kendoDialog");
+    dlg.title(t);
+    $("#dlgAlertMsg").html(x);
+    dlg.open();
 }
 
-function iniciarSetup(id, prog) {
-    tgConfirm('Mandar a Setup', 'Se cambiara el estado de ' + prog + ' a Setup.', function () {
-        $.post(TP.urls.setup, { idProceso: id, linea: lineaSel }, function (r) {
-            if (r.success) { cargar(lineaSel); }
-            else           { tgAlert('Atencion', r.message); }
-        }).fail(function () { tgAlert('Error', 'Error de conexion.'); });
-    });
+function _onConfirmar() {
+    if (_confirmFn) { _confirmFn(); _confirmFn = null; }
+}
+
+function tgConfirm(t, x, fn) {
+    _confirmFn = fn;
+    var dlg = $("#dlgConfirm").data("kendoDialog");
+    dlg.title(t);
+    $("#dlgConfirmMsg").html(x);
+    dlg.open();
+}
+
+function pedirSupervision(id) {
+    $.post(TP.urls.setup, { idProceso: id, linea: lineaSel }, function (r) {
+        if (r.success) { cargar(lineaSel); }
+        else           { tgAlert('Error', r.message); }
+    }).fail(function () { tgAlert('Error', 'Error de conexion.'); });
 }
 </script>
 }

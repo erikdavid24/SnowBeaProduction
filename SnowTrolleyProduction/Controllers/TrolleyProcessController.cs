@@ -10,9 +10,16 @@ namespace SnowTrolleyProduction.Controllers
     public class TrolleyProcessController : BAEController
     {
         private readonly TrolleyProcessService _svc =
-            new TrolleyProcessService(new BAESystemsGuaymasEntities());
+            new TrolleyProcessService(new BAESystemsGuaymasEntitiesSmtPlan());
 
-        public ActionResult Index() => View();
+        private readonly TrolleySetupService _setupSvc =
+            new TrolleySetupService(new BAESystemsGuaymasEntitiesSmtPlan());
+
+        public ActionResult Index()
+        {
+            ViewBag.Lineas = _svc.GetLineas();
+            return View();
+        }
 
         [HttpPost]
         public JsonResult ObtenerProcesos(int linea)
@@ -50,15 +57,9 @@ namespace SnowTrolleyProduction.Controllers
         public JsonResult GuardarSetup(int idProceso, int linea)
         {
             var (success, message) = _svc.IniciarSetup(idProceso, linea);
+            if (!success) return Json(new { success = false, message });
 
-            if (!success)
-                return Json(new { success = false, message });
-
-            return Json(new
-            {
-                success     = true,
-                redirectUrl = Url.Action("Index", "TrolleySetup", new { linea })
-            });
+            return Json(new { success = true, redirectUrl = Url.Action("Index", "TrolleySetup", new { linea }) });
         }
     }
 }

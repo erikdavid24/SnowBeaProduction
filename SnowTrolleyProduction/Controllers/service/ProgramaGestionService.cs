@@ -11,9 +11,9 @@ namespace SnowTrolleyProduction.Controllers.service
 {
     public class ProgramGestionService
     {
-        BAESystemsGuaymasEntities BD = new BAESystemsGuaymasEntities();
+        BAESystemsGuaymasEntitiesSmtPlan BD = new BAESystemsGuaymasEntitiesSmtPlan();
 
-        public ProgramGestionService(BAESystemsGuaymasEntities BDContext)
+        public ProgramGestionService(BAESystemsGuaymasEntitiesSmtPlan BDContext)
         {
             BD = BDContext;
         }
@@ -36,8 +36,8 @@ namespace SnowTrolleyProduction.Controllers.service
                     ISNULL(e.EnsambleBase, ts.Id_Programa) AS Ensamble,
                     STUFF((
                         SELECT DISTINCT ', ' + ts2.Id_Programa
-                        FROM [Proccess].[TrolleySetup] ts2
-                        INNER JOIN [Proccess].[Programas] p2 ON p2.Numero = ts2.Id_Programa
+                        FROM [Process].[TrolleySetup] ts2
+                        INNER JOIN [Process].[Programas] p2 ON p2.Numero = ts2.Id_Programa
                         WHERE p2.Ensamble = e.Id
                           AND ts2.Status    = ts.Status
                           AND ts2.WorkOrder = ts.WorkOrder
@@ -45,9 +45,9 @@ namespace SnowTrolleyProduction.Controllers.service
                         FOR XML PATH(''), TYPE
                     ).value('.','NVARCHAR(MAX)'), 1, 2, '') AS Lados,
                     ISNULL(p.CantidadTotalMateriales, 0) AS CantidadMateriales
-                FROM [Proccess].[TrolleySetup] ts
-                LEFT JOIN [Proccess].[Programas] p  ON p.Numero    = ts.Id_Programa
-                LEFT JOIN [Proccess].[Ensambles] e  ON e.Id        = p.Ensamble";
+                FROM [Process].[TrolleySetup] ts
+                LEFT JOIN [Process].[Programas] p  ON p.Numero    = ts.Id_Programa
+                LEFT JOIN [Process].[Ensambles] e  ON e.Id        = p.Ensamble";
 
             using (var conn = new SqlConnection(GetConnectionString()))
             {
@@ -82,7 +82,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
         public void Create(ProgramGestionViewModel model)
         {
-            string sql = @"INSERT INTO [Proccess].[TrolleySetup] 
+            string sql = @"INSERT INTO [Process].[TrolleySetup] 
                    (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea) 
                    VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
 
@@ -143,29 +143,29 @@ namespace SnowTrolleyProduction.Controllers.service
                     int piezas = ObtenerEntero(filaReal.Cell("Y"));
 
                     var infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
-                        @"SELECT TOP 1 e.Id, e.Linea1 FROM [Proccess].[Ensambles] e
-                          INNER JOIN [Proccess].[Lineas] l ON l.Id_Linea = e.Linea1
+                        @"SELECT TOP 1 e.Id, e.Linea1 FROM [Process].[Ensambles] e
+                          INNER JOIN [Process].[Lineas] l ON l.Id_Linea = e.Linea1
                           WHERE e.EnsambleBase = @eb AND l.Numero_Linea = @ln",
                         new { eb = programaBaseExcel, ln = lineaFinal });
 
                     bool useFallback = (infoEnsamble == null);
                     if (useFallback)
                         infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
-                            "SELECT TOP 1 Id, Linea1 FROM [Proccess].[Ensambles] WHERE EnsambleBase = @eb",
+                            "SELECT TOP 1 Id, Linea1 FROM [Process].[Ensambles] WHERE EnsambleBase = @eb",
                             new { eb = programaBaseExcel });
 
                     string advertenciaLinea = null;
                     if (!lineaFinal.HasValue && infoEnsamble != null && infoEnsamble.Linea1.HasValue)
                     {
                         var numLinea = conn.QueryFirstOrDefault<int?>(
-                            "SELECT TOP 1 Numero_Linea FROM [Proccess].[Lineas] WHERE Id_Linea = @id",
+                            "SELECT TOP 1 Numero_Linea FROM [Process].[Lineas] WHERE Id_Linea = @id",
                             new { id = infoEnsamble.Linea1.Value });
                         if (numLinea.HasValue && numLinea.Value >= 7 && numLinea.Value <= 9) lineaFinal = numLinea.Value;
                     }
                     else if (lineaFinal.HasValue && useFallback && infoEnsamble != null && infoEnsamble.Linea1.HasValue)
                     {
                         var numLineaDB = conn.QueryFirstOrDefault<int?>(
-                            "SELECT TOP 1 Numero_Linea FROM [Proccess].[Lineas] WHERE Id_Linea = @id",
+                            "SELECT TOP 1 Numero_Linea FROM [Process].[Lineas] WHERE Id_Linea = @id",
                             new { id = infoEnsamble.Linea1.Value });
                         if (numLineaDB.HasValue && numLineaDB.Value >= 7 && numLineaDB.Value <= 9 && numLineaDB.Value != lineaFinal.Value)
                             advertenciaLinea = $"BD línea {numLineaDB.Value}, Excel línea {lineaFinal.Value}";
@@ -175,7 +175,7 @@ namespace SnowTrolleyProduction.Controllers.service
                     if (infoEnsamble != null)
                     {
                         programasReales = conn.Query<string>(
-                            "SELECT Numero FROM [Proccess].[Programas] WHERE Ensamble = @eid AND Numero IS NOT NULL AND Numero <> '' ORDER BY Numero ASC",
+                            "SELECT Numero FROM [Process].[Programas] WHERE Ensamble = @eid AND Numero IS NOT NULL AND Numero <> '' ORDER BY Numero ASC",
                             new { eid = infoEnsamble.Id }).ToList();
                     }
 
@@ -186,26 +186,91 @@ namespace SnowTrolleyProduction.Controllers.service
                         string woLinea = lineaFinal.HasValue ? lineaFinal.Value.ToString() : "0";
                         string workOrderGenerado = $"L{woLinea}{semanaPlan}{anioActual}000";
 
-                        int woDuplicada = conn.QueryFirstOrDefault<int>(@"
-                            SELECT COUNT(*)
-                            FROM [Proccess].[TrolleySetup]
-                            WHERE Id_Programa = @prog
-                              AND WorkOrder    = @wo
-                              AND Status NOT IN ('Completado')",
-                            new { prog = programaReal, wo = workOrderGenerado });
+                        string woFinal    = workOrderGenerado;
+                        int    pzasFinales = piezas;
+                        bool   esDup       = false;
+                        string razon       = advertenciaLinea ?? "";
+                        int    existingId  = 0;
+
+                        // ¿El WO original está activo (no terminado)?
+                        bool originalActivo = conn.QueryFirstOrDefault<int>(@"
+                            SELECT COUNT(1) FROM [Process].[TrolleySetup]
+                            WHERE Id_Programa = @prog AND WorkOrder = @wo
+                              AND Status NOT IN ('Completado', 'Finalizado Parcial')",
+                            new { prog = programaReal, wo = workOrderGenerado }) > 0;
+
+                        if (originalActivo)
+                        {
+                            esDup = true;
+                            razon = $"WorkOrder '{workOrderGenerado}' ya existe";
+                        }
+                        else
+                        {
+                            // Buscar carta pendiente activa: formato nuevo (WO-) o viejo (WO-1, WO-2...)
+                            var pendienteInfo = conn.QueryFirstOrDefault<dynamic>(@"
+                                SELECT TOP 1 Id, WorkOrder, PiezasProgramadas FROM [Process].[TrolleySetup]
+                                WHERE Id_Programa = @prog
+                                  AND WorkOrder LIKE @pat
+                                  AND Status NOT IN ('Completado')
+                                ORDER BY Id DESC",
+                                new { prog = programaReal, pat = workOrderGenerado + "-%" });
+
+                            if (pendienteInfo != null)
+                            {
+                                int pzasExistentes = (int)pendienteInfo.PiezasProgramadas;
+                                int pzasFaltantes  = piezas - pzasExistentes;
+
+                                if (pzasFaltantes <= 0)
+                                {
+                                    // Pendiente ya cubre la demanda → solo informativo, no crear
+                                    existingId  = (int)pendienteInfo.Id;
+                                    woFinal     = (string)pendienteInfo.WorkOrder;
+                                    pzasFinales = pzasExistentes;
+                                    razon       = $"Carta pendiente cubre la demanda ({pzasExistentes} pzas existentes vs {piezas} del Excel)";
+                                }
+                                else
+                                {
+                                    // Falta producir más → crear carta con la diferencia
+                                    string woExistente = (string)pendienteInfo.WorkOrder;
+                                    var wm = System.Text.RegularExpressions.Regex.Match(woExistente ?? "", @"-(\d+)$");
+                                    woFinal     = wm.Success
+                                        ? woExistente.Substring(0, wm.Index) + "-" + (int.Parse(wm.Groups[1].Value) + 1)
+                                        : woExistente + "-1";
+                                    pzasFinales = pzasFaltantes;
+                                    razon       = $"Saldo adicional de {woFinal}: {pzasExistentes} existentes + {pzasFaltantes} nuevas = {piezas} total";
+                                }
+                            }
+                            else
+                            {
+                                bool originalTerminado = conn.QueryFirstOrDefault<int>(@"
+                                    SELECT COUNT(1) FROM [Process].[TrolleySetup]
+                                    WHERE Id_Programa = @prog AND WorkOrder = @wo
+                                      AND Status IN ('Completado', 'Finalizado Parcial')",
+                                    new { prog = programaReal, wo = workOrderGenerado }) > 0;
+
+                                if (originalTerminado)
+                                {
+                                    woFinal = workOrderGenerado + "-1";
+                                    razon   = $"Saldo de '{workOrderGenerado}'";
+                                }
+                            }
+                        }
 
                         lista.Add(new ExcelPreviewItemDto
                         {
-                            Id_Programa = programaReal,
-                            WorkOrder = workOrderGenerado,
-                            PiezasProgramadas = piezas,
-                            Status = "Creado",
-                            FechaCreacion = fechaPlan,
-                            Id_Linea = lineaFinal,
-                            Comentarios = "Carga Excel",
-                            Ensamble = programaBaseExcel,
-                            EsDuplicado = woDuplicada > 0,
-                            RazonRechazo = woDuplicada > 0 ? $"WorkOrder '{workOrderGenerado}' ya existe" : advertenciaLinea ?? ""
+                            Id_Programa       = programaReal,
+                            WorkOrder         = woFinal,
+                            PiezasProgramadas = pzasFinales,
+                            Status            = "Creado",
+                            FechaCreacion     = fechaPlan,
+                            Id_Linea          = lineaFinal,
+                            Comentarios       = woFinal == workOrderGenerado
+                                                    ? "Carga Excel"
+                                                    : $"Carga Excel | Saldo de {workOrderGenerado}",
+                            Ensamble          = programaBaseExcel,
+                            EsDuplicado       = esDup,
+                            RazonRechazo      = razon,
+                            ExistingId        = existingId
                         });
                     }
                 }
@@ -216,7 +281,7 @@ namespace SnowTrolleyProduction.Controllers.service
         public int GuardarDesdeLista(List<ExcelPreviewItemDto> items)
         {
             int conteo = 0;
-            string sqlInsert = @"INSERT INTO [Proccess].[TrolleySetup] 
+            string sqlInsert = @"INSERT INTO [Process].[TrolleySetup] 
                    (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea) 
                    VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
 
@@ -229,7 +294,7 @@ namespace SnowTrolleyProduction.Controllers.service
                     {
                         foreach (var item in items)
                         {
-                            if (item.EsDuplicado) continue;
+                            if (item.EsDuplicado || item.ExistingId > 0) continue;
                             
                             conn.Execute(sqlInsert, new
                             {
@@ -259,7 +324,7 @@ namespace SnowTrolleyProduction.Controllers.service
             int conteoInsertados = 0;
             string anioActual = DateTime.Now.Year.ToString().Substring(2);
 
-            string sqlInsert = @"INSERT INTO [Proccess].[TrolleySetup] 
+            string sqlInsert = @"INSERT INTO [Process].[TrolleySetup] 
                    (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea) 
                    VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
 
@@ -300,29 +365,29 @@ namespace SnowTrolleyProduction.Controllers.service
                     int piezas = ObtenerEntero(filaReal.Cell("Y"));
 
                     var infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
-                        @"SELECT TOP 1 e.Id, e.Linea1 FROM [Proccess].[Ensambles] e
-                          INNER JOIN [Proccess].[Lineas] l ON l.Id_Linea = e.Linea1
+                        @"SELECT TOP 1 e.Id, e.Linea1 FROM [Process].[Ensambles] e
+                          INNER JOIN [Process].[Lineas] l ON l.Id_Linea = e.Linea1
                           WHERE e.EnsambleBase = @eb AND l.Numero_Linea = @ln",
                         new { eb = programaBaseExcel, ln = lineaFinal });
 
                     bool useFallback = (infoEnsamble == null);
                     if (useFallback)
                         infoEnsamble = conn.QueryFirstOrDefault<EnsambleDto>(
-                            "SELECT TOP 1 Id, Linea1 FROM [Proccess].[Ensambles] WHERE EnsambleBase = @eb",
+                            "SELECT TOP 1 Id, Linea1 FROM [Process].[Ensambles] WHERE EnsambleBase = @eb",
                             new { eb = programaBaseExcel });
 
                     string comentariosExtra = null;
                     if (!lineaFinal.HasValue && infoEnsamble != null && infoEnsamble.Linea1.HasValue)
                     {
                         var numLinea = conn.QueryFirstOrDefault<int?>(
-                            "SELECT TOP 1 Numero_Linea FROM [Proccess].[Lineas] WHERE Id_Linea = @id",
+                            "SELECT TOP 1 Numero_Linea FROM [Process].[Lineas] WHERE Id_Linea = @id",
                             new { id = infoEnsamble.Linea1.Value });
                         if (numLinea.HasValue && numLinea.Value >= 7 && numLinea.Value <= 9) lineaFinal = numLinea.Value;
                     }
                     else if (lineaFinal.HasValue && useFallback && infoEnsamble != null && infoEnsamble.Linea1.HasValue)
                     {
                         var numLineaDB = conn.QueryFirstOrDefault<int?>(
-                            "SELECT TOP 1 Numero_Linea FROM [Proccess].[Lineas] WHERE Id_Linea = @id",
+                            "SELECT TOP 1 Numero_Linea FROM [Process].[Lineas] WHERE Id_Linea = @id",
                             new { id = infoEnsamble.Linea1.Value });
                         if (numLineaDB.HasValue && numLineaDB.Value >= 7 && numLineaDB.Value <= 9 && numLineaDB.Value != lineaFinal.Value)
                             comentariosExtra = $"BD línea {numLineaDB.Value}, Excel línea {lineaFinal.Value}";
@@ -332,7 +397,7 @@ namespace SnowTrolleyProduction.Controllers.service
                     if (infoEnsamble != null)
                     {
                         programasReales = conn.Query<string>(
-                            "SELECT Numero FROM [Proccess].[Programas] WHERE Ensamble = @eid AND Numero IS NOT NULL AND Numero <> '' ORDER BY Numero ASC",
+                            "SELECT Numero FROM [Process].[Programas] WHERE Ensamble = @eid AND Numero IS NOT NULL AND Numero <> '' ORDER BY Numero ASC",
                             new { eid = infoEnsamble.Id }).ToList();
                     }
 
@@ -344,21 +409,38 @@ namespace SnowTrolleyProduction.Controllers.service
                         string workOrderGenerado = $"L{woLinea}{semanaPlan}{anioActual}000";
 
 
-                        int woDuplicada = conn.QueryFirstOrDefault<int>(@"
-                            SELECT COUNT(*)
-                            FROM [Proccess].[TrolleySetup]
-                            WHERE Id_Programa = @prog
-                              AND WorkOrder    = @wo
-                              AND Status NOT IN ('Completado')",
-                            new { prog = programaReal, wo = workOrderGenerado });
+                        string woFinal = workOrderGenerado;
 
-                        if (woDuplicada > 0) continue;
+                        bool originalActivo = conn.QueryFirstOrDefault<int>(@"
+                            SELECT COUNT(1) FROM [Process].[TrolleySetup]
+                            WHERE Id_Programa = @prog AND WorkOrder = @wo
+                              AND Status NOT IN ('Completado', 'Finalizado Parcial')",
+                            new { prog = programaReal, wo = workOrderGenerado }) > 0;
+
+                        if (originalActivo) continue;
+
+                        // Pendiente activa: formato nuevo (WO-) o viejo (WO-1, WO-2...)
+                        bool pendienteActiva = conn.QueryFirstOrDefault<int>(@"
+                            SELECT COUNT(1) FROM [Process].[TrolleySetup]
+                            WHERE Id_Programa = @prog AND WorkOrder LIKE @pat
+                              AND Status NOT IN ('Completado')",
+                            new { prog = programaReal, pat = workOrderGenerado + "-%" }) > 0;
+
+                        if (pendienteActiva) continue;
+
+                        bool originalTerminado = conn.QueryFirstOrDefault<int>(@"
+                            SELECT COUNT(1) FROM [Process].[TrolleySetup]
+                            WHERE Id_Programa = @prog AND WorkOrder = @wo
+                              AND Status IN ('Completado', 'Finalizado Parcial')",
+                            new { prog = programaReal, wo = workOrderGenerado }) > 0;
+
+                        if (originalTerminado) woFinal = workOrderGenerado + "-1";
 
                         registros.Add(new
                         {
                             IdProceso         = 1,
                             IdPrograma        = (object)programaReal,
-                            WorkOrder         = (object)workOrderGenerado,
+                            WorkOrder         = (object)woFinal,
                             PiezasProgramadas = piezas,
                             Trolleys          = "",
                             Status            = "Creado",
@@ -387,7 +469,7 @@ namespace SnowTrolleyProduction.Controllers.service
         public void Update(ProgramGestionViewModel model)
         {
             string sql = @"
-                UPDATE [Proccess].[TrolleySetup]
+                UPDATE [Process].[TrolleySetup]
                 SET Id_Proceso = @p0,
                     Id_Programa = ISNULL(@p1, Id_Programa),
                     WorkOrder = @p2,
@@ -416,7 +498,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
         public void Delete(ProgramGestionViewModel model)
         {
-            string sql = "DELETE FROM [Proccess].[TrolleySetup] WHERE Id = @p0";
+            string sql = "DELETE FROM [Process].[TrolleySetup] WHERE Id = @p0";
             using (var conn = new SqlConnection(GetConnectionString()))
             {
                 conn.Open();
@@ -427,12 +509,12 @@ namespace SnowTrolleyProduction.Controllers.service
         public void DeleteCarta(string workOrder, string ensamble)
         {
             string sql = string.IsNullOrEmpty(ensamble)
-                ? "DELETE FROM [Proccess].[TrolleySetup] WHERE WorkOrder = @wo"
-                : @"DELETE FROM [Proccess].[TrolleySetup]
+                ? "DELETE FROM [Process].[TrolleySetup] WHERE WorkOrder = @wo"
+                : @"DELETE FROM [Process].[TrolleySetup]
                     WHERE WorkOrder = @wo
                       AND Id_Programa IN (
-                          SELECT p.Numero FROM [Proccess].[Programas] p
-                          INNER JOIN [Proccess].[Ensambles] e ON e.Id = p.Ensamble
+                          SELECT p.Numero FROM [Process].[Programas] p
+                          INNER JOIN [Process].[Ensambles] e ON e.Id = p.Ensamble
                           WHERE e.EnsambleBase = @ensamble
                       )";
             using (var conn = new SqlConnection(GetConnectionString()))
@@ -448,8 +530,8 @@ namespace SnowTrolleyProduction.Controllers.service
             {
                 string query = @"
                     SELECT DISTINCT l.Numero_Linea
-                    FROM [Proccess].[Lineas] l
-                    INNER JOIN [Proccess].[Ensambles] e ON e.Linea1 = l.Id_Linea
+                    FROM [Process].[Lineas] l
+                    INNER JOIN [Process].[Ensambles] e ON e.Linea1 = l.Id_Linea
                     WHERE e.EnsambleBase IS NOT NULL AND e.EnsambleBase <> ''
                     ORDER BY l.Numero_Linea ASC";
 
@@ -473,8 +555,8 @@ namespace SnowTrolleyProduction.Controllers.service
             {
                 string query = @"
                     SELECT DISTINCT e.EnsambleBase
-                    FROM [Proccess].[Ensambles] e
-                    INNER JOIN [Proccess].[Lineas] l ON e.Linea1 = l.Id_Linea
+                    FROM [Process].[Ensambles] e
+                    INNER JOIN [Process].[Lineas] l ON e.Linea1 = l.Id_Linea
                     WHERE l.Numero_Linea = @p0
                     AND e.EnsambleBase IS NOT NULL AND e.EnsambleBase <> ''
                     ORDER BY e.EnsambleBase ASC";
@@ -501,8 +583,8 @@ namespace SnowTrolleyProduction.Controllers.service
 
                 string query = @"
                     SELECT DISTINCT p.Numero
-                    FROM [Proccess].[Programas] p
-                    INNER JOIN [Proccess].[Ensambles] e ON p.Ensamble = e.Id
+                    FROM [Process].[Programas] p
+                    INNER JOIN [Process].[Ensambles] e ON p.Ensamble = e.Id
                     WHERE e.EnsambleBase = @p0
                     AND p.Numero IS NOT NULL AND p.Numero <> ''
                     ORDER BY p.Numero ASC";
@@ -528,8 +610,8 @@ namespace SnowTrolleyProduction.Controllers.service
                 if (string.IsNullOrEmpty(ensamble)) return new List<string>();
                 string query = @"
                     SELECT p.Numero
-                    FROM [Proccess].[Programas] p
-                    INNER JOIN [Proccess].[Ensambles] e ON p.Ensamble = e.Id
+                    FROM [Process].[Programas] p
+                    INNER JOIN [Process].[Ensambles] e ON p.Ensamble = e.Id
                     WHERE e.EnsambleBase = @p0
                     AND p.Numero IS NOT NULL AND p.Numero <> ''
                     ORDER BY p.Numero ASC";
@@ -550,8 +632,8 @@ namespace SnowTrolleyProduction.Controllers.service
                 if (string.IsNullOrEmpty(programaNumero)) return new List<string>();
                 string query = @"
                     SELECT p2.Numero
-                    FROM [Proccess].[Programas] p1
-                    INNER JOIN [Proccess].[Programas] p2 ON p2.Ensamble = p1.Ensamble
+                    FROM [Process].[Programas] p1
+                    INNER JOIN [Process].[Programas] p2 ON p2.Ensamble = p1.Ensamble
                     WHERE p1.Numero = @prog
                       AND p2.Numero IS NOT NULL AND p2.Numero <> ''
                     ORDER BY p2.Numero ASC";
@@ -567,9 +649,12 @@ namespace SnowTrolleyProduction.Controllers.service
         public int PreGuardar(List<ExcelPreviewItemDto> items)
         {
             int conteo = 0;
-            const string sqlInsert = @"INSERT INTO [Proccess].[TrolleySetup]
+            const string sqlInsert = @"INSERT INTO [Process].[TrolleySetup]
                    (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea)
                    VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
+            const string sqlUpdate = @"UPDATE [Process].[TrolleySetup]
+                   SET PiezasProgramadas = @PiezasProgramadas
+                   WHERE Id = @Id";
 
             using (var conn = new SqlConnection(GetConnectionString()))
             {
@@ -580,7 +665,7 @@ namespace SnowTrolleyProduction.Controllers.service
                     {
                         foreach (var item in items)
                         {
-                            if (item.EsDuplicado) continue;
+                            if (item.EsDuplicado || item.ExistingId > 0) continue;
                             conn.Execute(sqlInsert, new
                             {
                                 IdProceso         = 1,
@@ -588,7 +673,7 @@ namespace SnowTrolleyProduction.Controllers.service
                                 WorkOrder         = (object)item.WorkOrder,
                                 PiezasProgramadas = item.PiezasProgramadas,
                                 Trolleys          = "",
-                                Status            = "PreCarga",
+                                Status            = item.Pendiente ? "Pendiente" : "PreCarga",
                                 FechaCreacion     = item.FechaCreacion,
                                 IdLinea           = (object)item.Id_Linea ?? DBNull.Value,
                                 Comentarios       = (object)item.Comentarios ?? DBNull.Value,
@@ -610,9 +695,9 @@ namespace SnowTrolleyProduction.Controllers.service
                 SELECT ts.Id, ts.Id_Programa, ts.WorkOrder, ts.PiezasProgramadas,
                        ts.FechaCreacion, ts.Id_Linea, ts.Comentarios,
                        ISNULL(e.EnsambleBase, ts.Id_Programa) AS Ensamble
-                FROM   [Proccess].[TrolleySetup] ts
-                LEFT JOIN [Proccess].[Programas] p ON p.Numero = ts.Id_Programa
-                LEFT JOIN [Proccess].[Ensambles] e ON e.Id     = p.Ensamble
+                FROM   [Process].[TrolleySetup] ts
+                LEFT JOIN [Process].[Programas] p ON p.Numero = ts.Id_Programa
+                LEFT JOIN [Process].[Ensambles] e ON e.Id     = p.Ensamble
                 WHERE  ts.Status = 'PreCarga'
                 ORDER  BY ts.FechaCreacion ASC";
 
@@ -625,7 +710,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
         public int AutorizarPrecargas()
         {
-            const string sql = "UPDATE [Proccess].[TrolleySetup] SET Status = 'Creado' WHERE Status = 'PreCarga'";
+            const string sql = "UPDATE [Process].[TrolleySetup] SET Status = 'Creado' WHERE Status = 'PreCarga'";
             using (var conn = new SqlConnection(GetConnectionString()))
             {
                 conn.Open();
@@ -635,7 +720,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
         public void RechazarPrecargas()
         {
-            const string sql = "DELETE FROM [Proccess].[TrolleySetup] WHERE Status = 'PreCarga'";
+            const string sql = "DELETE FROM [Process].[TrolleySetup] WHERE Status = 'PreCarga'";
             using (var conn = new SqlConnection(GetConnectionString()))
             {
                 conn.Open();
@@ -793,6 +878,22 @@ namespace SnowTrolleyProduction.Controllers.service
             DateTime inicioFiscal = UltimoSabadoDiciembre(anio - 1);
             DateTime start = inicioFiscal.AddDays((semana - 1) * 7);
             return Tuple.Create(start, start.AddDays(6));
+        }
+
+        public void CambiarStatusKanban(int id, string status)
+        {
+            if (status != "Pendiente" && status != "Creado")
+                throw new Exception("Estado no permitido.");
+            const string sql = @"
+                UPDATE [Process].[TrolleySetup]
+                SET    Status = @status
+                WHERE  Id     = @id
+                  AND  Status IN ('Pendiente','Creado')";
+            using (var conn = new SqlConnection(GetConnectionString()))
+            {
+                conn.Open();
+                conn.Execute(sql, new { id, status });
+            }
         }
 
         private DateTime UltimoSabadoDiciembre(int anio)

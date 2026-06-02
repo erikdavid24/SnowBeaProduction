@@ -22,9 +22,14 @@
 
 <div class="ts-header" style="margin-bottom:14px;">
     <h4><i class="fas fa-tools" style="margin-right:8px;"></i>Setup de Trolleys</h4>
-    <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded">
-        <i class="fas fa-chevron-left"></i> Ir a Trabajos
-    </a>
+    <div style="display:flex;gap:8px;">
+        <a href="@Url.Action("Supervisores","TrolleySetup")" class="k-button btn-rounded">
+            <i class="fas fa-user-shield"></i> Supervisores
+        </a>
+        <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded">
+            <i class="fas fa-chevron-left"></i> Ir a Trabajos
+        </a>
+    </div>
 </div>
 
 <div class="ts-setup-panel">
@@ -116,10 +121,14 @@
 @section Scripts {
 <script>
 var U = {
-    datos:     '@Url.Action("ObtenerDatosPorLinea",   "TrolleySetup")',
-    arranque:  '@Url.Action("ActualizarArranque",     "TrolleySetup")',
-    finalizar: '@Url.Action("FinalizarProceso",       "TrolleySetup")',
-    admin:     '@Url.Action("VerificarPasswordAdmin", "TrolleySetup")'
+    datos:       '@Url.Action("ObtenerDatosPorLinea",   "TrolleySetup")',
+    arranque:    '@Url.Action("ActualizarArranque",     "TrolleySetup")',
+    finalizar:   '@Url.Action("FinalizarProceso",       "TrolleySetup")',
+    admin:       '@Url.Action("VerificarPasswordAdmin", "TrolleySetup")',
+    supervisores:'@Url.Action("GetSupervisores",        "TrolleySetup")',
+    empleados:   '@Url.Action("GetEmpleadosRH",         "TrolleySetup")',
+    agregarSup:  '@Url.Action("AgregarSupervisor",      "TrolleySetup")',
+    eliminarSup: '@Url.Action("EliminarSupervisor",     "TrolleySetup")'
 };
 var linea = @Html.Raw(ViewBag.LineaSeleccionada != null ? ViewBag.LineaSeleccionada.ToString() : "null");
 var m1 = false, m2 = false;
@@ -233,10 +242,15 @@ $('#btnEnProceso').on('click', function () {
 
 // ── finalizar ─────────────────────────────────────────────────────────────────
 $('#btnFinalizar').on('click', function () {
+    var prog    = parseInt($('#txtPzasProg').data('kendoNumericTextBox').value()) || 0;
+    var ya      = parseInt($('#hfPzasYa').val() || '0');
+    var maximo  = prog - ya;
+
     var htmlPiezas =
         '<div style="padding:8px 0;">' +
         lbl('Piezas producidas') +
-        '<input id="dlgInputPzas" type="number" min="0" class="k-textbox" style="width:140px;" placeholder="0" />' +
+        '<input id="dlgInputPzas" type="number" min="1" max="' + maximo + '" class="k-textbox" style="width:140px;" placeholder="0" />' +
+        '<p style="font-size:.8rem;color:#9aa0b8;margin-top:6px;">M&aacute;ximo permitido: <strong>' + maximo + '</strong></p>' +
         '</div>';
 
     $('<div/>').appendTo('body').kendoDialog({
@@ -250,8 +264,11 @@ $('#btnFinalizar').on('click', function () {
                     var v = $('#dlgInputPzas').val();
                     if (v === '') { tsAlert('Aviso', 'Ingrese las piezas producidas.', 'warning'); return false; }
                     var pzas = parseInt(v);
-                    var prog = parseInt($('#txtPzasProg').data('kendoNumericTextBox').value()) || 0;
-                    var ya   = parseInt($('#hfPzasYa').val() || '0');
+                    if (isNaN(pzas) || pzas <= 0) { tsAlert('Aviso', 'Las piezas deben ser mayor a 0.', 'warning'); return false; }
+                    if (pzas + ya > prog) {
+                        tsAlert('Aviso', 'No puedes producir más piezas de las programadas. Máximo: ' + maximo + '.', 'warning');
+                        return false;
+                    }
                     if ((pzas + ya) >= prog) {
                         finalizar($('#hfIdProceso').val(), pzas, prog, '');
                     } else {
@@ -268,9 +285,9 @@ function abrirDialogAdmin(pzas, prog) {
     var htmlAdmin =
         '<div style="padding:8px 0;">' +
         '<p style="color:#9aa0b8;font-size:.82rem;margin-bottom:14px;">Las piezas producidas son menores a las programadas. Se requiere autorizacion de supervisor.</p>' +
-        lbl('No. Empleado Admin') +
+        lbl('No. Empleado') +
         '<input id="dlgAdmUser" type="text" class="k-textbox" style="width:100%;margin-bottom:10px;" />' +
-        lbl('Contrasena') +
+        lbl('Contrase&#241;a') +
         '<input id="dlgAdmPass" type="password" class="k-textbox" style="width:100%;margin-bottom:10px;" />' +
         lbl('Motivo / Comentarios') +
         '<textarea id="dlgAdmComent" class="k-textbox" rows="2" style="width:100%;resize:none;" placeholder="Minimo 10 caracteres..."></textarea>' +
@@ -284,17 +301,14 @@ function abrirDialogAdmin(pzas, prog) {
             {
                 text: 'Confirmar Cierre', primary: true,
                 action: function () {
-                    var u = ($('#dlgAdmUser').val()    || '').trim();
-                    var p = ($('#dlgAdmPass').val()    || '');
-                    var c = ($('#dlgAdmComent').val()  || '').trim();
-                    if (!u || !p)    { tsAlert('Aviso', 'Faltan credenciales.', 'warning'); return false; }
+                    var u = ($('#dlgAdmUser').val()   || '').trim();
+                    var p = ($('#dlgAdmPass').val()   || '');
+                    var c = ($('#dlgAdmComent').val() || '').trim();
+                    if (!u || !p)      { tsAlert('Aviso', 'Ingresa numero de empleado y contrasena.', 'warning'); return false; }
                     if (c.length < 10) { tsAlert('Aviso', 'Minimo 10 caracteres en el motivo.', 'warning'); return false; }
-                    $.post(U.admin, { userNumber: u, password: p }, function (r) {
-                        if (r.success) {
-                            finalizar($('#hfIdProceso').val(), pzas, prog, c);
-                        } else {
-                            tsAlert('Acceso denegado', r.message || 'Credenciales invalidas.', 'error');
-                        }
+                    $.post(U.admin, { employeeNumber: u, password: p }, function (r) {
+                        if (r.success) { finalizar($('#hfIdProceso').val(), pzas, prog, c); }
+                        else { tsAlert('Sin permiso', r.message, 'error'); }
                     }).fail(function () { tsAlert('Error', 'Error de conexion.', 'error'); });
                 }
             }

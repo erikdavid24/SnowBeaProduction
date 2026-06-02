@@ -38,8 +38,6 @@
             background: #fff !important;
             border: 1px solid #e8ecf1 !important;
             border-radius: 10px !important;
-            box-shadow: 0 1px 6px rgba(0,0,0,.06) !important;
-            padding: 12px 20px !important;
         }
 
             .ts-header h4 {
@@ -83,6 +81,14 @@
             display: block !important;
             margin: 0 auto !important;
         }
+        .kanban-linea-group {
+            margin-bottom: 14px;
+        }
+        .kanban-linea-hdr {
+            font-size: .74rem; font-weight: 700; color: #6366f1;
+            padding: 4px 4px 4px; letter-spacing: .04em; text-transform: uppercase;
+            border-bottom: 1px solid #e0e7ff; margin-bottom: 8px;
+        }
     </style>
 }
 
@@ -91,7 +97,6 @@
     <div class="ts-toolbar">
         <a href="#" class="k-button k-primary btn-rounded" id="btnNuevoPrograma"><i class="fas fa-plus"></i> Nuevo Programa</a>
         <a href="#" class="k-button btn-excel" id="btnSubirExcel"><i class="fas fa-file-excel"></i>&nbsp;Subir Excel</a>
-        <a href="@Url.Action("Index","TrolleyProcess")" class="k-button btn-rounded" id="btnIrProceso"><i class="fas fa-play"></i> Ir al Proceso</a>
         <div class="ts-fiscal-filter k-d-flex k-flex-col">
             <label for="fiscalWeekPicker">Seleccionar Semana Fiscal</label>
             <div class="k-d-flex k-align-items-center" style="gap:10px;">
@@ -123,34 +128,60 @@
 
 <div class="ts-kanban" id="kanbanBoard">
     <div class="ts-kanban-col">
-        <div class="ts-kanban-col-header">
-            <i class="fas fa-clock"></i> Creado
-            <span id="cntPendiente" class="ts-kanban-badge" style="background:#fde68a;color:#92400e;"></span>
+        <div class="ts-kanban-col-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span><i class="fas fa-pause-circle"></i> Requeridos no programados por restricciones
+            <span id="cntPendiente" class="ts-kanban-badge" style="background:#e0e7ff;color:#3730a3;"></span></span>
+            @(Html.Kendo().DropDownList().Name("filterLineaPendiente")
+                .DataTextField("text").DataValueField("value")
+                .HtmlAttributes(new { style = "width:90px;font-size:.75rem;", data_body = "bodyPendiente" })
+                .Events(e => e.Change("onFiltrarLinea")))
         </div>
         <div class="ts-kanban-col-body" id="bodyPendiente"></div>
     </div>
     <div class="ts-kanban-col">
-        <div class="ts-kanban-col-header">
-            <i class="fas fa-cog"></i> En Proceso
-            <span id="cntEnProceso" class="ts-kanban-badge" style="background:#bfdbfe;color:#1e40af;"></span>
+        <div class="ts-kanban-col-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span><i class="fas fa-clock"></i> Creado
+            <span id="cntCreado" class="ts-kanban-badge" style="background:#fde68a;color:#92400e;"></span></span>
+            @(Html.Kendo().DropDownList().Name("filterLineaCreado")
+                .DataTextField("text").DataValueField("value")
+                .HtmlAttributes(new { style = "width:90px;font-size:.75rem;", data_body = "bodyCreado" })
+                .Events(e => e.Change("onFiltrarLinea")))
+        </div>
+        <div class="ts-kanban-col-body" id="bodyCreado"></div>
+    </div>
+    <div class="ts-kanban-col">
+        <div class="ts-kanban-col-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span><i class="fas fa-cog"></i> En Proceso
+            <span id="cntEnProceso" class="ts-kanban-badge" style="background:#bfdbfe;color:#1e40af;"></span></span>
+            @(Html.Kendo().DropDownList().Name("filterLineaEnProceso")
+                .DataTextField("text").DataValueField("value")
+                .HtmlAttributes(new { style = "width:90px;font-size:.75rem;", data_body = "bodyEnProceso" })
+                .Events(e => e.Change("onFiltrarLinea")))
         </div>
         <div class="ts-kanban-col-body" id="bodyEnProceso"></div>
     </div>
     <div class="ts-kanban-col">
-        <div class="ts-kanban-col-header">
-            <i class="fas fa-hourglass-half"></i> Piezas por Terminar
-            <span id="cntPiezasPendientes" class="ts-kanban-badge" style="background:#fef3c7;color:#92400e;"></span>
-        </div>
-        <div class="ts-kanban-col-body" id="bodyPiezasPendientes"></div>
-    </div>
-    <div class="ts-kanban-col">
-        <div class="ts-kanban-col-header">
-            <i class="fas fa-check-circle"></i> Completado
-            <span id="cntCompletado" class="ts-kanban-badge" style="background:#bbf7d0;color:#166534;"></span>
+        <div class="ts-kanban-col-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span><i class="fas fa-check-circle"></i> Completado
+            <span id="cntCompletado" class="ts-kanban-badge" style="background:#bbf7d0;color:#166534;"></span></span>
+            @(Html.Kendo().DropDownList().Name("filterLineaCompletado")
+                .DataTextField("text").DataValueField("value")
+                .HtmlAttributes(new { style = "width:90px;font-size:.75rem;", data_body = "bodyCompletado" })
+                .Events(e => e.Change("onFiltrarLinea")))
         </div>
         <div class="ts-kanban-col-body" id="bodyCompletado"></div>
     </div>
 </div>
+
+
+@(Html.Kendo().Sortable()
+    .For("#bodyPendiente")
+    .Filter(".ts-card")
+    .ConnectWith(".kanban-linea-group")
+    .Cursor("grabbing")
+    .HintHandler("kanbanHint")
+    .PlaceholderHandler("kanbanPlaceholder")
+    .Events(e => e.Change("onKanbanCardMoved").Move("onPendienteMove")))
 
 @(Html.Kendo().Window().Name("wndExcel").Title("Cargar Plan de Produccion").Visible(false).Modal(true).Width(500)
     .Content(@<text>
@@ -350,8 +381,9 @@ var PG = {
         guardarPreview:      '@Url.Action("GuardarPreview",      "ProgramGestion")',
         preGuardar:          '@Url.Action("PreGuardarPreview",   "ProgramGestion")',
         getPrecargas:        '@Url.Action("GetPrecargas",        "ProgramGestion")',
-        autorizarPrecargas:  '@Url.Action("AutorizarPrecargas",  "ProgramGestion")',
-        rechazarPrecargas:   '@Url.Action("RechazarPrecargas",   "ProgramGestion")'
+        autorizarPrecargas:  '@Url.Action("AutorizarPrecargas",    "ProgramGestion")',
+        rechazarPrecargas:   '@Url.Action("RechazarPrecargas",     "ProgramGestion")',
+        cambiarStatus:       '@Url.Action("CambiarStatusKanban",   "ProgramGestion")'
     },
     msj: {
         exito: '@Html.Raw(TempData["Success"] != null ? TempData["Success"].ToString() : "")',
