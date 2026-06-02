@@ -190,6 +190,7 @@
     <Compile Include="Controllers\TrolleyGestionController.cs" />
     <Compile Include="Controllers\TrolleyProcessController.cs" />
     <Compile Include="Controllers\TrolleySetupController.cs" />
+    <Compile Include="Controllers\SupervisoresController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -319,6 +320,7 @@
     <Content Include="Scripts\programa-gestion.min.js" />
     <Content Include="Scripts\trolley-gestion.js" />
     <Content Include="Scripts\trolley-gestion.min.js" />
+    <Content Include="Views\Supervisores\Index.cshtml" />
     <Content Include="Views\Web.config" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />

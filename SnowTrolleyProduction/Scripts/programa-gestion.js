@@ -1,4 +1,4 @@
-function swalBase(a,b,c,d){Swal.fire($.extend({title:a,text:b,type:c},d||{}));}
+function swalBase(a,b,c,d){Swal.fire($.extend({title:a,html:b,type:c},d||{}));}
 function swalOk(a,b,c){swalBase(a,b,'success',$.extend({confirmButtonColor:'#1bc5bd'},c||{}));}
 function swalErr(a,b){swalBase(a,b,'error',{confirmButtonColor:'#f64e60'});}
 function swalWarn(a,b){swalBase(a,b,'warning',{confirmButtonColor:'#f64e60'});}
