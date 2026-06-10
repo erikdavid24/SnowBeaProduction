@@ -1,4 +1,4 @@
-@model SnowTrolleyProduction.Models.ProgramGestionViewModel
+﻿@model SnowTrolleyProduction.Models.ProgramGestionViewModel
 @{
     ViewBag.Title = "Gestion de Programa";
 }
@@ -95,8 +95,8 @@
 <div class="ts-header">
     <h4><i class="fas fa-cogs" style="margin-right:8px;"></i>Plan de Produccion</h4>
     <div class="ts-toolbar">
-        <a href="#" class="k-button k-primary btn-rounded" id="btnNuevoPrograma"><i class="fas fa-plus"></i> Nuevo Programa</a>
-        <a href="#" class="k-button btn-excel" id="btnSubirExcel"><i class="fas fa-file-excel"></i>&nbsp;Subir Excel</a>
+        <a href="#" class="btn btn-brand btn-bold" id="btnNuevoPrograma"><i class="fas fa-plus"></i> Nuevo Programa</a>
+        <a href="#" class="btn btn-success btn-bold" id="btnSubirExcel"><i class="fas fa-file-excel"></i>&nbsp;Subir Excel</a>
         <div class="ts-fiscal-filter k-d-flex k-flex-col">
             <label for="fiscalWeekPicker">Seleccionar Semana Fiscal</label>
             <div class="k-d-flex k-align-items-center" style="gap:10px;">
@@ -104,14 +104,12 @@
                     .Name("fiscalWeekPicker")
                     .DateInput()
                 )
-                <a href="#" class="k-button btn-rounded" id="btnBuscar"><i class="fas fa-search"></i> Buscar</a>
-                <a href="#" class="k-button btn-rounded" id="btnLimpiar" title="Limpiar filtro"><i class="fas fa-times"></i> Limpiar</a>
+                <a href="#" class="btn btn-brand btn-bold" id="btnBuscar"><i class="fas fa-search"></i> Buscar</a>
+                <a href="#" class="btn btn-secondary btn-bold" id="btnLimpiar" title="Limpiar filtro"><i class="fas fa-times"></i> Limpiar</a>
             </div>
         </div>
     </div>
 </div>
-
-
 
 <div id="secPrecargas" style="display:none;margin-bottom:16px;">
     <div class="pg-precarga-hdr">
@@ -124,9 +122,9 @@
     </div>
 </div>
 
-
-
-<div class="ts-kanban" id="kanbanBoard">
+<div class="kt-portlet">
+    <div class="kt-portlet__body">
+        <div class="ts-kanban" id="kanbanBoard">
     <div class="ts-kanban-col">
         <div class="ts-kanban-col-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <span><i class="fas fa-pause-circle"></i> Requeridos no programados por restricciones
@@ -171,8 +169,9 @@
         </div>
         <div class="ts-kanban-col-body" id="bodyCompletado"></div>
     </div>
+        </div>
+    </div>
 </div>
-
 
 @(Html.Kendo().Sortable()
     .For("#bodyPendiente")
@@ -362,7 +361,6 @@
         </div>
     </text>)
 )
-
 
 <script>
 var PG = {

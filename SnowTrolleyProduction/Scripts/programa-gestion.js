@@ -1,4 +1,4 @@
-function swalBase(a,b,c,d){Swal.fire($.extend({title:a,html:b,type:c},d||{}));}
+﻿function swalBase(a,b,c,d){Swal.fire($.extend({title:a,html:b,type:c},d||{}));}
 function swalOk(a,b,c){swalBase(a,b,'success',$.extend({confirmButtonColor:'#1bc5bd'},c||{}));}
 function swalErr(a,b){swalBase(a,b,'error',{confirmButtonColor:'#f64e60'});}
 function swalWarn(a,b){swalBase(a,b,'warning',{confirmButtonColor:'#f64e60'});}
@@ -6,7 +6,6 @@ function formatFecha(a){if(!a)return'�';var b=new Date(parseInt(a.replace('/Da
 function tgConfirm(t,x,fn){$('<div/>').appendTo('body').kendoDialog({width:420,title:t,closable:true,modal:true,content:'<p style="margin:0;color:#3d4465;">'+x+'</p>',actions:[{text:'Cancelar'},{text:'Confirmar',primary:true,action:function(){fn();}}],close:function(){this.destroy();}}).data('kendoDialog').open();}
 function tgAlert(t,x){$('<div/>').appendTo('body').kendoDialog({width:380,title:t,closable:true,modal:true,content:'<p style="margin:0;color:#3d4465;">'+x+'</p>',actions:[{text:'OK',primary:true}],close:function(){this.destroy();}}).data('kendoDialog').open();}
 
-// Calendario Fiscal
 function inicializarFiltroSemanaFiscal() {
     var datePicker = $('#fiscalWeekPicker').data('kendoDatePicker');
     if (!datePicker) return;
@@ -14,11 +13,11 @@ function inicializarFiltroSemanaFiscal() {
     datePicker.bind('change', function() {
         var selectedDate = this.value();
         if (selectedDate) {
-            // Obtener información de la semana fiscal para la fecha seleccionada
+
             var fechaStr = kendo.toString(selectedDate, 'yyyy/MM/dd');
             $.get(PG.urls.semanaFiscal, { fecha: fechaStr }, function(r) {
                 if (r && r.semana) {
-                    // Guardar la semana fiscal en el datepicker
+
                     $('#fiscalWeekPicker').data('fiscal-week', r.semana);
                     $('#fiscalWeekPicker').data('fiscal-year', r.anio);
                 }
@@ -28,13 +27,12 @@ function inicializarFiltroSemanaFiscal() {
 }
 
 function actualizarMesesFiscales(ano) {
-    // Esta función ya no se usa con el nuevo diseño
+
 }
 
 function actualizarSemanasDelMes(ano, mes) {
-    // Esta función ya no se usa con el nuevo diseño
-}
 
+}
 
 function renderKanban(data) {
     var enProceso   = ['Setup', 'Arranque', 'En Proceso'];
@@ -68,7 +66,7 @@ function renderKanban(data) {
 function agruparCreadoPorLinea() {
     var $body = $('#bodyCreado');
     var cards = $body.find('.ts-card').toArray();
-    if (!cards.length) return;
+    if (!cards.length) { $body.wrapInner('<div class="kanban-linea-group" data-linea="0">'); return; }
 
     cards.sort(function (a, b) { return ($(a).data('linea') || 0) - ($(b).data('linea') || 0); });
     $body.empty();
@@ -88,35 +86,61 @@ function agruparCreadoPorLinea() {
 function initKanbanSortables(lineaActiva) {
     _lineaFiltroCreado = lineaActiva || '';
 
-    // Destruir sortables de grupos previos
     $('.kanban-linea-group').each(function () {
         var s = $(this).data('kendoSortable'); if (s) s.destroy();
     });
+    var ps = $('#bodyPendiente').data('kendoSortable'); if (ps) ps.destroy();
 
-    // En modo TODAS no se permite reordenar dentro de Creado
-    if (!_lineaFiltroCreado) return;
+    function makeSortStart(source) {
+        return function () {
+            _dragValid  = false;
+            _dragSource = source;
+            $(document).off('mouseup.kanbanDrop touchend.kanbanDrop');
+            $(document).one('mouseup.kanbanDrop touchend.kanbanDrop', function () {
+                setTimeout(function () { if (!_dragValid) cargarKanban(); }, 120);
+            });
+        };
+    }
 
     $('.kanban-linea-group').each(function () {
         $(this).kendoSortable({
             filter: '.ts-card', cursor: 'grabbing',
             hint: kanbanHint, placeholder: kanbanPlaceholder,
             connectWith: '#bodyPendiente',
-            change: function (e) { onKanbanCardMoved(e); }
+            start:  makeSortStart('group'),
+            change: function (e) {
+                _dragValid = true;
+                if (!_lineaFiltroCreado && e.action === 'sort') { setTimeout(cargarKanban, 0); return; }
+                onKanbanCardMoved(e);
+            }
         });
+    });
+
+    $('#bodyPendiente').kendoSortable({
+        filter: '.ts-card', cursor: 'grabbing',
+        hint: kanbanHint, placeholder: kanbanPlaceholder,
+        connectWith: '.kanban-linea-group',
+        start:  makeSortStart('pendiente'),
+        change: function (e) {
+            _dragValid = true;
+            if (!_lineaFiltroPendiente && e.action === 'sort') { setTimeout(cargarKanban, 0); return; }
+            onKanbanCardMoved(e);
+        }
     });
 }
 
-var _lineaFiltroCreado = '';
-var _kanbanScrollTimer = null;
+var _lineaFiltroCreado    = '';
+var _lineaFiltroPendiente = '';
+var _kanbanScrollTimer    = null;
+var _dragValid            = false;
+var _dragSource           = '';
 
 function kanbanHint(element) {
     return element.clone().css({ width: element.outerWidth(), opacity: 0.85, boxShadow: '0 4px 16px rgba(0,0,0,.18)', borderRadius: '8px' });
 }
 
 function kanbanPlaceholder(element) {
-    return element.clone()
-        .addClass('pg-sort-placeholder')
-        .css({ opacity: 0.35, border: '2px dashed #6366f1', borderRadius: '8px' });
+    return $('<div class="pg-sort-placeholder">').css({ height: element.outerHeight(true), opacity: 0 });
 }
 
 function onPendienteMove(e) {
@@ -131,20 +155,20 @@ function onPendienteMove(e) {
 function onKanbanCardMoved(e) {
     if (e.action !== 'receive') return;
     var id     = e.item.data('id');
-    var $dest  = e.sender.element;
-    var isPend = $dest.attr('id') === 'bodyPendiente';
+    var isPend = (_dragSource === 'group');
     var status = isPend ? 'Pendiente' : 'Creado';
 
     if (isPend) {
-        var $it = e.item, $c = $dest;
+        var $it = e.item, $body = $('#bodyPendiente');
         setTimeout(function () {
-            $c.find('.ts-kanban-empty').remove();
-            $c.prepend($it);
+            $body.find('.ts-kanban-empty').remove();
+            $body.prepend($it);
         }, 0);
     }
 
     $.post(PG.urls.cambiarStatus, { id: id, status: status }, function (r) {
         if (!r.success) { tgAlert('Error', r.message || 'No se pudo mover la carta.'); cargarKanban(); }
+        else if (!isPend) { cargarKanban(); }
     }).fail(function () { tgAlert('Error', 'Error de conexion.'); cargarKanban(); });
 }
 
@@ -161,6 +185,7 @@ function onFiltrarLinea() {
         initKanbanSortables(linea);
         _lineaFiltroCreado = linea;
     } else {
+        if (bodyId === 'bodyPendiente') _lineaFiltroPendiente = linea;
         $('#' + bodyId + ' .ts-card').each(function () {
             $(this).toggle(!linea || String($(this).data('linea')) === String(linea));
         });
@@ -187,7 +212,6 @@ function renderCol(bodyId, countId, filterId, items, saldoMap) {
     var $body = $('#' + bodyId).empty();
     $('#' + countId).text(items.length);
 
-    // Poblar Kendo DropDownList de lineas para esta columna
     var ddl = $('#' + filterId).data('kendoDropDownList');
     if (ddl) {
         var lineas = [];
@@ -250,7 +274,6 @@ function renderCol(bodyId, countId, filterId, items, saldoMap) {
     });
 }
 
-// Work Order
 function generarWorkOrderBase() {
     var ddl = $('#cbLinea').data('kendoDropDownList');
     if (!ddl || !ddl.value()) return;
@@ -273,10 +296,8 @@ function prepararWorkOrderFinal() {
     return true;
 }
 
-// Helpers de dropdowns
 function getLineaData()    { var d = $('#cbLinea').data('kendoDropDownList');    return { lineaId: d && d.value() ? parseInt(d.value()) : 0 }; }
 function getEnsambleData() { var d = $('#cbEnsamble').data('kendoDropDownList'); return { ensamble: d ? d.value() : '' }; }
-
 
 function onWndNuevoCerrar() {
     ['#cbLinea', '#cbEnsamble'].forEach(function (s) { var d = $(s).data('kendoDropDownList'); if (d) { d.value(''); if (s !== '#cbLinea') d.enable(false); } });
@@ -363,7 +384,6 @@ $(document).on('change', '.setup-trolley-slot', function () {
     $('#setupAlertaDuplicados').hide();
 });
 
-// Preview Excel
 function abrirPreview(data, soloVer) {
     var existing = $('#gridPreviewContainer').data('kendoGrid');
     if (existing) { existing.destroy(); }
@@ -475,22 +495,20 @@ function cargarPrecargas() {
         $('#badgePrecargas').text(count);
         if (count > 0) {
             $('#secPrecargas').slideDown(200);
-            $('#btnSubirExcel').addClass('k-state-disabled').attr('title', 'Autoriza o rechaza los pendientes antes de subir otro Excel.');
+            $('#btnSubirExcel').addClass('disabled').attr('title', 'Autoriza o rechaza los pendientes antes de subir otro Excel.');
         } else {
             $('#secPrecargas').slideUp(200);
-            $('#btnSubirExcel').removeClass('k-state-disabled').removeAttr('title');
+            $('#btnSubirExcel').removeClass('disabled').removeAttr('title');
         }
     });
 }
 
-// Inicio
 $(function () {
 
     if (PG.msj.exito)      { swalOk('Listo!', PG.msj.exito); cargarKanban(); }
     else if (PG.msj.error) { swalErr('Error', PG.msj.error);   cargarKanban(); }
     else                   { cargarKanban(); }
 
-    // Inicializar dropdowns de calendario fiscal
     inicializarFiltroSemanaFiscal();
 
     $('#btnNuevoPrograma').on('click', function (e) { e.preventDefault(); $('#wndNuevo').data('kendoWindow').center().open(); });
@@ -514,7 +532,6 @@ $(function () {
     $('#btnCancelarEditar').on('click', function () { $('#wndEditar').data('kendoWindow').close(); });
     $('#btnCancelarSetup').on('click',  function () { $('#wndSetup').data('kendoWindow').close(); });
 
-    // Vista previa Excel
     $('#btnPreviewExcel').on('click', function () {
         var file = $('#archivoExcelInput')[0] && $('#archivoExcelInput')[0].files[0];
         if (!file) { swalWarn('Archivo requerido', 'Selecciona un archivo .xlsx'); return; }
@@ -580,7 +597,6 @@ $(function () {
         });
     });
 
-    // Guardar nuevo
     $('#btnGuardarNuevo').on('click', function () {
         if (!prepararWorkOrderFinal()) return;
         var piezas = parseInt($('#txtPiezas').val());
@@ -610,7 +626,6 @@ $(function () {
           .always(function () { $btn.prop('disabled', false).html('<i class="fas fa-save"></i> Guardar'); });
     });
 
-   
     $('#btnGuardarEditar').on('click', function () {
         var piezas = parseInt($('#editPiezas').val());
         if (!piezas || piezas <= 0) { swalWarn('Campo requerido', 'Ingresa las piezas.'); return; }
@@ -627,7 +642,6 @@ $(function () {
           .always(function () { $btn.prop('disabled', false).html('<i class="fas fa-save"></i> Guardar'); });
     });
 
-    // Guardar setup trolleys
     $('#btnGuardarSetup').on('click', function () {
         var programaId = parseInt($('#setupProgramaId').val()), linea = parseInt($('#setupLinea').val());
         var zonas = {};
@@ -660,7 +674,6 @@ $(function () {
           .always(function () { $btn.prop('disabled', false).html('<i class="fas fa-tools"></i> Guardar Setup'); });
     });
 
-    // Card events � Edit
     $(document).on('click', '.btn-card-edit', function (e) {
         e.preventDefault();
         var $c = $(this).closest('.ts-card'), ensamble = $c.data('ensamble') || '', progActual = $c.data('prog') || '';
@@ -679,7 +692,6 @@ $(function () {
         }
         $('#wndEditar').data('kendoWindow').center().open();
     });
-
 
     $(document).on('click', '.btn-card-del', function (e) {
         e.preventDefault();
@@ -730,7 +742,6 @@ $(function () {
         });
     });
 
-    // Auto-scroll de columnas kanban mientras se arrastra una carta
     $(document).on('mousemove.kanbanscroll', function (e) {
         clearInterval(_kanbanScrollTimer);
         _kanbanScrollTimer = null;

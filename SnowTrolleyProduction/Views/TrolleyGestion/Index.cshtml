@@ -1,4 +1,4 @@
-@model SnowTrolleyProduction.Models.TrolleyGestionIndexViewModel
+﻿@model SnowTrolleyProduction.Models.TrolleyGestionIndexViewModel
 @{
     ViewBag.Title = "Gestor de Trolley";
     string ventana = TempData["Ventana"] != null ? TempData["Ventana"].ToString() : "maquinas";
@@ -27,22 +27,26 @@ function onTabSelect(e) {
     var acomodoContent   = Html.Partial("Tables/_AcomodoTable"  ).ToHtmlString();
 }
 
-@(Html.Kendo().TabStrip().Name("tabsGestion")
-    .Animation(false)
-    .Events(e => e.Select("onTabSelect"))
-    .Items(items => {
-        items.Add().Text("Maquinas").Selected(ventana == "maquinas")
-            .Content(maquinasContent);
+<div class="kt-portlet">
+    <div class="kt-portlet__body">
+        @(Html.Kendo().TabStrip().Name("tabsGestion")
+            .Animation(false)
+            .Events(e => e.Select("onTabSelect"))
+            .Items(items => {
+                items.Add().Text("Maquinas").Selected(ventana == "maquinas")
+                    .Content(maquinasContent);
 
-        items.Add().Text("Ensambles").Selected(ventana == "ensambles")
-            .Content(ensamblesContent);
-        items.Add().Text("Programas").Selected(ventana == "programas")
-            .Content(programasContent);
+                items.Add().Text("Ensambles").Selected(ventana == "ensambles")
+                    .Content(ensamblesContent);
+                items.Add().Text("Programas").Selected(ventana == "programas")
+                    .Content(programasContent);
 
-        items.Add().Text("Acomodos").Selected(ventana == "acomodos")
-            .Content(acomodoContent);
-    })
-)
+                items.Add().Text("Acomodos").Selected(ventana == "acomodos")
+                    .Content(acomodoContent);
+            })
+        )
+    </div>
+</div>
 
 @(Html.Kendo().Window().Name("wndGestion").Title("").Visible(false).Modal(true).Width(820)
     .Events(e => e.Close("onWndGestionCerrar"))
@@ -50,40 +54,26 @@ function onTabSelect(e) {
 )
 
 @section Scripts {
+@{
+    var tgActions = new[] {
+        "MaquinasTable", "AgregarMaquinaModal", "EditarMaquinaModal", "EquiposPorLinea",
+        "AgregarMaquina", "EditarMaquina", "EliminarMaquina",
+        "EnsamblesTable", "AgregarEnsambleModal", "EditarEnsambleModal",
+        "AgregarEnsamble", "EditarEnsamble", "EliminarEnsamble",
+        "ProgramasTable", "AgregarProgramaModal", "EditarProgramaModal",
+        "AgregarPrograma", "EditarPrograma", "EliminarPrograma",
+        "AcomodoTable", "AgregarAcomodoModal", "EditarAcomodoModal", "AcomodoAutocompletado",
+        "AgregarAcomodo", "EditarAcomodo", "EliminarAcomodo",
+        "EliminarAcomodosPorPrograma", "EnsambleTieneAcomodos", "LimpiarAcomodosPorEnsamble",
+        "GetMaterialesPorPrograma", "GetDetallesPrograma", "GetProgramasParaModal"
+    };
+}
 <script>
-var TG = {
-    urls: {
-        maquinasTable:        '@Url.Action("MaquinasTable",        "TrolleyGestion")',
-        agregarMaquinaModal:  '@Url.Action("AgregarMaquinaModal",  "TrolleyGestion")',
-        editarMaquinaModal:   '@Url.Action("EditarMaquinaModal",   "TrolleyGestion")',
-        equiposPorLinea:      '@Url.Action("EquiposPorLinea",      "TrolleyGestion")',
-        agregarMaquina:       '@Url.Action("AgregarMaquina",       "TrolleyGestion")',
-        editarMaquina:        '@Url.Action("EditarMaquina",        "TrolleyGestion")',
-        eliminarMaquina:      '@Url.Action("EliminarMaquina",      "TrolleyGestion")',
-        ensamblesTable:       '@Url.Action("EnsamblesTable",       "TrolleyGestion")',
-        agregarEnsambleModal: '@Url.Action("AgregarEnsambleModal", "TrolleyGestion")',
-        editarEnsambleModal:  '@Url.Action("EditarEnsambleModal",  "TrolleyGestion")',
-        agregarEnsamble:      '@Url.Action("AgregarEnsamble",      "TrolleyGestion")',
-        editarEnsamble:       '@Url.Action("EditarEnsamble",       "TrolleyGestion")',
-        eliminarEnsamble:     '@Url.Action("EliminarEnsamble",     "TrolleyGestion")',
-        programasTable:       '@Url.Action("ProgramasTable",       "TrolleyGestion")',
-        agregarProgramaModal: '@Url.Action("AgregarProgramaModal", "TrolleyGestion")',
-        editarProgramaModal:  '@Url.Action("EditarProgramaModal",  "TrolleyGestion")',
-        agregarPrograma:      '@Url.Action("AgregarPrograma",      "TrolleyGestion")',
-        editarPrograma:       '@Url.Action("EditarPrograma",       "TrolleyGestion")',
-        eliminarPrograma:     '@Url.Action("EliminarPrograma",     "TrolleyGestion")',
-        acomodoTable:         '@Url.Action("AcomodoTable",         "TrolleyGestion")',
-        agregarAcomodoModal:  '@Url.Action("AgregarAcomodoModal",  "TrolleyGestion")',
-        editarAcomodoModal:   '@Url.Action("EditarAcomodoModal",   "TrolleyGestion")',
-        acomodoAutocompletado:'@Url.Action("AcomodoAutocompletado","TrolleyGestion")',
-        agregarAcomodo:         '@Url.Action("AgregarAcomodo",         "TrolleyGestion")',
-        editarAcomodo:          '@Url.Action("EditarAcomodo",          "TrolleyGestion")',
-        eliminarAcomodo:        '@Url.Action("EliminarAcomodo",        "TrolleyGestion")',
-        getMaterialesPorPrograma:  '@Url.Action("GetMaterialesPorPrograma",  "TrolleyGestion")',
-        getDetallesPrograma:       '@Url.Action("GetDetallesPrograma",       "TrolleyGestion")',
-        getProgramasParaModal:     '@Url.Action("GetProgramasParaModal",     "TrolleyGestion")'
-    }
-};
+var TG = { urls: {} };
+@foreach (var a in tgActions)
+{
+    @:TG.urls["@(char.ToLowerInvariant(a[0]) + a.Substring(1))"] = "@Url.Action(a, "TrolleyGestion")";
+}
 </script>
 <script src="@Url.Content("~/Scripts/trolley-gestion.min.js")?v=@(new System.IO.FileInfo(Server.MapPath("~/Scripts/trolley-gestion.min.js")).LastWriteTime.Ticks)"></script>
 }
