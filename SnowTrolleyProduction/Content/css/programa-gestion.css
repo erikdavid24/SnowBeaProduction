@@ -1,11 +1,5 @@
-/* ========================================================================= */
-/* BORDES EN PICO (SIN REDONDEO)                                             */
-/* ========================================================================= */
-*, *::before, *::after { border-radius: 0 !important; }
+﻿*, *::before, *::after { border-radius: 0 !important; }
 
-/* ========================================================================= */
-/* HEADER Y TOOLBAR                                                          */
-/* ========================================================================= */
 .ts-header {
     display: flex;
     align-items: center;
@@ -50,9 +44,6 @@
     width: 125px !important;
 }
 
-/* ========================================================================= */
-/* KANBAN: 3 COLUMNAS CON SCROLL INDIVIDUAL                                  */
-/* ========================================================================= */
 .ts-kanban {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -110,7 +101,6 @@
     border-radius: 10px;
 }
 
-/* ocultar el listview original de kendo � usamos nuestro kanban */
 #lvTrolley {
     display: none !important;
 }
@@ -119,9 +109,6 @@
     display: none !important;
 }
 
-/* ========================================================================= */
-/* CARD STYLING                                                              */
-/* ========================================================================= */
 .ts-card {
     width: 100%;
     background: #fff;
@@ -172,9 +159,6 @@
     margin-top: 6px;
 }
 
-/* ========================================================================= */
-/* BADGES                                                                    */
-/* ========================================================================= */
 .ts-badge {
     display: inline-block;
     padding: 3px 10px;
@@ -189,9 +173,6 @@
 .ts-badge.done    { background: #f0fdf4; color: #22c55e; border: 1px solid #bbf7d0; }
 .ts-badge.partial { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
 
-/* ========================================================================= */
-/* CARD META                                                                 */
-/* ========================================================================= */
 .ts-card-meta {
     display: flex;
     justify-content: space-between;
@@ -211,9 +192,6 @@
     gap: 4px;
 }
 
-/* ========================================================================= */
-/* CARD ACTIONS                                                              */
-/* ========================================================================= */
 .ts-card-actions {
     display: flex;
     gap: 6px;
@@ -238,9 +216,6 @@
 .ts-card-actions a.del         { color: #ef4444; border-color: #fecaca; }
 .ts-card-actions a.del:hover   { background: #fff5f5; }
 
-/* ========================================================================= */
-/* KANBAN EMPTY STATE                                                        */
-/* ========================================================================= */
 img.show-empty {
     width: 120px !important;
     height: 120px !important;
@@ -260,17 +235,10 @@ img.show-empty {
     gap: 6px;
 }
 
-
-/* ========================================================================= */
-/* SWAL2 OVER KENDO MODAL                                                    */
-/* ========================================================================= */
 .swal2-container {
     z-index: 99999 !important;
 }
 
-/* ========================================================================= */
-/* FORM STYLING                                                              */
-/* ========================================================================= */
 .form-group  { margin-bottom: 15px; }
 
 .form-label {
@@ -296,9 +264,6 @@ img.show-empty {
     box-shadow: 0 0 0 3px rgba(93,120,255,.1);
 }
 
-/* ========================================================================= */
-/* TOOLBAR BUTTONS                                                           */
-/* ========================================================================= */
 .btn-excel {
     border-radius: 6px;
     background-color: #28a745;
@@ -308,18 +273,12 @@ img.show-empty {
 
 .btn-rounded { border-radius: 6px; }
 
-/* ========================================================================= */
-/* MODAL EXCEL                                                               */
-/* ========================================================================= */
 .wnd-excel-body     { padding: 15px; text-align: center; }
 .wnd-excel-icon     { display: block; font-size: 3rem; color: #28a745; margin-bottom: 15px; }
 .wnd-excel-text     { margin-bottom: 20px; color: #7e8299; }
 .wnd-excel-file     { width: 100%; margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
 .wnd-excel-submit   { width: 100%; border-radius: 6px; padding: 10px; }
 
-/* ========================================================================= */
-/* MODAL NUEVO PROGRAMA                                                      */
-/* ========================================================================= */
 .wnd-nuevo-body { padding: 20px; }
 
 .form-row { display: flex; gap: 15px; }
@@ -340,9 +299,6 @@ img.show-empty {
     padding-top: 16px;
 }
 
-/* ========================================================================= */
-/* RESPONSIVE                                                                */
-/* ========================================================================= */
 @media (max-width: 1400px) {
     .ts-kanban { grid-template-columns: repeat(2, 1fr); }
 }
@@ -353,9 +309,6 @@ img.show-empty {
     .wo-base, .wo-suffix { width: 100%; }
 }
 
-/* ========================================================================= */
-/* TAGS                                                                    */
-/* ========================================================================= */
 .ts-card-lados {
     display: flex;
     flex-wrap: wrap;
@@ -380,9 +333,6 @@ img.show-empty {
     font-weight: 700;
 }
 
-/* ========================================================================= */
-/* KANBAN BADGE                                                              */
-/* ========================================================================= */
 .ts-kanban-badge {
     margin-left: auto;
     padding: 1px 8px;
@@ -390,9 +340,6 @@ img.show-empty {
     font-size: .7rem;
 }
 
-/* ========================================================================= */
-/* SETUP DE TROLLEYS � VISUAL MACHINE LAYOUT                                 */
-/* ========================================================================= */
 .setup-zona-row {
     display: flex;
     align-items: center;
@@ -501,9 +448,6 @@ img.show-empty {
     flex-direction: column;
 }
 
-/* ========================================================================= */
-/* PRE-CARGA PENDIENTE                                                        */
-/* ========================================================================= */
 .pg-precarga-hdr {
     display: flex;
     align-items: center;

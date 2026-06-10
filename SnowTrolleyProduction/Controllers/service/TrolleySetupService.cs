@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using SnowTrolleyProduction.Models;
 using SnowTrolleyProduction.Models.Dtos;
 using System;
@@ -9,10 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace SnowTrolleyProduction.Controllers.service
 {
-    /// <summary>
-    /// Encapsula toda la l�gica de datos para la pantalla de Setup de Trolleys:
-    /// carga del SVG, inicio de proceso, finalizaci�n y autorizaci�n.
-    /// </summary>
+
     public class TrolleySetupService
     {
         private readonly string _connStr;
@@ -22,13 +19,6 @@ namespace SnowTrolleyProduction.Controllers.service
             _connStr = ctx.Database.Connection.ConnectionString;
         }
 
-        // ?? Datos del Setup (SVG) ?????????????????????????????????????????????
-
-        /// <summary>
-        /// Devuelve el programa activo ('En Proceso') para una l�nea y
-        /// las posiciones de trolleys para pintar el SVG.
-        /// Retorna null si no hay trabajo activo.
-        /// </summary>
         public SetupDatosDto GetDatosPorLinea(int linea)
         {
             const string sqlWorks = @"
@@ -66,13 +56,11 @@ namespace SnowTrolleyProduction.Controllers.service
                 var works = conn.Query<dynamic>(sqlWorks, new { linea }).ToList();
                 if (works == null || works.Count == 0) return null;
 
-                // Use the first record as the primary reference
                 var primary = works[0];
 
                 var positions = new List<TrolleyPosition>();
                 var allIds = new List<int>();
 
-                // Gather trolley positions from ALL active records (both sides)
                 foreach (var work in works)
                 {
                     allIds.Add((int)work.IdProceso);
@@ -99,7 +87,6 @@ namespace SnowTrolleyProduction.Controllers.service
                     }
                 }
 
-                // Determine overall status: if ANY is 'Arranque', report Arranque
                 string overallStatus = works.Any(w => (string)w.Status == "Arranque")
                     ? "Arranque"
                     : (string)primary.Status;
@@ -116,12 +103,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-
-        /// <summary>
-        /// Devuelve los trolleys disponibles en la l�nea y
-        /// el acomodo actual del programa dado.
-        /// (Usado por el modal de Setup en ProgramGestion.)
-        /// </summary>
         public TrolleySetupDataDto GetTrolleysSetup(int linea, int programaId)
         {
             const string sqlTrolleys = @"
@@ -172,7 +153,6 @@ namespace SnowTrolleyProduction.Controllers.service
 
                 var acomodoRows = conn.Query<dynamic>(sqlAcomodo, new { programaId }).ToList();
 
-                // Group acomodos by machine (cabezal)
                 var byMachine = new Dictionary<int, CabezalAcomodoDto>();
                 foreach (var row in acomodoRows)
                 {
@@ -196,7 +176,6 @@ namespace SnowTrolleyProduction.Controllers.service
 
                 result.Cabezales = byMachine.Values.OrderBy(c => c.Cabezal).ToList();
 
-                // Backwards compat: flat acomodo (merge all)
                 foreach (var cab in result.Cabezales)
                 {
                     foreach (var kv in cab.Acomodo)
@@ -212,11 +191,6 @@ namespace SnowTrolleyProduction.Controllers.service
             return result;
         }
 
-
-        /// <summary>
-        /// Reemplaza los registros de dbo.Acomodo para el programa indicado
-        /// con las zonas/trolleys del diccionario { locacion ? trolleyId }.
-        /// </summary>
         public void GuardarSetupTrolleys(int programaId, Dictionary<int, int> zonas, int? maquinaIdOverride = null)
         {
             const string sqlGetProg = @"
@@ -278,11 +252,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-
-        /// <summary>
-        /// Appends acomodo records for the second machine (cabezal 2) for the same programa.
-        /// Should be called after GuardarSetupTrolleys which deletes+inserts cabezal 1.
-        /// </summary>
         public void GuardarSetupTrolleysCabezal2(int programaId, Dictionary<int, int> zonas, int maquinaId)
         {
             const string sqlGetProg = @"
@@ -315,13 +284,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-
-        /// <summary>
-        /// Finaliza el proceso:
-        /// - Si piezasProducidas >= programadas ? Status = 'Completado'.
-        /// - Si es parcial ? Status = 'Completado' + crea nuevo registro 'Creado'
-        ///   con las piezas pendientes y una WorkOrder derivada.
-        /// </summary>
         public void FinalizarProceso(int idProceso, int piezasProducidas, string comentarios)
         {
             const string sqlSelect = @"
@@ -402,7 +364,6 @@ namespace SnowTrolleyProduction.Controllers.service
                         }, tx);
                     }
 
-
                     var siblingIds = conn.Query<int>(sqlSiblings, new { id = idProceso }, tx).ToList();
                     foreach (var sibId in siblingIds)
                     {
@@ -445,11 +406,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-
-        /// <summary>
-        /// Cambia el status de 'En Proceso' a 'Arranque', marcando la fecha.
-        /// Equivalente al bot�n "INICIAR PROCESO" de SnowBAEGym.
-        /// </summary>
         public (bool Success, string Message) ActualizarArranque(int idProceso)
         {
             const string sql = @"
@@ -457,7 +413,6 @@ namespace SnowTrolleyProduction.Controllers.service
                 SET    Status = 'Arranque'
                 WHERE  Id = @id AND Status = 'Setup'";
 
-           
             const string sqlSiblings = @"
                 SELECT ts2.Id
                 FROM   [Process].[TrolleySetup] ts1
@@ -473,7 +428,6 @@ namespace SnowTrolleyProduction.Controllers.service
                 conn.Open();
                 int rows = conn.Execute(sql, new { id = idProceso });
 
-                // Also update sibling sides to Arranque
                 var siblingIds = conn.Query<int>(sqlSiblings, new { id = idProceso }).ToList();
                 foreach (var sibId in siblingIds)
                 {
@@ -486,8 +440,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        /// <summary>Comprueba si existe alg�n proceso activo ('En Proceso'),
-        /// opcionalmente filtrado por l�nea.</summary>
         public (bool Exists, int Linea) GetProcesoActivo(int? linea)
         {
             string sql = @"

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace SnowTrolleyProduction.Models.Dtos
@@ -11,9 +11,9 @@ namespace SnowTrolleyProduction.Models.Dtos
         public string       workOrder         { get; set; }
         public int          piezasProgramadas { get; set; }
         public List<string> trolleys          { get; set; }
-        /// <summary>Lados del ensamble agrupados</summary>
+
         public List<string> lados             { get; set; }
-        /// <summary>IDs de todos los registros TrolleySetup para iniciar Setup de todos</summary>
+
         public List<int>    idsProcesos       { get; set; }
     }
 

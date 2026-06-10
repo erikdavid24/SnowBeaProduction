@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using SnowTrolleyProduction.Models;
 using System;
 using System.Collections.Generic;
@@ -16,7 +16,6 @@ namespace SnowTrolleyProduction.Controllers.service
             _connStr = ctx.Database.Connection.ConnectionString;
         }
 
-        // ?? L�neas SMT 
         public List<LineaGestion> GetLineasSMT()
         {
             const string sql = @"SELECT Id_Linea, Numero_Linea FROM [Process].[Lineas] WHERE AreaId = 48 AND Numero_Linea <> 1 ORDER BY Numero_Linea";
@@ -27,7 +26,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Maquinas 
         public List<MaquinaGestion> GetMaquinas()
         {
             const string sql = @"
@@ -114,7 +112,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Equipo
         public List<EquipoGestion> GetEquiposPorLinea(int lineaId)
         {
             const string sql = @"
@@ -128,7 +125,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? M�quinas
         public List<MaquinaGestion> GetMaquinasPorLinea(int lineaId)
         {
             const string sql = @"
@@ -148,7 +144,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Ensambles 
         public List<EnsambleGestion> GetEnsambles(string numero = "")
         {
             const string sql = @"
@@ -267,7 +262,11 @@ namespace SnowTrolleyProduction.Controllers.service
 
         public ProgramaGestion GetPrograma(int id)
         {
-            const string sql = "SELECT Id, Numero FROM [Process].[Programas] WHERE Id = @id";
+            const string sql = @"
+                SELECT Id, Numero,
+                       ISNULL(CantidadTotalMateriales, 0)       AS CantidadMateriales,
+                       ISNULL(CantidadComponentesDiferentes, 0) AS CantDiferentes
+                FROM [Process].[Programas] WHERE Id = @id";
             using (var conn = new SqlConnection(_connStr))
             {
                 conn.Open();
@@ -321,7 +320,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Acomodos 
         public List<AcomodosGroupViewModel> GetAcomodos()
         {
             const string sql = @"
@@ -447,38 +445,57 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        public (int ProgramaId, Dictionary<string, int> Zonas) GetAcomodoParaEdicion(int ensambleId)
+        public (int ProgramaId, Dictionary<string, int> Zonas) GetAcomodoParaEdicion(int programaId)
         {
-            const string sqlProg = @"
-                SELECT TOP 1 p.Id
-                FROM [Process].[Programas] p
-                WHERE p.Ensamble = @ensambleId
-                ORDER BY p.Numero ASC";
+            // Orden de maquinas IGUAL que en la vista (GetMaquinasPorLinea: por Equipo_descripcion),
+            // para que el suffix ("" = lado 1, "_2" = lado 2) cargue en la maquina correcta.
+            const string sqlMaqOrden = @"
+                SELECT m.Id
+                FROM [Process].[Maquinas] m
+                JOIN [Process].[Equipos] e ON m.EquipoId = e.Id_Equipo
+                JOIN [Process].[Programas] p ON p.Id = @programaId
+                JOIN [Process].[Ensambles] en ON p.Ensamble = en.Id
+                WHERE e.LineaId = en.Linea1
+                ORDER BY e.Equipo_descripcion";
 
             const string sqlAco = @"
                 SELECT a.Locacion, a.TrolleyId, a.MaquinaId
                 FROM [Process].[Acomodo] a
                 WHERE a.ProgramaId = @programaId
-                ORDER BY a.MaquinaId ASC";
+                  AND a.MaquinaId IS NOT NULL AND a.TrolleyId IS NOT NULL AND a.Locacion IS NOT NULL";
 
             using (var conn = new SqlConnection(_connStr))
             {
                 conn.Open();
-                int programaId = conn.QueryFirstOrDefault<int>(sqlProg, new { ensambleId });
-                if (programaId == 0) return (0, new Dictionary<string, int>());
-
+                var maquinaOrden = conn.Query<int>(sqlMaqOrden, new { programaId }).ToList();
                 var rows = conn.Query<dynamic>(sqlAco, new { programaId }).ToList();
-                var maquinaIds = rows.Select(r => (int)r.MaquinaId).Distinct().OrderBy(x => x).ToList();
                 var zonas = new Dictionary<string, int>();
 
                 foreach (var row in rows)
                 {
-                    int maqIdx = maquinaIds.IndexOf((int)row.MaquinaId);
+                    int maqId  = (int)row.MaquinaId;
+                    int maqIdx = maquinaOrden.IndexOf(maqId);
+                    if (maqIdx < 0) maqIdx = 0; // fallback si la maquina ya no esta en la linea
                     string suffix = maqIdx == 0 ? "" : "_2";
                     zonas["Z" + (int)row.Locacion + suffix] = (int)row.TrolleyId;
                 }
 
                 return (programaId, zonas);
+            }
+        }
+
+        public int? GetLineaIdPorPrograma(int programaId)
+        {
+            const string sql = @"
+                SELECT TOP 1 l.Id_Linea
+                FROM [Process].[Programas] p
+                JOIN [Process].[Ensambles] e ON p.Ensamble = e.Id
+                JOIN [Process].[Lineas] l ON e.Linea1 = l.Id_Linea
+                WHERE p.Id = @programaId";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                return conn.QueryFirstOrDefault<int?>(sql, new { programaId });
             }
         }
 
@@ -496,6 +513,42 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
+        public void EliminarAcomodosPorPrograma(int programaId)
+        {
+            const string sql = "DELETE FROM [Process].[Acomodo] WHERE ProgramaId = @programaId";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                conn.Execute(sql, new { programaId });
+            }
+        }
+
+        public bool EnsambleTieneAcomodos(int ensambleId)
+        {
+            const string sql = @"
+                SELECT COUNT(1) FROM [Process].[Acomodo] a
+                JOIN [Process].[Programas] p ON a.ProgramaId = p.Id
+                WHERE p.Ensamble = @ensambleId";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                return conn.QueryFirstOrDefault<int>(sql, new { ensambleId }) > 0;
+            }
+        }
+
+        public void LimpiarAcomodosPorEnsamble(int ensambleId)
+        {
+            const string sql = @"
+                DELETE a FROM [Process].[Acomodo] a
+                JOIN [Process].[Programas] p ON a.ProgramaId = p.Id
+                WHERE p.Ensamble = @ensambleId";
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                conn.Execute(sql, new { ensambleId });
+            }
+        }
+
         public void GuardarAcomodo(AcomodoFormViewModel vm)
         {
             const string sqlIns = "INSERT INTO [Process].[Acomodo] (ProgramaId, TrolleyId, Locacion, MaquinaId) VALUES (@prog, @trolley, @loc, @maq)";
@@ -505,7 +558,6 @@ namespace SnowTrolleyProduction.Controllers.service
                 conn.Open();
                 conn.Execute("DELETE FROM [Process].[Acomodo] WHERE ProgramaId = @ProgramaId", new { vm.ProgramaId });
 
-                // Maquina 1
                 if (vm.MaquinaId > 0)
                 {
                     var z1 = new Dictionary<int, int?> { {10,vm.Z10},{20,vm.Z20},{30,vm.Z30},{40,vm.Z40},{50,vm.Z50},{60,vm.Z60},{70,vm.Z70},{80,vm.Z80},{90,vm.Z90} };
@@ -514,7 +566,6 @@ namespace SnowTrolleyProduction.Controllers.service
                             conn.Execute(sqlIns, new { prog = vm.ProgramaId, trolley = kvp.Value.Value, loc = kvp.Key, maq = vm.MaquinaId });
                 }
 
-                // Maquina 2
                 if (vm.MaquinaId2 > 0)
                 {
                     var z2 = new Dictionary<int, int?> { {10,vm.Z10_2},{20,vm.Z20_2},{30,vm.Z30_2},{40,vm.Z40_2},{50,vm.Z50_2},{60,vm.Z60_2},{70,vm.Z70_2},{80,vm.Z80_2},{90,vm.Z90_2} };
@@ -545,7 +596,6 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Trolleys por l�nea (para acomodo modal) 
         public List<EquipoGestion> GetTrolleysPorLinea(int lineaId)
         {
             const string sql = @"
@@ -563,12 +613,11 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
-        // ?? Programas por l�nea (para acomodo modal)
         public List<ProgramaGestion> GetProgramasPorLinea(int lineaId, string orden = "numero")
         {
             string orderBy = orden == "recientes" ? "p.Id DESC" : "p.Numero ASC";
             string sql = $@"
-                SELECT p.Id, p.Numero
+                SELECT p.Id, p.Numero, e.Id AS EnsambleId, e.EnsambleBase AS EnsambleNumero
                 FROM [Process].[Programas] p
                 JOIN [Process].[Ensambles] e ON p.Ensamble = e.Id
                 WHERE e.Linea1 = @lineaId
@@ -577,7 +626,13 @@ namespace SnowTrolleyProduction.Controllers.service
             using (var conn = new SqlConnection(_connStr))
             {
                 conn.Open();
-                return conn.Query<ProgramaGestion>(sql, new { lineaId }).ToList();
+                return conn.Query<dynamic>(sql, new { lineaId }).Select(r => new ProgramaGestion
+                {
+                    Id         = r.Id,
+                    Numero     = r.Numero,
+                    EnsambleId = r.EnsambleId,
+                    Ensamble   = new EnsambleGestion { Id = r.EnsambleId, Numero = r.EnsambleNumero }
+                }).ToList();
             }
         }
     }

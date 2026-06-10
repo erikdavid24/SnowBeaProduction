@@ -1,4 +1,4 @@
-using BAEClassLibrary;
+﻿using BAEClassLibrary;
 using Kendo.Mvc.Extensions;
 using Kendo.Mvc.UI;
 using SnowTrolleyProduction.Controllers.service;
@@ -224,12 +224,12 @@ namespace SnowTrolleyProduction.Controllers
         [HttpPost]
         public ActionResult CargaMasiva(HttpPostedFileBase archivoExcel, bool? preview)
         {
-            // Preview mode
+
             if (preview == true)
             {
                 if (archivoExcel == null || archivoExcel.ContentLength == 0)
                     return Json(new { success = false, message = "Selecciona un archivo Excel valido." });
-                
+
                 try
                 {
                     var items = _svc.ParseExcelForPreview(archivoExcel.InputStream);
@@ -240,14 +240,13 @@ namespace SnowTrolleyProduction.Controllers
                     return Json(new { success = false, message = ex.Message });
                 }
             }
-            
-            // Direct save mode (legacy)
+
             if (archivoExcel == null || archivoExcel.ContentLength == 0)
             {
                 TempData["Error"] = "Por favor selecciona un archivo de Excel valido.";
                 return RedirectToAction("Index");
             }
-            
+
             try
             {
                 var items = _svc.ParseExcelForPreview(archivoExcel.InputStream);
@@ -256,9 +255,9 @@ namespace SnowTrolleyProduction.Controllers
                     ? "No se encontraron datos validos en el Excel."
                     : string.Format("exito! Se cargaron {0} programas.", count);
             }
-            catch (Exception ex) 
-            { 
-                TempData["Error"] = "Error al procesar el Excel: " + ex.Message; 
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error al procesar el Excel: " + ex.Message;
             }
             return RedirectToAction("Index");
         }

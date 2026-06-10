@@ -9,7 +9,7 @@
 
 <div class="form-group" style="margin-bottom:12px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-        <label class="form-label" style="margin:0;font-weight:700;color:#3d4465;">Programa</label>
+        <label class="form-label" style="margin:0;font-weight:700;color:#3d4465;">Buscar por Programa</label>
         <button type="button" id="btnOrdenToggle"
                 class="k-button @(ordenActual == "recientes" ? "k-primary" : "")"
                 style="font-size:.73rem;padding:2px 10px;"
@@ -138,10 +138,15 @@
 
 <script>
 (function () {
+    // Trolleys que pueden repetirse en varias zonas (no se bloquean)
+    var TROLLEYS_LIBRES = ['MATRIX', 'MANUAL'];
+    function esLibre(desc) { return $.inArray(desc, TROLLEYS_LIBRES) >= 0; }
+
     var programData = [
         @if (programas != null) {
             for (int i = 0; i < programas.Count; i++) {
-                @:{ value: @programas[i].Id, text: '@Html.Raw(programas[i].Numero.Replace("'", "\\'"))' }@(i < programas.Count - 1 ? "," : "")
+                var ens = programas[i].Ensamble != null ? programas[i].Ensamble.Numero : "";
+                @:{ value: @programas[i].Id, text: '@Html.Raw(programas[i].Numero.Replace("'", "\\'"))', ensamble: '@Html.Raw((ens ?? "").Replace("'", "\\'"))' }@(i < programas.Count - 1 ? "," : "")
             }
         }
     ];
@@ -159,11 +164,16 @@
         suggest:        true,
         clearButton:    true,
         placeholder:    '-- Selecciona Programa --',
-        noDataTemplate: 'No se encontraron programas'
+        noDataTemplate: 'No se encontraron programas',
+        template:       '#= text # <span style="color:rgb(154,160,184);font-size:.72rem;">(#= ensamble #)</span>'
     });
+    var cbPrograma = $('#acoPrograma').data('kendoComboBox');
 
     if (programaPresel) {
-        $('#acoPrograma').data('kendoComboBox').value(programaPresel);
+        cbPrograma.value(programaPresel);
+        // En edicion no se permite cambiar el programa del acomodo
+        cbPrograma.enable(false);
+        $('#btnOrdenToggle').hide();
     }
 
     if (zonasPresel) {
@@ -208,7 +218,7 @@
         e.preventDefault();
         $(this).removeClass('aco-drag-over');
         if (!dragId) return;
-        if (dragDesc !== 'MATRIX') {
+        if (!esLibre(dragDesc)) {
             $('.aco-drop-zone').each(function () {
                 if ($(this).data('val') == dragId)
                     $(this).data('val', '-1').removeClass('aco-filled').find('.aco-drop-text').text('');
@@ -229,7 +239,7 @@
             if (v !== '-1') used.push(v);
         });
         $('.aco-badge').each(function () {
-            if ($(this).data('desc') === 'MATRIX') return; // MATRIX puede usarse en múltiples zonas
+            if (esLibre($(this).data('desc'))) return; // MATRIX/MANUAL pueden usarse en múltiples zonas
             var id = $(this).data('id').toString();
             if ($.inArray(id, used) >= 0) $(this).addClass('aco-used').attr('draggable', 'false');
             else $(this).removeClass('aco-used').attr('draggable', 'true');

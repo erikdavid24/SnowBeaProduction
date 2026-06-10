@@ -1,4 +1,4 @@
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using SnowTrolleyProduction.Models;
 using System;
 using System.Collections.Generic;
@@ -30,7 +30,7 @@ namespace SnowTrolleyProduction.Controllers.service
             }
 
             string sql = @"
-                SELECT 
+                SELECT
                     ts.Id, ts.Id_Proceso, ts.Id_Programa, ts.WorkOrder, ts.PiezasProgramadas,
                     ts.Trolleys, ts.Status, ts.FechaCreacion, ts.FechaFinalizacion, ts.Id_Linea, ts.Comentarios,
                     ISNULL(e.EnsambleBase, ts.Id_Programa) AS Ensamble,
@@ -82,8 +82,8 @@ namespace SnowTrolleyProduction.Controllers.service
 
         public void Create(ProgramGestionViewModel model)
         {
-            string sql = @"INSERT INTO [Process].[TrolleySetup] 
-                   (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea) 
+            string sql = @"INSERT INTO [Process].[TrolleySetup]
+                   (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea)
                    VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
 
             using (var conn = new SqlConnection(GetConnectionString()))
@@ -192,7 +192,6 @@ namespace SnowTrolleyProduction.Controllers.service
                         string razon       = advertenciaLinea ?? "";
                         int    existingId  = 0;
 
-                        // ¿El WO original está activo (no terminado)?
                         bool originalActivo = conn.QueryFirstOrDefault<int>(@"
                             SELECT COUNT(1) FROM [Process].[TrolleySetup]
                             WHERE Id_Programa = @prog AND WorkOrder = @wo
@@ -206,7 +205,7 @@ namespace SnowTrolleyProduction.Controllers.service
                         }
                         else
                         {
-                            // Buscar carta pendiente activa: formato nuevo (WO-) o viejo (WO-1, WO-2...)
+
                             var pendienteInfo = conn.QueryFirstOrDefault<dynamic>(@"
                                 SELECT TOP 1 Id, WorkOrder, PiezasProgramadas FROM [Process].[TrolleySetup]
                                 WHERE Id_Programa = @prog
@@ -222,7 +221,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
                                 if (pzasFaltantes <= 0)
                                 {
-                                    // Pendiente ya cubre la demanda → solo informativo, no crear
+
                                     existingId  = (int)pendienteInfo.Id;
                                     woFinal     = (string)pendienteInfo.WorkOrder;
                                     pzasFinales = pzasExistentes;
@@ -230,7 +229,7 @@ namespace SnowTrolleyProduction.Controllers.service
                                 }
                                 else
                                 {
-                                    // Falta producir más → crear carta con la diferencia
+
                                     string woExistente = (string)pendienteInfo.WorkOrder;
                                     var wm = System.Text.RegularExpressions.Regex.Match(woExistente ?? "", @"-(\d+)$");
                                     woFinal     = wm.Success
@@ -281,8 +280,8 @@ namespace SnowTrolleyProduction.Controllers.service
         public int GuardarDesdeLista(List<ExcelPreviewItemDto> items)
         {
             int conteo = 0;
-            string sqlInsert = @"INSERT INTO [Process].[TrolleySetup] 
-                   (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea) 
+            string sqlInsert = @"INSERT INTO [Process].[TrolleySetup]
+                   (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea)
                    VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
 
             using (var conn = new SqlConnection(GetConnectionString()))
@@ -295,7 +294,7 @@ namespace SnowTrolleyProduction.Controllers.service
                         foreach (var item in items)
                         {
                             if (item.EsDuplicado || item.ExistingId > 0) continue;
-                            
+
                             conn.Execute(sqlInsert, new
                             {
                                 IdProceso         = 1,
@@ -324,8 +323,8 @@ namespace SnowTrolleyProduction.Controllers.service
             int conteoInsertados = 0;
             string anioActual = DateTime.Now.Year.ToString().Substring(2);
 
-            string sqlInsert = @"INSERT INTO [Process].[TrolleySetup] 
-                   (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea) 
+            string sqlInsert = @"INSERT INTO [Process].[TrolleySetup]
+                   (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea)
                    VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
 
             using (var workBook = new XLWorkbook(streamArchivo))
@@ -333,11 +332,9 @@ namespace SnowTrolleyProduction.Controllers.service
             {
                 conn.Open();
 
-                // Buscar hoja "SMT Run Plan" (ej: "FW 10 SMT Run Plan")
                 var sheet = workBook.Worksheets.FirstOrDefault(w => w.Name.IndexOf("SMT Run Plan", StringComparison.OrdinalIgnoreCase) >= 0);
                 if (sheet == null) sheet = workBook.Worksheet(3);
 
-                // Extraer semana del nombre de la hoja (ej: "FW 10 SMT Run Plan" ? "10")
                 string nombreHoja = sheet.Name ?? "";
                 string digitosHoja = new string(nombreHoja.Where(char.IsDigit).ToArray());
                 string semanaPlan = digitosHoja.Length >= 2 ? digitosHoja.Substring(0, 2)
@@ -408,7 +405,6 @@ namespace SnowTrolleyProduction.Controllers.service
                         string woLinea = lineaFinal.HasValue ? lineaFinal.Value.ToString() : "0";
                         string workOrderGenerado = $"L{woLinea}{semanaPlan}{anioActual}000";
 
-
                         string woFinal = workOrderGenerado;
 
                         bool originalActivo = conn.QueryFirstOrDefault<int>(@"
@@ -419,7 +415,6 @@ namespace SnowTrolleyProduction.Controllers.service
 
                         if (originalActivo) continue;
 
-                        // Pendiente activa: formato nuevo (WO-) o viejo (WO-1, WO-2...)
                         bool pendienteActiva = conn.QueryFirstOrDefault<int>(@"
                             SELECT COUNT(1) FROM [Process].[TrolleySetup]
                             WHERE Id_Programa = @prog AND WorkOrder LIKE @pat
@@ -624,7 +619,6 @@ namespace SnowTrolleyProduction.Controllers.service
             catch { return new List<string>(); }
         }
 
-        /// <summary>Given a programa number, returns all sibling lados from the same ensamble.</summary>
         public List<string> GetLadosHermanos(string programaNumero)
         {
             try
@@ -784,7 +778,7 @@ namespace SnowTrolleyProduction.Controllers.service
 
             try
             {
-                // Obtener primer y último día del mes gregoriano
+
                 DateTime primerDiaDelMes = new DateTime(ano, mes, 1);
                 DateTime ultimoDiaDelMes = primerDiaDelMes.AddMonths(1).AddDays(-1);
 
@@ -792,12 +786,11 @@ namespace SnowTrolleyProduction.Controllers.service
                 {
                     conn.Open();
 
-                    // Obtener todas las semanas fiscales únicas en el rango del mes
                     var semanasDelMes = conn.Query<dynamic>(
-                        @"SELECT DISTINCT fc.FiscalWeek, fc.FiscalYear, 
+                        @"SELECT DISTINCT fc.FiscalWeek, fc.FiscalYear,
                                  MIN(fc.[Date]) as FechaInicio, MAX(fc.[Date]) as FechaFin
                           FROM dbo.FiscalCalendar fc
-                          WHERE CAST(fc.[Date] AS DATE) >= @inicio 
+                          WHERE CAST(fc.[Date] AS DATE) >= @inicio
                             AND CAST(fc.[Date] AS DATE) <= @fin
                           GROUP BY fc.FiscalWeek, fc.FiscalYear
                           ORDER BY fc.FiscalYear, fc.FiscalWeek",
@@ -845,22 +838,16 @@ namespace SnowTrolleyProduction.Controllers.service
                 System.Diagnostics.Debug.WriteLine("Error GetSemanaFiscal BD: " + ex.Message);
             }
 
-            // Fallback: calcular semana fiscal manualmente
-            // El año fiscal BAE empieza el último sábado de diciembre del año anterior
             return CalcularSemanaFiscal(fecha);
         }
 
         private string CalcularSemanaFiscal(DateTime fecha)
         {
-            // Encontrar el �ltimo s�bado de diciembre del a�o anterior al a�o fiscal
-            // El a�o fiscal empieza en el �ltimo s�bado de diciembre del a�o calendario anterior
-            // Determinar a qu� a�o fiscal pertenece la fecha
+
             int anioFiscal = fecha.Year;
 
-            // El inicio del a�o fiscal es el �ltimo s�bado de diciembre del a�o anterior
             DateTime inicioFiscal = UltimoSabadoDiciembre(anioFiscal - 1);
 
-            // Si la fecha es anterior al inicio del a�o fiscal actual, pertenece al a�o fiscal anterior
             if (fecha.Date < inicioFiscal.Date)
             {
                 anioFiscal--;

@@ -10,6 +10,7 @@
 @if (esEdicion)
 {
     <input type="hidden" id="modalEnsambleId" value="@ensamble.Id" />
+    <input type="hidden" id="modalEnsambleLineaOriginal" value="@(ensamble.Linea != null ? ensamble.Linea.Id_Linea : 0)" />
 }
 
 <div class="form-group">
@@ -41,23 +42,67 @@
 
 <script>
 (function () {
-    var esEdicion = @(esEdicion ? "true" : "false");
+    var esEdicion     = @(esEdicion ? "true" : "false");
+    var lineaOriginal = @(esEdicion && ensamble.Linea != null ? ensamble.Linea.Id_Linea.ToString() : "0");
 
     $('#modalEnsambleLineaSelect').kendoDropDownList();
     $('#modalEnsambleNumero').kendoTextBox();
+
+    function guardar(numero, lineaId, limpiarAcomodo) {
+        var ensambleId = parseInt($('#modalEnsambleId').val());
+        var doSave = function () {
+            $.post(TG.urls.editarEnsamble, { ensambleId: ensambleId, numero: numero, lineaId: lineaId }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarEnsambles(); }
+                else { tgAlert('Error', r.message); }
+            });
+        };
+        if (limpiarAcomodo) {
+            $.post(TG.urls.limpiarAcomodosPorEnsamble, { ensambleId: ensambleId }, function () { doSave(); });
+        } else {
+            doSave();
+        }
+    }
+
+    // Dialogo de 3 opciones: Mantener / Limpiar acomodo al cambiar de linea
+    function preguntarAcomodo(numero, lineaId) {
+        $('<div/>').appendTo('body').kendoDialog({
+            width: 460, title: 'El ensamble cambia de linea', closable: true, modal: true,
+            content: '<p style="margin:0;color:#3d4465;">Este ensamble tiene un acomodo de trolleys asignado. ' +
+                     'Los trolleys pertenecen a la linea anterior.<br/><br/>' +
+                     '<b>Mantener:</b> conserva el acomodo actual.<br/>' +
+                     '<b>Limpiar:</b> elimina el acomodo para reasignarlo segun la nueva linea.</p>',
+            actions: [
+                { text: 'Cancelar' },
+                { text: 'Mantener acomodo', action: function () { guardar(numero, lineaId, false); } },
+                { text: 'Limpiar acomodo', primary: true, action: function () { guardar(numero, lineaId, true); } }
+            ],
+            close: function () { this.destroy(); }
+        }).data('kendoDialog').open();
+    }
 
     $('#btnSubmitEnsamble').on('click', function () {
         var numero = ($('#modalEnsambleNumero').val() || '').trim();
         var lineaId = parseInt($('#modalEnsambleLineaSelect').data('kendoDropDownList').value());
         if (!numero) { tgAlert('Campo requerido', 'El número de ensamble es requerido.'); return; }
-        var $btn = $(this).prop('disabled', true);
+
         if (esEdicion) {
             var ensambleId = parseInt($('#modalEnsambleId').val());
-            $.post(TG.urls.editarEnsamble, { ensambleId: ensambleId, numero: numero, lineaId: lineaId }, function (r) {
-                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarEnsambles(); }
-                else { tgAlert('Error', r.message); }
-            }).always(function () { $btn.prop('disabled', false); });
+            var cambioLinea = lineaOriginal > 0 && lineaId !== lineaOriginal;
+
+            if (cambioLinea) {
+                // Verificar si tiene acomodos antes de guardar
+                $.get(TG.urls.ensambleTieneAcomodos, { ensambleId: ensambleId }, function (r) {
+                    if (r.tiene) {
+                        preguntarAcomodo(numero, lineaId);
+                    } else {
+                        guardar(numero, lineaId, false);
+                    }
+                });
+            } else {
+                guardar(numero, lineaId, false);
+            }
         } else {
+            var $btn = $(this).prop('disabled', true);
             $.post(TG.urls.agregarEnsamble, { numero: numero, lineaId: lineaId }, function (r) {
                 if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarEnsambles(); }
                 else { tgAlert('Error', r.message); }

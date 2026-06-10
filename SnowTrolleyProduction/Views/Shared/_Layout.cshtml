@@ -11,26 +11,26 @@
     <title>BAE Systems | OpEx</title>
     <meta name="description" content="OpEx">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <!--begin::Fonts -->
+    
     <link rel="stylesheet" href="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Content/font-google-apis/fontgoogleapi.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <link rel="shortcut icon" href="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Content/baesystems/favicon.ico" />
-    <!--end::Fonts -->
-    <!--begin:: Kendo Mandatory Styles -->
+    
+    
     <link href="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Content/allNew.css" rel="stylesheet" type="text/css" />
-    @*<link href="~/Content/all.css" rel="stylesheet" />*@
-    <!--end:: Kendo Mandatory Styles  -->
-    <!--begin:: Global Mandatory Styles -->
+    
+    
+    
     <link href="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/assets/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css" />
     <link href="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/assets/plugins/global/plugins.bundle.js" type="text/javascript"></script>
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/baeScripts.js"></script>
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/Shared.js"></script>
 
-    <!--end:: Global Mandatory Styles -->
-    <!--begin:: Kendo Mandatory Scripts -->
+    
+    
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/kendo/@ViewBag.Kendo/kendo.all.min.js" type="text/javascript"></script>
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/kendo/@ViewBag.Kendo/kendo.aspnetmvc.min.js" type="text/javascript"></script>
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/kendo/@ViewBag.Kendo/jszip.min.js" type="text/javascript"></script>
@@ -42,19 +42,18 @@
     {
         <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/kendo/@ViewBag.Kendo/messages/kendo.messages.es-US.min.js" type="text/javascript"></script>
         <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/kendo/@ViewBag.Kendo/cultures/kendo.culture.es-US.min.js" type="text/javascript"></script>
-        @*<script src="~/Scripts/kendo/@ViewBag.Kendo/messages/kendo.messages.es-US.min.js" type="text/javascript"></script>
-            <script src="~/Scripts/kendo/@ViewBag.Kendo/cultures/kendo.culture.es-US.min.js" type="text/javascript"></script>*@
+        
         <script>kendo.culture("es-US");</script>
     }
-    <!--end:: Kendo Mandatory Scripts  -->
+    
 
 </head>
 <body class="kt-quick-panel--right kt-demo-panel--right kt-offcanvas-panel--right kt-header--fixed kt-header-mobile--fixed kt-subheader--enabled kt-subheader--transparent kt-aside--enabled kt-aside--fixed @BAEClassLibrary.UserContext.current.AsideMenu">
 
     @RenderSection("Styles", required: false)
 
-    <!-- begin:: Page -->
-    <!-- begin:: Header Mobile -->
+    
+    
     <div id="kt_header_mobile" class="kt-header-mobile  kt-header-mobile--fixed ">
         <div class="kt-header-mobile__logo">
             <a href="https://apps.bae.gym/BaseDatos/OpEx/Home">
@@ -72,14 +71,14 @@
             </button>
         </div>
     </div>
-    <!-- end:: Header Mobile -->
+    
     <div class="kt-grid kt-grid--hor kt-grid--root">
         <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--ver kt-page">
-            <!-- begin:: Aside -->
+            
             <button class="kt-aside-close " id="kt_aside_close_btn"><i class="la la-close"></i></button>
             <div class="kt-aside  kt-aside--fixed  kt-grid__item kt-grid kt-grid--desktop kt-grid--hor-desktop"
                  id="kt_aside">
-                <!-- begin:: Aside -->
+                
                 <div class="kt-aside__brand kt-grid__item " id="kt_aside_brand">
                     <div class="kt-aside__brand-logo">
                         <a href="https://apps.bae.gym/BaseDatos/OpEx/Home">
@@ -90,8 +89,8 @@
                         <button class="kt-aside__brand-aside-toggler" id="kt_aside_toggler"><span></span></button>
                     </div>
                 </div>
-                <!-- end:: Aside -->
-                <!-- begin:: Aside Menu -->
+                
+                
                 <div class="kt-aside-menu-wrapper kt-grid__item kt-grid__item--fluid" id="kt_aside_menu_wrapper">
                     <div id="kt_aside_menu" class="kt-aside-menu " data-ktmenu-vertical="1" data-ktmenu-scroll="1"
                          data-ktmenu-dropdown-timeout="500">
@@ -100,13 +99,13 @@
                         </ul>
                     </div>
                 </div>
-                <!-- end:: Aside Menu -->
+                
             </div>
-            <!-- end:: Aside -->
+            
             <div class="kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor kt-wrapper" id="kt_wrapper">
-                <!-- begin:: Header -->
+                
                 <div id="kt_header" class="kt-header kt-grid__item  kt-header--fixed ">
-                    <!-- begin: Header Menu -->
+                    
                     <button class="kt-header-menu-wrapper-close" id="kt_header_menu_mobile_close_btn">
                         <i class="la la-close"></i>
                     </button>
@@ -118,10 +117,10 @@
                             </ul>
                         </div>
                     </div>
-                    <!-- end: Header Menu -->
-                    <!-- begin:: Header Topbar -->
+                    
+                    
                     <div class="kt-header__topbar">
-                        <!--begin: Notifications -->
+                        
                         <div class="kt-header__topbar-item dropdown" id="NotificationDropdown">
                             <div class="kt-header__topbar-wrapper" data-toggle="dropdown" data-offset="30px,0px"
                                  aria-expanded="true">
@@ -132,7 +131,7 @@
                             </div>
                             <div class="dropdown-menu dropdown-menu-fit dropdown-menu-right dropdown-menu-anim dropdown-menu-top-unround dropdown-menu-lg">
                                 <form>
-                                    <!--begin: Head -->
+                                    
                                     <div class="kt-head kt-head--skin-dark kt-head--fit-x kt-head--fit-b" style="background-image: url(https://apps.bae.gym:84/Resources/Content/baesystems/bg-1.jpg)">
                                         <h3 class="kt-head__title">
                                             @BAEClassLibrary.Resources.Notifications
@@ -158,7 +157,7 @@
                                             </li>
                                         </ul>
                                     </div>
-                                    <!--end: Head -->
+                                    
                                     <div class="tab-content">
                                         <div class="tab-pane active show " id="topbar_notifications_notifications"
                                              role="tabpanel">
@@ -182,8 +181,8 @@
                                 </form>
                             </div>
                         </div>
-                        <!--end: Notifications -->
-                        <!--begin: Language bar -->
+                        
+                        
                         <div class="kt-header__topbar-item kt-header__topbar-item--langs">
                             <div class="kt-header__topbar-wrapper" data-toggle="dropdown" data-offset="10px,0px">
                                 <span class="kt-header__topbar-icon">
@@ -212,8 +211,8 @@
                                 </ul>
                             </div>
                         </div>
-                        <!--end: Language bar -->
-                        <!--begin: User Bar -->
+                        
+                        
                         <div class="kt-header__topbar-item kt-header__topbar-item--user">
                             <div class="kt-header__topbar-wrapper" data-toggle="dropdown" data-offset="0px,0px">
                                 <div class="kt-header__topbar-user">
@@ -224,7 +223,7 @@
                                 </div>
                             </div>
                             <div class="dropdown-menu dropdown-menu-fit dropdown-menu-right dropdown-menu-anim dropdown-menu-top-unround dropdown-menu-xl">
-                                <!--begin: Head -->
+                                
                                 <div class="kt-user-card kt-user-card--skin-dark kt-notification-item-padding-x"
                                      style="background-image: url(@BAEClassLibrary.UserContext.current.ResourcesApiUrl/assets/media/misc/bg-1.jpg)">
                                     <div class="kt-user-card__avatar">
@@ -236,8 +235,8 @@
                                         @BAEClassLibrary.UserContext.current.DisplayName
                                     </div>
                                 </div>
-                                <!--end: Head -->
-                                <!--begin: Navigation -->
+                                
+                                
                                 <div class="kt-notification">
                                     <a href="#" class="kt-notification__item">
                                         <div class="kt-notification__item-icon">
@@ -254,18 +253,17 @@
                                     </a>
                                     <div class="kt-notification__custom kt-space-between">
                                         <a href="@(Url.Action("Logout" , "Home"))" class="btn btn-label btn-label-brand btn-sm btn-bold">Sign Out</a>
-                                        @*<a href="demo12/custom/user/login-v2.html" target="_blank"
-                                            class="btn btn-clean btn-sm btn-bold">Upgrade Plan</a>*@
+                                        
                                     </div>
                                 </div>
-                                <!--end: Navigation -->
+                                
                             </div>
                         </div>
-                        <!--end: User Bar -->
+                        
                     </div>
-                    <!-- end:: Header Topbar -->
+                    
                 </div>
-                <!-- end:: Header -->
+                
                 <div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
                     <div class="kt-subheader   kt-grid__item" id="kt_subheader">
                         <div class="kt-container  kt-container--fluid ">
@@ -275,7 +273,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- begin:: Content -->
+                    
                     <div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
                         @RenderBody()
                         @if (ViewBag.AnswareResult != null)
@@ -289,9 +287,9 @@
                             </script>
                         }
                     </div>
-                    <!-- end:: Content -->
+                    
                 </div>
-                <!-- begin:: Footer -->
+                
                 <div class="kt-footer  kt-grid__item kt-grid kt-grid--desktop kt-grid--ver-desktop" id="kt_footer">
                     <div class="kt-container  kt-container--fluid ">
                         <div class="kt-footer__copyright kt-footer__menu">
@@ -306,7 +304,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- end:: Footer -->
+                
             </div>
         </div>
     </div>
@@ -323,17 +321,17 @@
         .Actions(actions => actions.Close())
     )
     <div class="NotEmplpyeeID" id="@BAEClassLibrary.UserContext.current.EmployeeID" style="display:none"></div>
-    <!-- end:: Page -->
-    <!--begin::Global Theme Bundle -->
+    
+    
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/assets/js/scripts.bundle.js" type="text/javascript"></script>
     <script src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/MenuSelector.js" type="text/javascript"></script>
-    <!--end::Global Theme Bundle -->
-    <!--begin::Global Notification -->
+    
+    
     <script type="text/javascript" src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/jquery.signalR-2.4.1.js"></script>
     <script type="text/javascript" src="https://apps.bae.gym:84/BAEAPI2/signalr/hubs"></script>
     <script type="text/javascript" src="@BAEClassLibrary.UserContext.current.ResourcesApiUrl/Scripts/NotificationsMetronic.js"></script>
 
-    <!--end::Global Notification -->
+    
     @RenderSection("Scripts", required: false)
     <style>
         /* BORDES EN PICO + FUENTE GLOBAL - carga al final para ganar cualquier especificidad */

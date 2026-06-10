@@ -1,4 +1,4 @@
-using BAEClassLibrary;
+﻿using BAEClassLibrary;
 using Kendo.Mvc.Extensions;
 using Kendo.Mvc.UI;
 using SnowTrolleyProduction.Controllers.service;
@@ -26,8 +26,6 @@ namespace SnowTrolleyProduction.Controllers
             };
             return View(vm);
         }
-
- 
 
         [HttpGet]
         public ActionResult MaquinasTable()
@@ -90,8 +88,6 @@ namespace SnowTrolleyProduction.Controllers
             return Json(new { success = true });
         }
 
-        // Ensambles
-
         [HttpGet]
         public ActionResult EnsamblesTable(string numero)
         {
@@ -149,8 +145,6 @@ namespace SnowTrolleyProduction.Controllers
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
 
-        // Programas
-
         [HttpGet]
         public ActionResult ProgramasTable(string numero)
         {
@@ -180,6 +174,8 @@ namespace SnowTrolleyProduction.Controllers
         {
             try
             {
+                if (cantDiferentes > cantidadMateriales)
+                    return Json(new { success = false, message = "Los Componentes Diferentes no pueden ser mayores que el Total de Materiales." });
                 _svc.AgregarPrograma(numero, ensambleId, cantidadMateriales, cantDiferentes);
                 return Json(new { success = true });
             }
@@ -191,6 +187,8 @@ namespace SnowTrolleyProduction.Controllers
         {
             try
             {
+                if (cantDiferentes > cantidadMateriales)
+                    return Json(new { success = false, message = "Los Componentes Diferentes no pueden ser mayores que el Total de Materiales." });
                 _svc.EditarPrograma(programaId, ensambleId, numero, cantidadMateriales, cantDiferentes);
                 return Json(new { success = true });
             }
@@ -208,7 +206,6 @@ namespace SnowTrolleyProduction.Controllers
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
 
-
         [HttpGet]
         public ActionResult AcomodoTable()
         {
@@ -225,16 +222,16 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpGet]
-        public ActionResult EditarAcomodoModal(int ensambleId)
+        public ActionResult EditarAcomodoModal(int programaId)
         {
             var lineas = _svc.GetLineasSMT();
-            ViewBag.LineaId    = _svc.GetLineaIdPorEnsamble(ensambleId);
-            ViewBag.EnsambleId = ensambleId;
+            ViewBag.LineaId    = _svc.GetLineaIdPorPrograma(programaId);
+            ViewBag.ProgramaId = programaId;
             return PartialView("Modals/_AcomodoModal", lineas);
         }
 
         [HttpGet]
-        public ActionResult AcomodoAutocompletado(int linea, string orden = "numero", int? ensambleId = null)
+        public ActionResult AcomodoAutocompletado(int linea, string orden = "numero", int? programaId = null)
         {
             var lineaObj = _svc.GetLineasSMT().FirstOrDefault(l => l.Id_Linea == linea);
             int lineaId = lineaObj != null ? lineaObj.Id_Linea : linea;
@@ -248,10 +245,10 @@ namespace SnowTrolleyProduction.Controllers
             ViewBag.Maquinas  = maquinas;
             ViewData["orden"] = orden;
 
-            if (ensambleId.HasValue)
+            if (programaId.HasValue)
             {
-                var (programaId, zonas) = _svc.GetAcomodoParaEdicion(ensambleId.Value);
-                ViewBag.ProgramaIdPresel = programaId > 0 ? (int?)programaId : null;
+                var (pid, zonas) = _svc.GetAcomodoParaEdicion(programaId.Value);
+                ViewBag.ProgramaIdPresel = pid > 0 ? (int?)pid : null;
                 ViewBag.ZonasPresel      = zonas;
             }
 
@@ -291,6 +288,39 @@ namespace SnowTrolleyProduction.Controllers
             try
             {
                 _svc.EliminarAcomodo(acomodoId);
+                return Json(new { success = true });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
+
+        [HttpPost]
+        public JsonResult EliminarAcomodosPorPrograma(int programaId)
+        {
+            try
+            {
+                _svc.EliminarAcomodosPorPrograma(programaId);
+                return Json(new { success = true });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
+
+        [HttpGet]
+        public JsonResult EnsambleTieneAcomodos(int ensambleId)
+        {
+            try
+            {
+                var tiene = _svc.EnsambleTieneAcomodos(ensambleId);
+                return Json(new { tiene }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex) { return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet); }
+        }
+
+        [HttpPost]
+        public JsonResult LimpiarAcomodosPorEnsamble(int ensambleId)
+        {
+            try
+            {
+                _svc.LimpiarAcomodosPorEnsamble(ensambleId);
                 return Json(new { success = true });
             }
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
@@ -377,12 +407,14 @@ namespace SnowTrolleyProduction.Controllers
         [HttpPost]
         public JsonResult AcomodoJson([DataSourceRequest] DataSourceRequest request)
         {
-            var data = _svc.GetAcomodos().Select(g => new AcomodoGridRow
+            var data = _svc.GetAcomodos().SelectMany(g => g.Programas.Select(p => new AcomodoGridRow
             {
                 EnsambleId = g.Ensamble.Id,
                 Ensamble   = g.Ensamble.Numero,
-                Linea      = g.Ensamble.Linea != null ? (int?)g.Ensamble.Linea.Numero_Linea : null
-            }).ToList();
+                Linea      = g.Ensamble.Linea != null ? (int?)g.Ensamble.Linea.Numero_Linea : null,
+                ProgramaId = p.Id,
+                Programa   = p.Numero
+            })).ToList();
             return Json(data.ToDataSourceResult(request));
         }
     }

@@ -1,4 +1,4 @@
-@using Kendo.Mvc.UI
+﻿@using Kendo.Mvc.UI
 @{
     ViewBag.Title = "Supervisores Autorizados";
     var _uc      = BAEClassLibrary.UserContext.current;
@@ -68,7 +68,6 @@
         .ServerOperation(false))
 )
 
-@* Ventana: Editar contrasena *@
 @(Html.Kendo().Window()
     .Name("winEditPass")
     .Title("-")
@@ -103,7 +102,6 @@
     </text>)
 )
 
-@* Ventana: Ver contrasena (solo admin) *@
 @if (isAdmin)
 {
     @(Html.Kendo().Window()

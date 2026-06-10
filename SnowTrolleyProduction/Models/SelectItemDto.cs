@@ -1,4 +1,4 @@
-namespace SnowTrolleyProduction.Models
+﻿namespace SnowTrolleyProduction.Models
 {
     public class SelectItemDto
     {

@@ -41,7 +41,7 @@
 
 <div class="k-edit-label">@Html.LabelFor(m => m.Id_Linea)</div>
 <div class="k-edit-field">
-    @* Nullable<int> requiere NumericTextBox sin For *@
+    
     @(Html.Kendo().NumericTextBox()
         .Name("Id_Linea")
         .Value(Model != null ? Model.Id_Linea : null)

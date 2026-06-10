@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace SnowTrolleyProduction.Models.Dtos
@@ -39,7 +39,6 @@ namespace SnowTrolleyProduction.Models.Dtos
         public List<TrolleyItemDto>      Maquinas   { get; set; }
         public List<CabezalAcomodoDto>   Cabezales  { get; set; }
 
-        // Backwards compat: flat acomodo for single-machine case
         public Dictionary<string, int>   Acomodo    { get; set; }
         public int                       MaquinaId  { get; set; }
     }

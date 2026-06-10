@@ -1,42 +1,54 @@
 @model List<SnowTrolleyProduction.Models.LineaGestion>
 @{
     var lineaPresel    = ViewBag.LineaId    as int?;
-    var ensamblePresel = ViewBag.EnsambleId as int?;
+    var programaPresel = ViewBag.ProgramaId as int?;
     string titulo = lineaPresel.HasValue ? "Editar Acomodo" : "Agregar Acomodo";
 }
 
-<h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">@titulo</h4>
+<div class="aco-modal-scroll">
+    <h4 style="margin-bottom:16px;font-weight:700;color:#3d4465;">@titulo</h4>
 
-<div class="form-group">
-    <label class="form-label">Linea</label>
-    <select id="acoLineaSelect">
-        <option value="">-- Selecciona una linea--</option>
-        @foreach (var linea in Model)
-        {
-            <option value="@linea.Id_Linea" @(lineaPresel.HasValue && lineaPresel.Value == linea.Id_Linea ? "selected" : "")>@linea.Numero_Linea</option>
-        }
-    </select>
+    <div class="form-group">
+        <label class="form-label">Linea</label>
+        <select id="acoLineaSelect">
+            <option value="">-- Selecciona una linea--</option>
+            @foreach (var linea in Model)
+            {
+                <option value="@linea.Id_Linea" @(lineaPresel.HasValue && lineaPresel.Value == linea.Id_Linea ? "selected" : "")>@linea.Numero_Linea</option>
+            }
+        </select>
+    </div>
+
+    <div id="acoAutocompletadoContainer"></div>
 </div>
 
-<div id="acoAutocompletadoContainer"></div>
-
-<div class="form-actions" style="margin-top:16px;">
+<div class="form-actions" style="margin-top:16px;border-top:1px solid #e2e6f0;padding-top:14px;">
     <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
     <button type="button" class="k-button k-primary" id="btnSubmitAcomodo" style="display:none;"><i class="fas fa-save"></i> Guardar</button>
 </div>
 
+<style>
+.aco-modal-scroll { max-height: 70vh; overflow-y: auto; overflow-x: hidden; padding-right: 6px; }
+</style>
+
 <script>
 (function () {
     var lineaPresel    = @(lineaPresel.HasValue    ? lineaPresel.Value.ToString()    : "null");
-    var ensamblePresel = @(ensamblePresel.HasValue ? ensamblePresel.Value.ToString() : "null");
+    var programaPresel = @(programaPresel.HasValue ? programaPresel.Value.ToString() : "null");
+
+    function recenterWnd() {
+        var w = $('#wndGestion').data('kendoWindow');
+        if (w) { w.center(); }
+    }
 
     function cargarAutocompletado(lineaId) {
-        if (!lineaId) { $('#acoAutocompletadoContainer').empty(); $('#btnSubmitAcomodo').hide(); return; }
+        if (!lineaId) { $('#acoAutocompletadoContainer').empty(); $('#btnSubmitAcomodo').hide(); recenterWnd(); return; }
         var params = { linea: lineaId };
-        if (ensamblePresel) params.ensambleId = ensamblePresel;
+        if (programaPresel) params.programaId = programaPresel;
         $.get(TG.urls.acomodoAutocompletado, params, function (html) {
             $('#acoAutocompletadoContainer').html(html);
             $('#btnSubmitAcomodo').show();
+            setTimeout(recenterWnd, 60);
         });
     }
 
@@ -47,12 +59,14 @@
 
     if (lineaPresel) {
         $ddlLinea.value(lineaPresel);
+        $ddlLinea.enable(false); // en edicion la linea no se puede cambiar
         cargarAutocompletado(lineaPresel);
     }
 
     $(document).on('click', '#btnSubmitAcomodo', function () {
-        var programaId = parseInt($('#acoPrograma').val());
-        if (!programaId) { tgAlert('Error', 'Selecciona un programa.'); return; }
+        var cbPrograma = $('#acoPrograma').data('kendoComboBox');
+        var programaId = cbPrograma ? parseInt(cbPrograma.value()) : 0;
+        if (!programaId || programaId <= 0) { tgAlert('Error', 'Selecciona un programa valido.'); return; }
 
         var data = { ProgramaId: programaId, MaquinaId: 0, MaquinaId2: 0 };
 

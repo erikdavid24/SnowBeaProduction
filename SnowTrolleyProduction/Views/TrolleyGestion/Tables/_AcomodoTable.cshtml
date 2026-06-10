@@ -7,14 +7,17 @@
     .HtmlAttributes(new { style = "height: 600px;" })
     .ToolBar(t => t.Search())
     .Columns(cols => {
+        cols.Bound(g => g.Programa).Title("Programa");
         cols.Bound(g => g.Ensamble).Title("Ensamble");
-        cols.Bound(g => g.Linea).Title("Linea").Width(150);
-        cols.Bound(g => g.EnsambleId).Title("Acciones").Width(120)
+        cols.Bound(g => g.Linea).Title("Linea").Width(110);
+        cols.Bound(g => g.ProgramaId).Title("Acciones").Width(210)
             .Sortable(false).Filterable(false)
             .HtmlAttributes(new { style = "white-space:nowrap;" })
             .ClientTemplate(
-                "<button class='k-button btn-rounded btn-edit-acomodo' data-id='#=EnsambleId#'>" +
-                "<i class='fas fa-edit'></i> Editar</button>");
+                "<button class='k-button btn-rounded btn-edit-acomodo' data-id='#=ProgramaId#'>" +
+                "<i class='fas fa-edit'></i> Editar</button> " +
+                "<button class='k-button btn-rounded btn-del-acomodo' data-id='#=ProgramaId#' data-prog='#=Programa#' style='color:\\#ef4444;border-color:\\#fecaca;'>" +
+                "<i class='fas fa-trash-alt'></i> Eliminar</button>");
     })
     .Sortable()
     .Filterable()

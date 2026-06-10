@@ -1,13 +1,5 @@
-/* ========================================================================= */
-/* BORDES EN PICO (SIN REDONDEO)                                             */
-/* ========================================================================= */
-*, *::before, *::after { border-radius: 0 !important; }
+﻿*, *::before, *::after { border-radius: 0 !important; }
 
-/* ========================================================================= */
-/* TROLLEY GESTION STYLES                                                    */
-/* ========================================================================= */
-
-/* ── Kendo TabStrip overrides ─────────────────────────────────────────────── */
 #tabsGestion.k-tabstrip { border: none; background: transparent; }
 
 #tabsGestion > .k-tabstrip-items {
@@ -55,7 +47,6 @@
     min-height: 220px;
 }
 
-/* ── Toolbar ──────────────────────────────────────────────────────────────── */
 .gestion-toolbar {
     display: flex;
     align-items: center;
@@ -72,7 +63,6 @@
 
 .tg-tab-body { min-height: 80px; }
 
-/* ── Kendo Grid ───────────────────────────────────────────────────────────── */
 .k-grid {
     font-family: "Segoe UI", Arial, sans-serif;
 }
@@ -82,9 +72,6 @@
     margin-right: 0;
 }
 
-/* ========================================================================= */
-/* ACOMODO MACHINE LAYOUT (visual zone layout in modal)                      */
-/* ========================================================================= */
 .acomodo-machine-layout {
     display: flex;
     flex-direction: column;
@@ -156,18 +143,12 @@
     min-width: 180px;
 }
 
-/* ========================================================================= */
-/* ACOMODO TOGGLE ARROWS                                                     */
-/* ========================================================================= */
 .acomodo-arrow {
     transition: transform .15s;
     color: #646c9a;
     font-size: .8rem;
 }
 
-/* ========================================================================= */
-/* ACOMODO ACCORDION TABLES  (matches tg-grid dark-header theme)             */
-/* ========================================================================= */
 .acomodo-outer-table {
     width: 100%;
     border-collapse: collapse;

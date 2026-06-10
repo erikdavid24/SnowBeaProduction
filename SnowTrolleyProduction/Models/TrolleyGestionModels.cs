@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace SnowTrolleyProduction.Models
 {
@@ -69,7 +69,7 @@ namespace SnowTrolleyProduction.Models
     public class AcomodoFormViewModel
     {
         public int ProgramaId { get; set; }
-        // Maquina 1
+
         public int MaquinaId { get; set; }
         public int? Z10 { get; set; }
         public int? Z20 { get; set; }
@@ -80,7 +80,7 @@ namespace SnowTrolleyProduction.Models
         public int? Z70 { get; set; }
         public int? Z80 { get; set; }
         public int? Z90 { get; set; }
-        // Maquina 2
+
         public int MaquinaId2 { get; set; }
         public int? Z10_2 { get; set; }
         public int? Z20_2 { get; set; }
@@ -119,6 +119,8 @@ namespace SnowTrolleyProduction.Models
         public int EnsambleId { get; set; }
         public string Ensamble { get; set; }
         public int? Linea { get; set; }
+        public int ProgramaId { get; set; }
+        public string Programa { get; set; }
     }
 
 }
