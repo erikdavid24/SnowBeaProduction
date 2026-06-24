@@ -35,9 +35,9 @@
     <input id="modalEnsambleNumero" value="@(esEdicion ? ensamble.Numero : "")" style="width:100%;" />
 </div>
 
-<div class="form-actions">
-    <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
-    <button type="button" class="k-button k-primary" id="btnSubmitEnsamble"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
+<div class="form-actions" style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+    <button type="button" class="btn btn-secondary" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
+    <button type="button" class="btn btn-primary" id="btnSubmitEnsamble"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
 </div>
 
 <script>

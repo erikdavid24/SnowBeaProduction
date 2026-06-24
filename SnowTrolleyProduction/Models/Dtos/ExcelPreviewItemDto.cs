@@ -20,5 +20,7 @@ namespace SnowTrolleyProduction.Models
         public string RazonRechazo { get; set; }
         public bool Pendiente { get; set; }
         public int ExistingId { get; set; }
+        public bool EsActualizacion { get; set; }
+        public int PiezasAnteriores { get; set; }
     }
 }

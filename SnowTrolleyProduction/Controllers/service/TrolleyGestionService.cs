@@ -82,6 +82,27 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
+        public void AgregarMaquinaNueva(string descripcion, int lineaId)
+        {
+            using (var conn = new SqlConnection(_connStr))
+            {
+                conn.Open();
+                using (var tx = conn.BeginTransaction())
+                {
+                    const string sqlEquipo = @"
+                        INSERT INTO [Process].[Equipos] (Equipo_descripcion, AreaId, LineaId, Activo)
+                        OUTPUT INSERTED.Id_Equipo
+                        VALUES (@descripcion, 48, @lineaId, 1)";
+                    int equipoId = conn.ExecuteScalar<int>(sqlEquipo, new { descripcion, lineaId }, tx);
+
+                    const string sqlMaquina = "INSERT INTO [Process].[Maquinas] (EquipoId, LineaId) VALUES (@equipoId, @lineaId)";
+                    conn.Execute(sqlMaquina, new { equipoId, lineaId }, tx);
+
+                    tx.Commit();
+                }
+            }
+        }
+
         public void EditarMaquina(int maquinaId, int equipoId)
         {
             const string sql = "UPDATE [Process].[Maquinas] SET EquipoId = @equipoId WHERE Id = @maquinaId";
@@ -263,14 +284,31 @@ namespace SnowTrolleyProduction.Controllers.service
         public ProgramaGestion GetPrograma(int id)
         {
             const string sql = @"
-                SELECT Id, Numero,
-                       ISNULL(CantidadTotalMateriales, 0)       AS CantidadMateriales,
-                       ISNULL(CantidadComponentesDiferentes, 0) AS CantDiferentes
-                FROM [Process].[Programas] WHERE Id = @id";
+                SELECT p.Id, p.Numero, p.Ensamble AS EnsambleId,
+                       ISNULL(p.CantidadTotalMateriales, 0)       AS CantidadMateriales,
+                       ISNULL(p.CantidadComponentesDiferentes, 0) AS CantDiferentes,
+                       e.EnsambleBase AS EnsambleNumero
+                FROM [Process].[Programas] p
+                LEFT JOIN [Process].[Ensambles] e ON p.Ensamble = e.Id
+                WHERE p.Id = @id";
             using (var conn = new SqlConnection(_connStr))
             {
                 conn.Open();
-                return conn.QueryFirstOrDefault<ProgramaGestion>(sql, new { id });
+                var r = conn.QueryFirstOrDefault<dynamic>(sql, new { id });
+                if (r == null) return null;
+                return new ProgramaGestion
+                {
+                    Id = (int)r.Id,
+                    Numero = (string)r.Numero,
+                    EnsambleId = r.EnsambleId == null ? (int?)null : (int)r.EnsambleId,
+                    Ensamble = r.EnsambleId == null ? null : new EnsambleGestion
+                    {
+                        Id = (int)r.EnsambleId,
+                        Numero = (string)r.EnsambleNumero
+                    },
+                    CantidadMateriales = (int)r.CantidadMateriales,
+                    CantDiferentes = (int)r.CantDiferentes
+                };
             }
         }
 

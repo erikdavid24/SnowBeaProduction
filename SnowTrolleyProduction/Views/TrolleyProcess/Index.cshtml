@@ -5,6 +5,8 @@
     var _uc       = BAEClassLibrary.UserContext.current;
     bool isAdmin  = _uc != null && (_uc.IsAdmin || _uc.EmployeeNum.ToString() == "128379");
     bool canSetup = isAdmin || BAEClassLibrary.UserContext.ModulePermissions.Update("SnowTrolley");
+    // Demo: 128379 no tiene permiso de mover (reordenar) procesos
+    bool sinPermisoMover = _uc != null && _uc.EmployeeNum.ToString() == "128379";
 }
 
 @section Styles {
@@ -55,7 +57,7 @@
                 }
             </div>
             <div id="btnIrSetupWrap" style="display:none;">
-                <a id="btnIrASetup" href="#" class="k-button k-primary btn-rounded">
+                <a id="btnIrASetup" href="#" class="btn btn-primary btn-sm">
                     <i class="fas fa-arrow-right"></i> Ir a Setup
                 </a>
             </div>
@@ -98,7 +100,7 @@
             .Name("gridProcesos")
             .HtmlAttributes(new { style = "display:none;" })
             .Columns(cols => {
-                if (!BAEClassLibrary.UserContext.current.Employee.JobTitles.Name.Contains("Operador")) {
+                if (!BAEClassLibrary.UserContext.current.Employee.JobTitles.Name.Contains("Operador") && !sinPermisoMover) {
                     cols.Template(r => "").Title("").Width(36)
                         .ClientTemplate("<span class='tp-handle'><i class='fas fa-grip-vertical'></i></span>")
                         .HtmlAttributes(new { style = "text-align:center;padding:6px 4px;" });
@@ -307,7 +309,7 @@ function pintarDisponibles(procesos) {
         }).join(' ');
         var accionHtml;
         if (!hayActivo && tieneTrolleys && idx === 0) {
-            accionHtml = '<button class="k-button k-primary btn-rounded" onclick="pedirSupervision(' +
+            accionHtml = '<button class="btn btn-primary btn-sm" onclick="pedirSupervision(' +
                 p.id_Proceso + ')">' +
                 '<i class="fas fa-tools"></i> Setup</button>';
         } else if (!tieneTrolleys) {

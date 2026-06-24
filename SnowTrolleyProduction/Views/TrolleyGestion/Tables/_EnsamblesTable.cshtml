@@ -1,5 +1,5 @@
-﻿<div class="gestion-toolbar">
-    <button class="k-button k-primary btn-rounded" id="btnAgregarEnsamble"><i class="fas fa-plus"></i> Agregar Ensamble</button>
+<div class="gestion-toolbar" style="margin-bottom:8px;">
+    <button class="btn btn-primary btn-sm" id="btnAgregarEnsamble"><i class="fas fa-plus"></i> Agregar Ensamble</button>
 </div>
 
 @(Html.Kendo().Grid<SnowTrolleyProduction.Models.EnsambleGridRow>()
@@ -9,14 +9,14 @@
     .Columns(cols => {
         cols.Bound(e => e.Numero).Title("Ensamble");
         cols.Bound(e => e.Linea).Title("Linea");
-        cols.Bound(e => e.Id).Title("Acciones").Width(200)
+        cols.Bound(e => e.Id).Title("Acciones").Width(120)
             .Sortable(false).Filterable(false)
             .HtmlAttributes(new { style = "white-space:nowrap;" })
             .ClientTemplate(
-                "<button class='k-button btn-rounded btn-edit-ensamble' data-id='#=Id#'>" +
-                "<i class='fas fa-edit'></i> Editar</button> " +
-                "<button class='k-button btn-rounded btn-del-ensamble' data-id='#=Id#' style='color:\\#ef4444;border-color:\\#fecaca;'>" +
-                "<i class='fas fa-trash-alt'></i> Eliminar</button>");
+                "<button class='btn btn-icon btn-sm btn-warning btn-edit-ensamble' data-id='#=Id#' title='Editar'>" +
+                "<i class='fas fa-edit'></i></button> " +
+                "<button class='btn btn-icon btn-sm btn-danger btn-del-ensamble' data-id='#=Id#' title='Eliminar'>" +
+                "<i class='fas fa-trash-alt'></i></button>");
     })
     .Sortable()
     .Filterable()

@@ -13,8 +13,8 @@
 }
 
 <div class="form-group">
-    <label class="form-label">Ensamble</label>
-    <select id="modalProgramaEnsambleSelect">
+    <label class="form-label" style="display:block;">Ensamble</label>
+    <select id="modalProgramaEnsambleSelect" style="width:320px;max-width:100%;">
         @foreach (var ens in Model)
         {
             <option value="@ens.Id" @(esEdicion && programa.Ensamble != null && programa.Ensamble.Id == ens.Id ? "selected" : "")>@ens.Numero</option>
@@ -40,9 +40,9 @@
     </div>
 </div>
 
-<div class="form-actions">
-    <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
-    <button type="button" class="k-button k-primary" id="btnSubmitPrograma"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
+<div class="form-actions" style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+    <button type="button" class="btn btn-secondary" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
+    <button type="button" class="btn btn-primary" id="btnSubmitPrograma"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
 </div>
 
 <script>
@@ -57,6 +57,8 @@
         placeholder: '-- Escribe o selecciona ensamble --',
         noDataTemplate: 'No se encontraron ensambles'
     }).data('kendoComboBox');
+    // Al agregar, el combo inicia vacio (no preseleccionar el primer ensamble)
+    if (!esEdicion) { $ensambleDDL.value(''); }
     $('#modalProgramaNumero').kendoTextBox();
     var $numMat = $('#modalProgramaMateriales').kendoNumericTextBox({
         min: 0, decimals: 0, format: '##', placeholder: '0'

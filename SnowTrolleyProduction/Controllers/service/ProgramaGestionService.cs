@@ -136,6 +136,8 @@ namespace SnowTrolleyProduction.Controllers.service
                     string programaBaseExcel = filaReal.Cell("B").GetString()?.Trim();
                     if (string.IsNullOrWhiteSpace(programaBaseExcel)) continue;
 
+                    string ladoExcel = filaReal.Cell("C").GetString()?.Trim() ?? "";
+
                     string lineaExcelStr = filaReal.Cell("H").GetString()?.Trim() ?? "";
                     int? lineaFinal = null;
                     if (int.TryParse(lineaExcelStr, out int parsedLine)) lineaFinal = parsedLine;
@@ -179,6 +181,9 @@ namespace SnowTrolleyProduction.Controllers.service
                             new { eid = infoEnsamble.Id }).ToList();
                     }
 
+                    // Lado vacio = ambos (s1 y s2); lado especifico = solo ese lado.
+                    programasReales = FiltrarProgramasPorLado(programasReales, ladoExcel);
+
                     if (!programasReales.Any()) continue;
 
                     foreach (var programaReal in programasReales)
@@ -189,19 +194,38 @@ namespace SnowTrolleyProduction.Controllers.service
                         string woFinal    = workOrderGenerado;
                         int    pzasFinales = piezas;
                         bool   esDup       = false;
+                        bool   esActualizacion = false;
+                        int    pzasAnteriores  = 0;
                         string razon       = advertenciaLinea ?? "";
                         int    existingId  = 0;
 
-                        bool originalActivo = conn.QueryFirstOrDefault<int>(@"
-                            SELECT COUNT(1) FROM [Process].[TrolleySetup]
+                        // WO base sin modificar (termina en 000) y activo -> se actualiza con las piezas del Excel.
+                        var activoInfo = conn.QueryFirstOrDefault<dynamic>(@"
+                            SELECT TOP 1 Id, WorkOrder, PiezasProgramadas FROM [Process].[TrolleySetup]
                             WHERE Id_Programa = @prog AND WorkOrder = @wo
-                              AND Status NOT IN ('Completado', 'Finalizado Parcial')",
-                            new { prog = programaReal, wo = workOrderGenerado }) > 0;
+                              AND Status NOT IN ('Completado', 'Finalizado Parcial')
+                            ORDER BY Id DESC",
+                            new { prog = programaReal, wo = workOrderGenerado });
 
-                        if (originalActivo)
+                        if (activoInfo != null)
                         {
-                            esDup = true;
-                            razon = $"WorkOrder '{workOrderGenerado}' ya existe";
+                            pzasAnteriores = (int)activoInfo.PiezasProgramadas;
+                            woFinal        = (string)activoInfo.WorkOrder;
+                            existingId     = (int)activoInfo.Id;
+
+                            if (pzasAnteriores == piezas)
+                            {
+                                // Mismo programa, mismo WO base, mismas piezas -> no hay nada que cambiar.
+                                esDup = true;
+                                razon = $"WorkOrder '{workOrderGenerado}' ya existe con las mismas piezas ({piezas})";
+                            }
+                            else
+                            {
+                                // WO base sin modificar -> actualizar piezas al valor del Excel (no se crea uno nuevo).
+                                esActualizacion = true;
+                                pzasFinales     = piezas;
+                                razon           = $"Actualizar '{woFinal}': {pzasAnteriores} -> {piezas} piezas (Excel)";
+                            }
                         }
                         else
                         {
@@ -269,7 +293,9 @@ namespace SnowTrolleyProduction.Controllers.service
                             Ensamble          = programaBaseExcel,
                             EsDuplicado       = esDup,
                             RazonRechazo      = razon,
-                            ExistingId        = existingId
+                            ExistingId        = existingId,
+                            EsActualizacion   = esActualizacion,
+                            PiezasAnteriores  = pzasAnteriores
                         });
                     }
                 }
@@ -283,6 +309,9 @@ namespace SnowTrolleyProduction.Controllers.service
             string sqlInsert = @"INSERT INTO [Process].[TrolleySetup]
                    (Id_Proceso, Id_Programa, WorkOrder, PiezasProgramadas, Trolleys, Status, FechaCreacion, Id_Linea, Comentarios, Linea)
                    VALUES (@IdProceso, @IdPrograma, @WorkOrder, @PiezasProgramadas, @Trolleys, @Status, @FechaCreacion, @IdLinea, @Comentarios, @Linea)";
+            const string sqlUpdate = @"UPDATE [Process].[TrolleySetup]
+                   SET PiezasProgramadas = @PiezasProgramadas
+                   WHERE Id = @Id";
 
             using (var conn = new SqlConnection(GetConnectionString()))
             {
@@ -293,7 +322,21 @@ namespace SnowTrolleyProduction.Controllers.service
                     {
                         foreach (var item in items)
                         {
-                            if (item.EsDuplicado || item.ExistingId > 0) continue;
+                            if (item.EsDuplicado) continue;
+
+                            // WO base sin modificar -> actualizar piezas del registro existente con el valor del Excel.
+                            if (item.EsActualizacion && item.ExistingId > 0)
+                            {
+                                conn.Execute(sqlUpdate, new
+                                {
+                                    PiezasProgramadas = item.PiezasProgramadas,
+                                    Id                = item.ExistingId
+                                }, transaction);
+                                conteo++;
+                                continue;
+                            }
+
+                            if (item.ExistingId > 0) continue;
 
                             conn.Execute(sqlInsert, new
                             {
@@ -355,6 +398,8 @@ namespace SnowTrolleyProduction.Controllers.service
                     string programaBaseExcel = filaReal.Cell("B").GetString()?.Trim();
                     if (string.IsNullOrWhiteSpace(programaBaseExcel)) continue;
 
+                    string ladoExcel = filaReal.Cell("C").GetString()?.Trim() ?? "";
+
                     string lineaExcelStr = filaReal.Cell("H").GetString()?.Trim() ?? "";
                     int? lineaFinal = null;
                     if (int.TryParse(lineaExcelStr, out int parsedLine)) lineaFinal = parsedLine;
@@ -397,6 +442,9 @@ namespace SnowTrolleyProduction.Controllers.service
                             "SELECT Numero FROM [Process].[Programas] WHERE Ensamble = @eid AND Numero IS NOT NULL AND Numero <> '' ORDER BY Numero ASC",
                             new { eid = infoEnsamble.Id }).ToList();
                     }
+
+                    // Lado vacio = ambos (s1 y s2); lado especifico = solo ese lado.
+                    programasReales = FiltrarProgramasPorLado(programasReales, ladoExcel);
 
                     if (!programasReales.Any()) continue;
 
@@ -598,6 +646,25 @@ namespace SnowTrolleyProduction.Controllers.service
             }
         }
 
+        // Filtra los programas de un ensamble segun el lado indicado en el Excel (columna C).
+        // Vacio = se requieren ambos lados (s1 y s2) -> se devuelven todos.
+        // "s1" -> solo programas que terminan en s1; "s2" -> solo los que terminan en s2.
+        private static List<string> FiltrarProgramasPorLado(List<string> programas, string ladoExcel)
+        {
+            if (programas == null) return new List<string>();
+            if (string.IsNullOrWhiteSpace(ladoExcel)) return programas;
+
+            string lado = ladoExcel.Trim().ToLowerInvariant();
+            string sufijo = lado.Contains("1") ? "s1"
+                          : lado.Contains("2") ? "s2"
+                          : null;
+            if (sufijo == null) return programas; // valor no reconocido -> no filtrar
+
+            return programas
+                .Where(p => !string.IsNullOrWhiteSpace(p) && p.Trim().ToLowerInvariant().EndsWith(sufijo))
+                .ToList();
+        }
+
         public List<string> GetLadosPorEnsamble(string ensamble)
         {
             try
@@ -659,7 +726,22 @@ namespace SnowTrolleyProduction.Controllers.service
                     {
                         foreach (var item in items)
                         {
-                            if (item.EsDuplicado || item.ExistingId > 0) continue;
+                            if (item.EsDuplicado) continue;
+
+                            // WO base sin modificar -> actualizar piezas del registro existente con el valor del Excel.
+                            if (item.EsActualizacion && item.ExistingId > 0)
+                            {
+                                conn.Execute(sqlUpdate, new
+                                {
+                                    PiezasProgramadas = item.PiezasProgramadas,
+                                    Id                = item.ExistingId
+                                }, transaction);
+                                conteo++;
+                                continue;
+                            }
+
+                            if (item.ExistingId > 0) continue;
+
                             conn.Execute(sqlInsert, new
                             {
                                 IdProceso         = 1,

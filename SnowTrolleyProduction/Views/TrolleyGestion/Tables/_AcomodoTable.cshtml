@@ -1,5 +1,5 @@
-<div class="gestion-toolbar">
-    <button class="k-button k-primary btn-rounded" id="btnAgregarAcomodo"><i class="fas fa-plus"></i> Agregar Acomodo</button>
+<div class="gestion-toolbar" style="margin-bottom:8px;">
+    <button class="btn btn-primary btn-sm" id="btnAgregarAcomodo"><i class="fas fa-plus"></i> Agregar Acomodo</button>
 </div>
 
 @(Html.Kendo().Grid<SnowTrolleyProduction.Models.AcomodoGridRow>()
@@ -10,14 +10,14 @@
         cols.Bound(g => g.Programa).Title("Programa");
         cols.Bound(g => g.Ensamble).Title("Ensamble");
         cols.Bound(g => g.Linea).Title("Linea").Width(110);
-        cols.Bound(g => g.ProgramaId).Title("Acciones").Width(210)
+        cols.Bound(g => g.ProgramaId).Title("Acciones").Width(120)
             .Sortable(false).Filterable(false)
             .HtmlAttributes(new { style = "white-space:nowrap;" })
             .ClientTemplate(
-                "<button class='k-button btn-rounded btn-edit-acomodo' data-id='#=ProgramaId#'>" +
-                "<i class='fas fa-edit'></i> Editar</button> " +
-                "<button class='k-button btn-rounded btn-del-acomodo' data-id='#=ProgramaId#' data-prog='#=Programa#' style='color:\\#ef4444;border-color:\\#fecaca;'>" +
-                "<i class='fas fa-trash-alt'></i> Eliminar</button>");
+                "<button class='btn btn-icon btn-sm btn-warning btn-edit-acomodo' data-id='#=ProgramaId#' title='Editar'>" +
+                "<i class='fas fa-edit'></i></button> " +
+                "<button class='btn btn-icon btn-sm btn-danger btn-del-acomodo' data-id='#=ProgramaId#' data-prog='#=Programa#' title='Eliminar'>" +
+                "<i class='fas fa-trash-alt'></i></button>");
     })
     .Sortable()
     .Filterable()

@@ -118,12 +118,21 @@
     padding: 12px 14px;
     box-sizing: border-box;
     position: relative;
-    transition: box-shadow .15s;
-    cursor: default;
+    transition: box-shadow .15s, opacity .12s;
+    cursor: grab;
+    user-select: none;
+}
+
+.ts-card:active {
+    cursor: grabbing;
 }
 
 .ts-card:hover {
     box-shadow: 0 4px 14px rgba(0,0,0,.1);
+}
+
+.ts-card.ts-card--dragging {
+    opacity: 0.25 !important;
 }
 
 .ts-card-num {
@@ -234,6 +243,29 @@ img.show-empty {
     align-items: center;
     gap: 6px;
 }
+
+/* ── Drag & Drop ─────────────────────────────────────────── */
+.pg-sort-placeholder {
+    background: rgba(93,120,255,.07) !important;
+    border: 2px dashed #5d78ff !important;
+    border-radius: 6px !important;
+    box-sizing: border-box !important;
+    min-height: 50px !important;
+}
+
+.ts-kanban-col-body.kanban-drop-ready {
+    background: #f5f7ff !important;
+    outline: 2px dashed #a8b4ff;
+    outline-offset: -4px;
+    transition: background .15s;
+}
+
+.ts-kanban-col-body.kanban-drag-over {
+    background: #eef0ff !important;
+    outline: 2px dashed #5d78ff;
+    outline-offset: -4px;
+}
+/* ─────────────────────────────────────────────────────────── */
 
 .swal2-container {
     z-index: 99999 !important;

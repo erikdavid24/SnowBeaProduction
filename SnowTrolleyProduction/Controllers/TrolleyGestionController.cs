@@ -70,6 +70,19 @@ namespace SnowTrolleyProduction.Controllers
         }
 
         [HttpPost]
+        public JsonResult AgregarMaquinaNueva(string descripcion, int lineaId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(descripcion))
+                    return Json(new { success = false, message = "Escribe el nombre de la maquina." });
+                _svc.AgregarMaquinaNueva(descripcion.Trim(), lineaId);
+                return Json(new { success = true });
+            }
+            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        }
+
+        [HttpPost]
         public JsonResult EditarMaquina(int maquinaId, int equipoId)
         {
             try

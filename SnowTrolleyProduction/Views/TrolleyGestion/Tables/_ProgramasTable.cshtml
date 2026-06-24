@@ -1,6 +1,15 @@
-﻿<div class="gestion-toolbar">
-    <button class="k-button k-primary btn-rounded" id="btnAgregarPrograma"><i class="fas fa-plus"></i> Agregar Programa</button>
+﻿<div class="gestion-toolbar" style="margin-bottom:8px;">
+    <button class="btn btn-primary btn-sm" id="btnAgregarPrograma"><i class="fas fa-plus"></i> Agregar Programa</button>
 </div>
+
+<style>
+    /* Reserva siempre la barra vertical y oculta la horizontal para evitar el parpadeo
+       del scroll horizontal al cargar los datos (las columnas ya caben en el ancho). */
+    #gridProgramas .k-grid-content { overflow-y: scroll; overflow-x: hidden; }
+    /* Oculta la barra del wrapper que parpadea al cargar; el scroll real lo maneja
+       el contenido interno (.k-grid-content). */
+    #gridProgramas { overflow: hidden; }
+</style>
 
 @(Html.Kendo().Grid<SnowTrolleyProduction.Models.ProgramaGridRow>()
     .Name("gridProgramas")
@@ -34,14 +43,15 @@
                 "# } else { #" +
                 "<span style='color:\\#ef4444;font-size:.75rem;font-weight:600;'>Sin mat.</span>" +
                 "# } #");
-        cols.Bound(p => p.Id).Title("Acciones").Width(200)
+        cols.Bound(p => p.Id).Title("Acciones").Width(120)
             .Sortable(false).Filterable(false)
-            .HtmlAttributes(new { style = "white-space:nowrap;" })
+            .HtmlAttributes(new { style = "white-space:nowrap;text-align:center;" })
+            .HeaderHtmlAttributes(new { style = "text-align:center;" })
             .ClientTemplate(
-                "<button class='k-button btn-rounded btn-edit-programa' data-id='#=Id#'>" +
-                "<i class='fas fa-edit'></i> Editar</button> " +
-                "<button class='k-button btn-rounded btn-del-programa' data-id='#=Id#' style='color:\\#ef4444;border-color:\\#fecaca;'>" +
-                "<i class='fas fa-trash-alt'></i> Eliminar</button>");
+                "<button class='btn btn-icon btn-sm btn-warning btn-edit-programa' data-id='#=Id#' title='Editar' " +
+                "style='width:32px;height:32px;padding:0;'><i class='fas fa-edit'></i></button> " +
+                "<button class='btn btn-icon btn-sm btn-danger btn-del-programa' data-id='#=Id#' title='Eliminar' " +
+                "style='width:32px;height:32px;padding:0;'><i class='fas fa-trash-alt'></i></button>");
     })
     .Sortable()
     .Filterable()

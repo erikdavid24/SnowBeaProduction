@@ -61,70 +61,96 @@ function renderKanban(data) {
 
     agruparCreadoPorLinea();
     initKanbanSortables();
+    poblarFiltroGlobal(data);
 }
 
 function agruparCreadoPorLinea() {
     var $body = $('#bodyCreado');
     var cards = $body.find('.ts-card').toArray();
-    if (!cards.length) { $body.wrapInner('<div class="kanban-linea-group" data-linea="0">'); return; }
-
+    if (!cards.length) return;
     cards.sort(function (a, b) { return ($(a).data('linea') || 0) - ($(b).data('linea') || 0); });
     $body.empty();
-
-    var currentLinea = null, $grp = null;
     cards.forEach(function (card) {
-        var linea = $(card).data('linea') || 0;
-        if (linea !== currentLinea) {
-            currentLinea = linea;
-            $grp = $('<div class="kanban-linea-group" id="lineaGrp' + linea + '" data-linea="' + linea + '">').appendTo($body);
-            $('<div class="kanban-linea-hdr"><i class="fas fa-industry"></i> L' + linea + '</div>').appendTo($grp);
-        }
-        $grp.append(card);
+        $body.append(card);
     });
 }
 
 function initKanbanSortables(lineaActiva) {
     _lineaFiltroCreado = lineaActiva || '';
 
-    $('.kanban-linea-group').each(function () {
-        var s = $(this).data('kendoSortable'); if (s) s.destroy();
-    });
     var ps = $('#bodyPendiente').data('kendoSortable'); if (ps) ps.destroy();
-
-    function makeSortStart(source) {
-        return function () {
-            _dragValid  = false;
-            _dragSource = source;
-            $(document).off('mouseup.kanbanDrop touchend.kanbanDrop');
-            $(document).one('mouseup.kanbanDrop touchend.kanbanDrop', function () {
-                setTimeout(function () { if (!_dragValid) cargarKanban(); }, 120);
-            });
-        };
-    }
-
-    $('.kanban-linea-group').each(function () {
-        $(this).kendoSortable({
-            filter: '.ts-card', cursor: 'grabbing',
-            hint: kanbanHint, placeholder: kanbanPlaceholder,
-            connectWith: '#bodyPendiente',
-            start:  makeSortStart('group'),
-            change: function (e) {
-                _dragValid = true;
-                if (!_lineaFiltroCreado && e.action === 'sort') { setTimeout(cargarKanban, 0); return; }
-                onKanbanCardMoved(e);
-            }
-        });
-    });
+    var cs = $('#bodyCreado').data('kendoSortable');    if (cs) cs.destroy();
 
     $('#bodyPendiente').kendoSortable({
         filter: '.ts-card', cursor: 'grabbing',
         hint: kanbanHint, placeholder: kanbanPlaceholder,
-        connectWith: '.kanban-linea-group',
-        start:  makeSortStart('pendiente'),
+        connectWith: '#bodyCreado',
+        start: function (e) {
+            _dragValid = false; _dragSource = 'pendiente';
+            e.item.addClass('ts-card--dragging');
+            $('#bodyCreado').addClass('kanban-drop-ready');
+            $(document).off('mouseup.kanbanDrop touchend.kanbanDrop');
+            $(document).one('mouseup.kanbanDrop touchend.kanbanDrop', function () {
+                e.item.removeClass('ts-card--dragging');
+                $('.ts-kanban-col-body').removeClass('kanban-drop-ready kanban-drag-over');
+                setTimeout(function () { if (!_dragValid) cargarKanban(); }, 120);
+            });
+        },
         change: function (e) {
             _dragValid = true;
-            if (!_lineaFiltroPendiente && e.action === 'sort') { setTimeout(cargarKanban, 0); return; }
-            onKanbanCardMoved(e);
+            $('.ts-kanban-col-body').removeClass('kanban-drop-ready kanban-drag-over');
+            if (e.action === 'receive') {
+                var id = parseInt(e.item.attr('data-id'), 10);
+                if (!id) { tgAlert('Error', 'ID de carta inválido.'); cargarKanban(); return; }
+                $.post(PG.urls.cambiarStatus, { id: id, status: 'Pendiente' }, function (r) {
+                    if (!r.success) { tgAlert('Error', r.message || 'No se pudo mover la carta.'); }
+                    cargarKanban();
+                }).fail(function (xhr) { tgAlert('Error', 'Error de conexión (' + xhr.status + ').'); cargarKanban(); });
+            }
+        }
+    });
+
+    $('#bodyCreado').kendoSortable({
+        filter: '.ts-card', cursor: 'grabbing',
+        hint: kanbanHint,
+        placeholder: function (element) {
+            // En "Todas" no se muestra el recuadro azul de destino (sin animacion de reacomodo).
+            if (!_lineaFiltroGlobal) return $('<div class="pg-sort-noop">').css({ display: 'none' });
+            return kanbanPlaceholder(element);
+        },
+        connectWith: '#bodyPendiente',
+        start: function (e) {
+            _dragValid = false; _dragSource = 'creado';
+            // En "Todas" se bloquea el reorden arriba/abajo: se guarda el orden para revertir.
+            _creadoSnapshot = !_lineaFiltroGlobal ? $('#bodyCreado').children('.ts-card').toArray() : null;
+            e.item.addClass('ts-card--dragging');
+            $('#bodyPendiente').addClass('kanban-drop-ready');
+            $(document).off('mouseup.kanbanDrop touchend.kanbanDrop');
+            $(document).one('mouseup.kanbanDrop touchend.kanbanDrop', function () {
+                e.item.removeClass('ts-card--dragging');
+                $('.ts-kanban-col-body').removeClass('kanban-drop-ready kanban-drag-over');
+                setTimeout(function () { if (!_dragValid) cargarKanban(); }, 120);
+            });
+        },
+        change: function (e) {
+            _dragValid = true;
+            $('.ts-kanban-col-body').removeClass('kanban-drop-ready kanban-drag-over');
+            // En "Todas" se bloquea el reorden interno (arriba/abajo); mover a Pendiente si se permite.
+            if (e.action === 'sort' && !_lineaFiltroGlobal) {
+                if (_creadoSnapshot) {
+                    var $b = $('#bodyCreado');
+                    _creadoSnapshot.forEach(function (el) { $b.append(el); });
+                }
+                return;
+            }
+            if (e.action === 'receive') {
+                var id = parseInt(e.item.attr('data-id'), 10);
+                if (!id) { tgAlert('Error', 'ID de carta inválido.'); cargarKanban(); return; }
+                $.post(PG.urls.cambiarStatus, { id: id, status: 'Creado' }, function (r) {
+                    if (!r.success) { tgAlert('Error', r.message || 'No se pudo mover la carta.'); }
+                    cargarKanban();
+                }).fail(function (xhr) { tgAlert('Error', 'Error de conexión (' + xhr.status + ').'); cargarKanban(); });
+            }
         }
     });
 }
@@ -134,13 +160,22 @@ var _lineaFiltroPendiente = '';
 var _kanbanScrollTimer    = null;
 var _dragValid            = false;
 var _dragSource           = '';
+var _creadoSnapshot       = null;
 
 function kanbanHint(element) {
-    return element.clone().css({ width: element.outerWidth(), opacity: 0.85, boxShadow: '0 4px 16px rgba(0,0,0,.18)', borderRadius: '8px' });
+    return element.clone().css({
+        width: element.outerWidth(),
+        opacity: 0.96,
+        boxShadow: '0 10px 28px rgba(0,0,0,.22)',
+        border: '2px solid #5d78ff',
+        transform: 'rotate(1.5deg) scale(1.01)',
+        zIndex: 10000,
+        pointerEvents: 'none'
+    });
 }
 
 function kanbanPlaceholder(element) {
-    return $('<div class="pg-sort-placeholder">').css({ height: element.outerHeight(true), opacity: 0 });
+    return $('<div class="pg-sort-placeholder">').css({ height: element.outerHeight(true) });
 }
 
 function onPendienteMove(e) {
@@ -172,24 +207,38 @@ function onKanbanCardMoved(e) {
     }).fail(function () { tgAlert('Error', 'Error de conexion.'); cargarKanban(); });
 }
 
-function onFiltrarLinea() {
-    var ddl    = $(this.element);
-    var linea  = this.value();
-    var bodyId = ddl.data('body');
+// Filtro GLOBAL de linea: filtra las 4 columnas a la vez.
+var _lineaFiltroGlobal = '';
 
-    if (bodyId === 'bodyCreado') {
-        $('#bodyCreado .kanban-linea-group').each(function () {
-            var show = !linea || String($(this).data('linea')) === String(linea);
-            $(this).toggle(show);
-        });
-        initKanbanSortables(linea);
-        _lineaFiltroCreado = linea;
-    } else {
-        if (bodyId === 'bodyPendiente') _lineaFiltroPendiente = linea;
-        $('#' + bodyId + ' .ts-card').each(function () {
-            $(this).toggle(!linea || String($(this).data('linea')) === String(linea));
-        });
-    }
+function poblarFiltroGlobal(data) {
+    var ddl = $('#filterLineaGlobal').data('kendoDropDownList');
+    if (!ddl) return;
+    var prev = _lineaFiltroGlobal || '';
+    var lineas = [];
+    (data || []).forEach(function (x) {
+        var l = x.Id_Linea;
+        if (l && lineas.indexOf(l) < 0) lineas.push(l);
+    });
+    lineas.sort(function (a, b) { return a - b; });
+    var ds = [{ text: 'Todas', value: '' }];
+    lineas.forEach(function (l) { ds.push({ text: 'L' + l, value: String(l) }); });
+    ddl.setDataSource(new kendo.data.DataSource({ data: ds }));
+    var existe = ds.some(function (d) { return d.value === prev; });
+    ddl.value(existe ? prev : '');
+    _lineaFiltroGlobal = ddl.value();
+    aplicarFiltroGlobal(_lineaFiltroGlobal);
+}
+
+function onFiltrarLineaGlobal() {
+    _lineaFiltroGlobal = this.value();
+    aplicarFiltroGlobal(_lineaFiltroGlobal);
+}
+
+function aplicarFiltroGlobal(linea) {
+    $('#kanbanBoard .ts-card').each(function () {
+        var l = String($(this).data('linea') || '');
+        $(this).toggle(!linea || l === String(linea));
+    });
 }
 
 function cargarKanban() {
@@ -212,16 +261,6 @@ function renderCol(bodyId, countId, filterId, items, saldoMap) {
     var $body = $('#' + bodyId).empty();
     $('#' + countId).text(items.length);
 
-    var ddl = $('#' + filterId).data('kendoDropDownList');
-    if (ddl) {
-        var lineas = [];
-        items.forEach(function (x) { var l = x.Id_Linea; if (l && lineas.indexOf(l) < 0) lineas.push(l); });
-        lineas.sort(function (a, b) { return a - b; });
-        var ds = [{ text: 'Todas', value: '' }];
-        lineas.forEach(function (l) { ds.push({ text: 'L' + l, value: String(l) }); });
-        ddl.setDataSource(new kendo.data.DataSource({ data: ds }));
-        ddl.value('');
-    }
     if (!items.length) { $body.append('<div class="ts-kanban-empty"><div class="k-grid" style="border:none;background:transparent;overflow:visible;height:auto;box-shadow:none;"><img class="show-empty" /></div></div>'); return; }
 
     var procStatuses    = ['Setup', 'Arranque', 'En Proceso'];
@@ -285,7 +324,7 @@ function generarWorkOrderBase() {
 
 function prepararWorkOrderFinal() {
     var linea = $('#cbLinea').data('kendoDropDownList').value();
-    var ensamble = $('#cbEnsamble').data('kendoDropDownList').value();
+    var ensamble = $('#cbEnsamble').data('kendoComboBox').value();
     var programa = $('#hdnProgramaSeleccionado').val();
     var base = $('#txtWorkOrderBase').val();
     if (!linea)    { swalWarn('Campo requerido', 'Selecciona una L�nea.');    return false; }
@@ -297,29 +336,32 @@ function prepararWorkOrderFinal() {
 }
 
 function getLineaData()    { var d = $('#cbLinea').data('kendoDropDownList');    return { lineaId: d && d.value() ? parseInt(d.value()) : 0 }; }
-function getEnsambleData() { var d = $('#cbEnsamble').data('kendoDropDownList'); return { ensamble: d ? d.value() : '' }; }
+function getEnsambleData() { var d = $('#cbEnsamble').data('kendoComboBox'); return { ensamble: d ? d.value() : '' }; }
 
 function onWndNuevoCerrar() {
-    ['#cbLinea', '#cbEnsamble'].forEach(function (s) { var d = $(s).data('kendoDropDownList'); if (d) { d.value(''); if (s !== '#cbLinea') d.enable(false); } });
+    var dLineaNvo = $('#cbLinea').data('kendoDropDownList');   if (dLineaNvo) dLineaNvo.value('');
+    var dEnsNvo   = $('#cbEnsamble').data('kendoComboBox');    if (dEnsNvo)   { dEnsNvo.value(''); dEnsNvo.enable(false); }
     $('#txtWorkOrderBase,#hdnWorkOrderFinal,#txtPiezas,#txtComentarios,#hdnProgramaSeleccionado').val(''); $('#txtWorkOrderSufijo').val('000');
     $('#ladosAutoContainer').html('<span style="color:#b0b7d0;font-size:.82rem;">Selecciona un ensamble para ver los lados...</span>');
 }
 function onWndEditarCerrar() {
-    $('#editId,#editEnsamble,#editEnsambleVal,#editWorkOrder,#editPiezas,#editTrolleys,#editLinea,#editComentarios').val('');
+    $('#editId,#editEnsamble,#editEnsambleVal,#editWorkOrder,#editWorkOrderBase,#editWorkOrderSufijo,#editTrolleys,#editComentarios').val('');
+    var npClose = $('#editPiezas').data('kendoNumericTextBox'); if (npClose) npClose.value(null);
+    var dlClose = $('#editLinea').data('kendoDropDownList');     if (dlClose) dlClose.value('');
     $('#editLadosContainer').html('<span style="color:#b0b7d0;font-size:.82rem;">Cargando lados...</span>');
 }
 function onWndSetupCerrar() { $('#setupPrograma,#setupProgramaId,#setupLinea').val(''); $('#setupZonasContainer').empty(); }
 
 function onLineaChange() {
     var id = $('#cbLinea').data('kendoDropDownList').value();
-    var ddlE = $('#cbEnsamble').data('kendoDropDownList');
+    var ddlE = $('#cbEnsamble').data('kendoComboBox');
     ddlE.value('');
     $('#hdnProgramaSeleccionado').val('');
     $('#ladosAutoContainer').html('<span style="color:#b0b7d0;font-size:.82rem;">Selecciona un ensamble para ver los lados...</span>');
     if (id) { ddlE.enable(true); ddlE.dataSource.read(); generarWorkOrderBase(); } else { ddlE.enable(false); $('#txtWorkOrderBase').val(''); }
 }
 function onEnsambleChange() {
-    var id = $('#cbEnsamble').data('kendoDropDownList').value();
+    var id = $('#cbEnsamble').data('kendoComboBox').value();
     var $cont = $('#ladosAutoContainer');
     $('#hdnProgramaSeleccionado').val('');
     if (!id) {
@@ -403,7 +445,11 @@ function abrirPreview(data, soloVer) {
                 Status:            { type: 'string' },
                 EsDuplicado:       { type: 'boolean', editable: false },
                 RazonRechazo:      { type: 'string',  editable: false },
-                Pendiente:         { type: 'boolean', defaultValue: false }
+                EsActualizacion:   { type: 'boolean', editable: false },
+                ExistingId:        { type: 'number',  editable: false },
+                PiezasAnteriores:  { type: 'number',  editable: false },
+                Pendiente:         { type: 'boolean', defaultValue: false, editable: false },
+                Seleccionado:      { type: 'boolean', defaultValue: true,  editable: false }
             } } },
             pageSize: 100
         },
@@ -414,8 +460,13 @@ function abrirPreview(data, soloVer) {
         editable: 'incell',
         noRecords: { template: "<img class='show-empty' />" },
         columns: [
+            { field: 'Seleccionado', width: 46, sortable: false, filterable: false,
+              headerTemplate: '<input type="checkbox" class="preview-sel-all" checked title="Seleccionar / deseleccionar todos" style="width:16px;height:16px;cursor:pointer;" />',
+              headerAttributes: { style: 'text-align:center;' },
+              attributes: { style: 'text-align:center;' },
+              template: function(d){ if(d.EsDuplicado) return '<input type="checkbox" class="preview-sel-chk" disabled style="width:16px;height:16px;cursor:not-allowed;" title="Duplicado: no se puede seleccionar" />'; return '<input type="checkbox" class="preview-sel-chk" ' + (d.Seleccionado !== false ? 'checked' : '') + ' style="width:16px;height:16px;cursor:pointer;" />'; } },
             { field: 'EsDuplicado', title: '', width: 50, sortable: false, filterable: false,
-              template: function(d){ if(d.EsDuplicado) return '<i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:16px;" title="'+(d.RazonRechazo||'')+'"></i>'; if(d.RazonRechazo) return '<i class="fas fa-exclamation-triangle" style="color:#f59e0b;font-size:16px;" title="'+d.RazonRechazo+'"></i>'; return '<i class="fas fa-check-circle" style="color:#22c55e;font-size:16px;"></i>'; } },
+              template: function(d){ if(d.EsDuplicado) return '<i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:16px;" title="'+(d.RazonRechazo||'')+'"></i>'; if(d.EsActualizacion) return '<i class="fas fa-sync-alt" style="color:#3b82f6;font-size:16px;" title="'+(d.RazonRechazo||'')+'"></i>'; if(d.RazonRechazo) return '<i class="fas fa-exclamation-triangle" style="color:#f59e0b;font-size:16px;" title="'+d.RazonRechazo+'"></i>'; return '<i class="fas fa-check-circle" style="color:#22c55e;font-size:16px;"></i>'; } },
             { field: 'Pendiente', title: 'Restricción', width: 100, sortable: false, filterable: false,
               headerAttributes: { style: 'text-align:center;font-size:.78rem;' },
               attributes: { style: 'text-align:center;' },
@@ -444,6 +495,21 @@ function abrirPreview(data, soloVer) {
         var item = grid.dataItem($(this).closest('tr'));
         if (item) item.set('Pendiente', this.checked);
     });
+    $(document).off('change.pgsel').on('change.pgsel', '.preview-sel-chk', function () {
+        var grid = $('#gridPreview').data('kendoGrid');
+        var item = grid.dataItem($(this).closest('tr'));
+        if (item) item.set('Seleccionado', this.checked);
+        sincronizarSelAll();
+        actualizarConteoPreview();
+    });
+    $(document).off('change.pgselall').on('change.pgselall', '.preview-sel-all', function () {
+        var chk = this.checked;
+        var grid = $('#gridPreview').data('kendoGrid');
+        var all = grid.dataSource.data();
+        for (var i = 0; i < all.length; i++) { if (!all[i].EsDuplicado) all[i].set('Seleccionado', chk); }
+        $('#gridPreview .preview-sel-chk:not(:disabled)').prop('checked', chk);
+        actualizarConteoPreview();
+    });
     actualizarConteoPreview();
     $(document).off('click.pgpreview').on('click.pgpreview', '.pg-preview-del', function(e) {
         e.preventDefault();
@@ -454,6 +520,8 @@ function abrirPreview(data, soloVer) {
     if (soloVer) {
         $('#btnConfirmarCarga').hide();
         $('#btnEliminarDuplicados').hide();
+        var gSolo = $('#gridPreview').data('kendoGrid');
+        if (gSolo) gSolo.hideColumn('Seleccionado');
     } else {
         $('#btnConfirmarCarga').show();
     }
@@ -473,13 +541,31 @@ function verPrecargas() {
     }).fail(function () { tgAlert('Error', 'No se pudieron cargar los registros pendientes.'); });
 }
 
+function sincronizarSelAll() {
+    var g = $('#gridPreview').data('kendoGrid');
+    if (!g) return;
+    var all = g.dataSource.data(), totalSel = 0, sel = 0;
+    for (var i = 0; i < all.length; i++) {
+        if (all[i].EsDuplicado) continue;
+        totalSel++;
+        if (all[i].Seleccionado !== false) sel++;
+    }
+    var $chk = $('#gridPreview .preview-sel-all');
+    if (!$chk.length) return;
+    $chk.prop('checked', totalSel > 0 && sel === totalSel);
+    $chk.prop('indeterminate', sel > 0 && sel < totalSel);
+}
+
 function actualizarConteoPreview() {
     var g = $('#gridPreview').data('kendoGrid');
     if (!g) return;
-    var all = g.dataSource.data(), n = all.length, dupl = 0;
-    for (var i = 0; i < n; i++) { if (all[i].EsDuplicado) dupl++; }
+    var all = g.dataSource.data(), n = all.length, dupl = 0, sel = 0;
+    for (var i = 0; i < n; i++) {
+        if (all[i].EsDuplicado) { dupl++; continue; }
+        if (all[i].Seleccionado !== false) sel++;
+    }
     var ok = n - dupl;
-    $('#previewCountLabel').html('<i class="fas fa-list-ol"></i> <b>'+n+'</b> registros &nbsp;|&nbsp; <i class="fas fa-check-circle" style="color:#22c55e;"></i> <b>'+ok+'</b> validos');
+    $('#previewCountLabel').html('<i class="fas fa-list-ol"></i> <b>'+n+'</b> registros &nbsp;|&nbsp; <i class="fas fa-check-circle" style="color:#22c55e;"></i> <b>'+ok+'</b> validos &nbsp;|&nbsp; <i class="fas fa-check-square" style="color:#1bc5bd;"></i> <b>'+sel+'</b> seleccionados');
     if (dupl > 0) {
         $('#previewDuplicateLabel').html('<i class="fas fa-exclamation-triangle"></i> <b>'+dupl+'</b> duplicados (se omitiran al guardar)').show();
         $('#btnEliminarDuplicados').show();
@@ -530,6 +616,10 @@ $(function () {
     });
     $('#btnCancelarNuevo').on('click',  function () { $('#wndNuevo').data('kendoWindow').close(); });
     $('#btnCancelarEditar').on('click', function () { $('#wndEditar').data('kendoWindow').close(); });
+    // Si se borra el sufijo del WorkOrder y se deja vacio, volver a poner "000"
+    $(document).on('blur', '#editWorkOrderSufijo', function () {
+        if (!($(this).val() || '').trim()) $(this).val('000');
+    });
     $('#btnCancelarSetup').on('click',  function () { $('#wndSetup').data('kendoWindow').close(); });
 
     $('#btnPreviewExcel').on('click', function () {
@@ -570,13 +660,16 @@ $(function () {
     $('#btnConfirmarCarga').on('click', function () {
         var grid = $('#gridPreview').data('kendoGrid');
         if (!grid) return;
-        var raw = grid.dataSource.data(), items = [], dups = 0;
+        var raw = grid.dataSource.data(), items = [], dups = 0, noSel = 0;
         for (var i = 0; i < raw.length; i++) {
             var obj = raw[i].toJSON ? raw[i].toJSON() : raw[i];
-            if (!obj.EsDuplicado) { items.push(obj); } else { dups++; }
+            if (obj.EsDuplicado) { dups++; continue; }
+            if (obj.Seleccionado === false) { noSel++; continue; }
+            items.push(obj);
         }
-        if (!items.length) { swalWarn('Sin datos validos', 'No quedan registros validos para guardar.'); return; }
-        var msj = 'Se guardaran <b>'+items.length+'</b> registros nuevos.';
+        if (!items.length) { swalWarn('Sin seleccion', 'Marca al menos un registro para pre-guardar.'); return; }
+        var msj = 'Se guardaran <b>'+items.length+'</b> registros seleccionados.';
+        if (noSel > 0) msj += '<br/><small style="color:#7d8499;">Se omitiran '+noSel+' sin seleccionar.</small>';
         if (dups > 0) msj += '<br/><small style="color:#ef4444;">Se omitiran '+dups+' duplicados.</small>';
         Swal.fire({ title: 'Pre-Guardar Excel?', html: msj, type: 'question', showCancelButton: true,
             confirmButtonColor: '#1bc5bd', cancelButtonColor: '#9aa0b8',
@@ -627,13 +720,21 @@ $(function () {
     });
 
     $('#btnGuardarEditar').on('click', function () {
-        var piezas = parseInt($('#editPiezas').val());
+        var nPiezasW = $('#editPiezas').data('kendoNumericTextBox');
+        var piezas = nPiezasW ? nPiezasW.value() : parseInt($('#editPiezas').val());
         if (!piezas || piezas <= 0) { swalWarn('Campo requerido', 'Ingresa las piezas.'); return; }
+        var ddlLineaW = $('#editLinea').data('kendoDropDownList');
+        var lineaSel = ddlLineaW ? ddlLineaW.value() : $('#editLinea').val();
+        if (!lineaSel) { swalWarn('Campo requerido', 'Selecciona una Linea.'); return; }
+        var woSuf = ($('#editWorkOrderSufijo').val() || '').trim();
+        if (!woSuf) { woSuf = '000'; $('#editWorkOrderSufijo').val('000'); }
+        var woFinal = ($('#editWorkOrderBase').val() || '') + woSuf;
+        $('#editWorkOrder').val(woFinal);
         var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
         $.post(PG.urls.editarDirecto, {
             Id: parseInt($('#editId').val()), Id_Proceso: 1,
-            WorkOrder: $('#editWorkOrder').val(), PiezasProgramadas: piezas,
-            Trolleys: $('#editTrolleys').val(), Id_Linea: $('#editLinea').val() || null,
+            WorkOrder: woFinal, PiezasProgramadas: piezas,
+            Trolleys: $('#editTrolleys').val(), Id_Linea: lineaSel || null,
             Comentarios: $('#editComentarios').val()
         }, function (r) {
             if (r.success) { swalOk('Listo!', '', { timer: 1200, showConfirmButton: false }); $('#wndEditar').data('kendoWindow').close(); cargarKanban(); }
@@ -677,9 +778,18 @@ $(function () {
     $(document).on('click', '.btn-card-edit', function (e) {
         e.preventDefault();
         var $c = $(this).closest('.ts-card'), ensamble = $c.data('ensamble') || '', progActual = $c.data('prog') || '';
-        $('#editId').val($c.data('id')); $('#editWorkOrder').val($c.data('wo'));
+        $('#editId').val($c.data('id'));
+        var woFull = String($c.data('wo') || '');
+        var woBase = woFull.length > 3 ? woFull.slice(0, -3) : woFull;
+        var woSuf  = woFull.length > 3 ? woFull.slice(-3)    : '';
+        $('#editWorkOrder').val(woFull);
+        $('#editWorkOrderBase').val(woBase);
+        $('#editWorkOrderSufijo').val(woSuf);
         $('#editEnsamble').val(ensamble); $('#editEnsambleVal').val(ensamble);
-        $('#editPiezas').val($c.data('piezas')); $('#editLinea').val($c.data('linea'));
+        var nPiezas = $('#editPiezas').data('kendoNumericTextBox');
+        if (nPiezas) nPiezas.value($c.data('piezas') || null);
+        var ddlLinea = $('#editLinea').data('kendoDropDownList');
+        if (ddlLinea) ddlLinea.value(String($c.data('linea') || ''));
         $('#editTrolleys').val($c.data('trolleys')); $('#editComentarios').val($c.data('coment'));
         var ladosStr = $c.data('lados') || '';
         var $cont = $('#editLadosContainer').empty();

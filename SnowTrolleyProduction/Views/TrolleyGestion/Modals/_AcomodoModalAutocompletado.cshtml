@@ -11,8 +11,8 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
         <label class="form-label" style="margin:0;font-weight:700;color:#3d4465;">Buscar por Programa</label>
         <button type="button" id="btnOrdenToggle"
-                class="k-button @(ordenActual == "recientes" ? "k-primary" : "")"
-                style="font-size:.73rem;padding:2px 10px;"
+                class="btn @(ordenActual == "recientes" ? "btn-primary" : "btn-outline-secondary") btn-sm"
+                style="font-size:.73rem;"
                 data-orden="@ordenActual">
             <i class="fas @(ordenActual == "recientes" ? "fa-clock" : "fa-sort-alpha-down")"></i>
             @(ordenActual == "recientes" ? "Mas recientes" : "Alfabetico")

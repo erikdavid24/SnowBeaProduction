@@ -124,15 +124,18 @@
 
 <div class="kt-portlet">
     <div class="kt-portlet__body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <label style="font-size:.78rem;font-weight:600;color:#7d8499;margin:0;">Linea:</label>
+            @(Html.Kendo().DropDownList().Name("filterLineaGlobal")
+                .DataTextField("text").DataValueField("value")
+                .HtmlAttributes(new { style = "width:130px;font-size:.8rem;" })
+                .Events(e => e.Change("onFiltrarLineaGlobal")))
+        </div>
         <div class="ts-kanban" id="kanbanBoard">
     <div class="ts-kanban-col">
         <div class="ts-kanban-col-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <span><i class="fas fa-pause-circle"></i> Requeridos no programados por restricciones
             <span id="cntPendiente" class="ts-kanban-badge" style="background:#e0e7ff;color:#3730a3;"></span></span>
-            @(Html.Kendo().DropDownList().Name("filterLineaPendiente")
-                .DataTextField("text").DataValueField("value")
-                .HtmlAttributes(new { style = "width:90px;font-size:.75rem;", data_body = "bodyPendiente" })
-                .Events(e => e.Change("onFiltrarLinea")))
         </div>
         <div class="ts-kanban-col-body" id="bodyPendiente"></div>
     </div>
@@ -140,10 +143,6 @@
         <div class="ts-kanban-col-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <span><i class="fas fa-clock"></i> Creado
             <span id="cntCreado" class="ts-kanban-badge" style="background:#fde68a;color:#92400e;"></span></span>
-            @(Html.Kendo().DropDownList().Name("filterLineaCreado")
-                .DataTextField("text").DataValueField("value")
-                .HtmlAttributes(new { style = "width:90px;font-size:.75rem;", data_body = "bodyCreado" })
-                .Events(e => e.Change("onFiltrarLinea")))
         </div>
         <div class="ts-kanban-col-body" id="bodyCreado"></div>
     </div>
@@ -151,10 +150,6 @@
         <div class="ts-kanban-col-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <span><i class="fas fa-cog"></i> En Proceso
             <span id="cntEnProceso" class="ts-kanban-badge" style="background:#bfdbfe;color:#1e40af;"></span></span>
-            @(Html.Kendo().DropDownList().Name("filterLineaEnProceso")
-                .DataTextField("text").DataValueField("value")
-                .HtmlAttributes(new { style = "width:90px;font-size:.75rem;", data_body = "bodyEnProceso" })
-                .Events(e => e.Change("onFiltrarLinea")))
         </div>
         <div class="ts-kanban-col-body" id="bodyEnProceso"></div>
     </div>
@@ -162,25 +157,12 @@
         <div class="ts-kanban-col-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <span><i class="fas fa-check-circle"></i> Completado
             <span id="cntCompletado" class="ts-kanban-badge" style="background:#bbf7d0;color:#166534;"></span></span>
-            @(Html.Kendo().DropDownList().Name("filterLineaCompletado")
-                .DataTextField("text").DataValueField("value")
-                .HtmlAttributes(new { style = "width:90px;font-size:.75rem;", data_body = "bodyCompletado" })
-                .Events(e => e.Change("onFiltrarLinea")))
         </div>
         <div class="ts-kanban-col-body" id="bodyCompletado"></div>
     </div>
         </div>
     </div>
 </div>
-
-@(Html.Kendo().Sortable()
-    .For("#bodyPendiente")
-    .Filter(".ts-card")
-    .ConnectWith(".kanban-linea-group")
-    .Cursor("grabbing")
-    .HintHandler("kanbanHint")
-    .PlaceholderHandler("kanbanPlaceholder")
-    .Events(e => e.Change("onKanbanCardMoved").Move("onPendienteMove")))
 
 @(Html.Kendo().Window().Name("wndExcel").Title("Cargar Plan de Produccion").Visible(false).Modal(true).Width(500)
     .Content(@<text>
@@ -239,9 +221,10 @@
                 </div>
                 <div class="form-col">
                     <label class="form-label">Ensamble *</label>
-                    @(Html.Kendo().DropDownList().Name("Id_Ensamble").DataTextField("Text").DataValueField("Value")
-                        .OptionLabel("-- Selecciona Ensamble --").HtmlAttributes(new { style = "width:100%;", id = "cbEnsamble" })
-                        .DataSource(s => s.Read(r => r.Action("GetEnsambles","ProgramGestion").Data("getLineaData").Type(HttpVerbs.Get)).ServerFiltering(true))
+                    @(Html.Kendo().ComboBox().Name("Id_Ensamble").DataTextField("Text").DataValueField("Value")
+                        .Placeholder("-- Selecciona Ensamble --").HtmlAttributes(new { style = "width:100%;", id = "cbEnsamble" })
+                        .Filter(FilterType.Contains)
+                        .DataSource(s => s.Read(r => r.Action("GetEnsambles","ProgramGestion").Data("getLineaData").Type(HttpVerbs.Get)).ServerFiltering(false))
                         .AutoBind(false).Enable(false).Events(e => e.Change("onEnsambleChange")))
                 </div>
             </div>
@@ -293,7 +276,12 @@
             <div class="form-group form-row">
                 <div class="form-col">
                     <label class="form-label">WorkOrder</label>
-                    @(Html.Kendo().TextBox().Name("editWorkOrder").HtmlAttributes(new { style = "width:100%;" }))
+                    <div class="wo-wrap">
+                        @(Html.Kendo().TextBox().Name("editWorkOrderBase").Readonly(true).HtmlAttributes(new { @class = "wo-base", style = "width:auto;" }))
+                        <span class="wo-sep">-</span>
+                        @(Html.Kendo().TextBox().Name("editWorkOrderSufijo").HtmlAttributes(new { @class = "wo-suffix", maxlength = "3" }))
+                    </div>
+                    <input type="hidden" id="editWorkOrder" />
                 </div>
                 <div class="form-col">
                     <label class="form-label">Piezas Programadas *</label>
@@ -310,16 +298,13 @@
                     <span style="color:#b0b7d0;font-size:.82rem;">Cargando lados...</span>
                 </div>
             </div>
-            <div class="form-group form-row">
-                <div class="form-col">
-                    <label class="form-label">Linea</label>
-                    @(Html.Kendo().NumericTextBox<int>().Name("editLinea").HtmlAttributes(new { style = "width:100%;" }))
-                </div>
-                <div class="form-col">
-                    <label class="form-label">Trolleys</label>
-                    @(Html.Kendo().TextBox().Name("editTrolleys").HtmlAttributes(new { style = "width:100%;" }))
-                </div>
+            <div class="form-group">
+                <label class="form-label">Linea</label>
+                @(Html.Kendo().DropDownList().Name("editLinea").DataTextField("Text").DataValueField("Value")
+                    .OptionLabel("-- Selecciona Linea --").HtmlAttributes(new { style = "width:100%;" })
+                    .DataSource(s => s.Read(r => r.Action("GetLineas", "ProgramGestion").Type(HttpVerbs.Get))))
             </div>
+            <input type="hidden" id="editTrolleys" />
             <div class="form-group">
                 <label class="form-label">Comentarios</label>
                 @(Html.Kendo().TextArea().Name("editComentarios").Rows(2).HtmlAttributes(new { style = "width:100%;" }))

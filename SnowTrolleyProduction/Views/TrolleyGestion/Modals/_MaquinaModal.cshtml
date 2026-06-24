@@ -1,4 +1,4 @@
-﻿@model List<SnowTrolleyProduction.Models.LineaGestion>
+@model List<SnowTrolleyProduction.Models.LineaGestion>
 @{
     var maquina = ViewBag.Maquina as SnowTrolleyProduction.Models.MaquinaGestion;
     bool esEdicion = maquina != null;
@@ -18,6 +18,21 @@ else
     <input type="hidden" id="modalMaquinaId" value="@maquina.Id" />
 }
 
+@if (!esEdicion)
+{
+    <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <div class="kt-radio-inline">
+            <label class="kt-radio">
+                <input type="radio" name="modoMaquina" value="existente" checked /> M&#225;quina existente <span></span>
+            </label>
+            <label class="kt-radio">
+                <input type="radio" name="modoMaquina" value="nueva" /> M&#225;quina nueva <span></span>
+            </label>
+        </div>
+    </div>
+}
+
 <div class="form-group">
     <label class="form-label">L&#237;nea</label>
     <select id="modalLineaSelect">
@@ -35,20 +50,29 @@ else
     </select>
 </div>
 
-<div class="form-group">
+<div class="form-group" id="grpEquipoExistente">
     <label class="form-label">Equipo</label>
     <input id="modalEquipoSelect" style="width:100%;" />
 </div>
 
-<div class="form-actions">
-    <button type="button" class="k-button" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
-    <button type="button" class="k-button k-primary" id="btnSubmitMaquina"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
+@if (!esEdicion)
+{
+    <div class="form-group" id="grpEquipoNuevo" style="display:none;">
+        <label class="form-label">Nombre de la m&#225;quina <span class="kt-font-danger">*</span></label>
+        <input class="form-control" id="modalEquipoNuevo" placeholder="Escribe el nombre de la nueva m&#225;quina..." />
+    </div>
+}
+
+<div class="form-actions" style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+    <button type="button" class="btn btn-secondary" onclick="$('#wndGestion').data('kendoWindow').close();">Cancelar</button>
+    <button type="button" class="btn btn-primary" id="btnSubmitMaquina"><i class="fas fa-save"></i> @(esEdicion ? "Editar" : "Agregar")</button>
 </div>
 
 <script>
 (function () {
     var esEdicion = @(esEdicion ? "true" : "false");
     var equipoActual = @(esEdicion && maquina.Equipo != null ? maquina.Equipo.IdEquipo.ToString() : "null");
+    var modo = 'existente';
 
     var $lineaDDL = $('#modalLineaSelect').kendoDropDownList({
         change: cargarEquipos
@@ -70,11 +94,38 @@ else
 
     cargarEquipos();
 
+    // Cambio entre "maquina existente" y "maquina nueva"
+    $('input[name="modoMaquina"]').on('change', function () {
+        modo = this.value;
+        if (modo === 'nueva') {
+            $('#grpEquipoExistente').hide();
+            $('#grpEquipoNuevo').show();
+        } else {
+            $('#grpEquipoNuevo').hide();
+            $('#grpEquipoExistente').show();
+        }
+    });
+
     $('#btnSubmitMaquina').on('click', function () {
+        var lineaId = parseInt($lineaDDL.value());
+        var $btn = $(this);
+
+        // --- Crear una maquina NUEVA (nuevo equipo) ---
+        if (!esEdicion && modo === 'nueva') {
+            var desc = ($('#modalEquipoNuevo').val() || '').trim();
+            if (!desc) { tgAlert('Campo requerido', 'Escribe el nombre de la maquina.'); return; }
+            $btn.prop('disabled', true);
+            $.post(TG.urls.agregarMaquinaNueva, { descripcion: desc, lineaId: lineaId }, function (r) {
+                if (r.success) { $('#wndGestion').data('kendoWindow').close(); cargarMaquinas(); }
+                else { tgAlert('Error', r.message); }
+            }).always(function () { $btn.prop('disabled', false); });
+            return;
+        }
+
+        // --- Maquina existente (editar o agregar) ---
         var equipoId = parseInt($equipoDDL.value());
-        var lineaId  = parseInt($lineaDDL.value());
         if (!equipoId) { tgAlert('Campo requerido', 'Selecciona un equipo.'); return; }
-        var $btn = $(this).prop('disabled', true);
+        $btn.prop('disabled', true);
         if (esEdicion) {
             var maquinaId = parseInt($('#modalMaquinaId').val());
             $.post(TG.urls.editarMaquina, { maquinaId: maquinaId, equipoId: equipoId }, function (r) {
